@@ -13,6 +13,9 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- LZ-String for Link Compression -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+  <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/kvs-timetable-app/sw.js');
@@ -3814,7 +3817,59 @@
         setTimeout(() => toast.remove(), 300);
       }, 3500);
     }
+// --- FIREBASE REALTIME CLOUD SYNC ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",
+  authDomain: "kvs-timetable-sync.firebaseapp.com",
+  databaseURL: "https://kvs-timetable-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "kvs-timetable-sync",
+  storageBucket: "kvs-timetable-sync.firebasestorage.app",
+  messagingSenderId: "545842654239",
+  appId: "1:545842654239:web:7ce5564d0924f0efc3792a"
+};
 
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const rtdb = firebase.database();
+const timetableCloudRef = rtdb.ref("kvs_live_timetable");
+
+// 1. LIVE SYNC RECEIVER (Runs automatically on all staff devices)
+timetableCloudRef.on("value", (snapshot) => {
+  const cloudData = snapshot.val();
+  if (cloudData && cloudData.compressed) {
+    try {
+      const decompressed = LZString.decompressFromEncodedURIComponent(cloudData.compressed);
+      if (decompressed) {
+        window.appState = JSON.parse(decompressed);
+        syncActiveSchoolFromRepository();
+        updateSchoolInfo();
+        if (typeof renderCurrentSlide === "function") renderCurrentSlide();
+        if (typeof renderMatrix === "function") renderMatrix();
+      }
+    } catch (e) {
+      console.error("Error applying cloud timetable sync:", e);
+    }
+  }
+});
+
+// 2. BROADCAST FUNCTION (Pushes your updates to all devices)
+window.syncToAllTeachers = function () {
+  try {
+    const raw = JSON.stringify(window.appState);
+    const compressed = LZString.compressToEncodedURIComponent(raw);
+    timetableCloudRef.set({
+      compressed: compressed,
+      updatedAt: new Date().toISOString()
+    }).then(() => {
+      alert("Timetable synced live! All teachers will see this updated version immediately.");
+    }).catch((err) => {
+      alert("Cloud sync failed: " + err.message);
+    });
+  } catch (err) {
+    console.error("Sync error:", err);
+  }
+};
     window.onload = function () {
       const loadedFromHash = loadStateFromUrl();
       if (!loadedFromHash) {

@@ -109,7 +109,7 @@
         </button>
 
         <!-- Copy View-Only Link -->
-        <button onclick="copyViewOnlyLink()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition flex items-center gap-1.5 shadow-xs" title="Share read-only timetable link for teachers & HM">
+        <button id="btn-publish-sync" onclick="copyViewOnlyLink()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition flex items-center gap-1.5 shadow-xs" title="Share read-only timetable link for teachers & HM">
           <i class="ph-bold ph-eye text-sm text-amber-600"></i>
           <span>Share View-Only</span>
         </button>
@@ -1522,6 +1522,8 @@
         if (banner) banner.classList.add("hidden");
         return;
       }
+      document.getElementById("btn-publish-sync")?.classList.remove("hidden");
+      document.getElementById("btn-publish-sync")?.classList.add("hidden");
 
       if (banner) banner.classList.remove("hidden");
 

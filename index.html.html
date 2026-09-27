@@ -1,0 +1,3828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KVS Timetable Synchronizer Studio - Multi-School Edition</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- SheetJS for Excel Exports -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- LZ-String for Link Compression -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* Print Formatting */
+    @media print {
+      body { background: white !important; padding: 0 !important; color: black !important; }
+      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner { display: none !important; }
+      .print-page { 
+        page-break-after: always !important; 
+        break-after: page !important; 
+        margin: 0 !important; 
+        padding: 16px !important; 
+      }
+      .print-page:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+      @page { size: landscape; margin: 8mm; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
+
+  <div id="view-only-banner" class="hidden bg-amber-500 text-white px-4 py-2 text-xs font-bold shadow-sm no-print">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-lock-key text-base"></i>
+        <span>VIEW-ONLY MODE ACTIVE: Schedules, subjects, and teachers are locked against editing. Viewing, filtering, and all print options remain fully enabled.</span>
+      </div>
+      <button onclick="copyShareableLink()" class="px-2.5 py-0.5 rounded bg-white text-amber-800 font-extrabold hover:bg-amber-100 transition text-[11px]">
+        Switch to Edit Link
+      </button>
+    </div>
+  </div>
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Active School Profile Selector -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-800 flex items-center justify-center text-white shadow-sm font-black text-lg">
+          <i class="ph-bold ph-calendar-check"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight" id="header-school-name">PM SHRI KV GILL NAGAR, CHENNAI</h1>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200" id="header-session-badge">2026-27</span>
+          </div>
+          <!-- Quick Multi-School Switcher Dropdown -->
+          <div class="flex items-center gap-2 mt-0.5">
+            <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Active School:</span>
+            <select id="global-school-selector" onchange="switchSchool(this.value)" class="text-xs font-extrabold text-indigo-700 bg-indigo-50/70 border border-indigo-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              <!-- Dynamically populated via renderSchoolSelectors() -->
+            </select>
+            <button onclick="openSchoolManagerModal()" class="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300">
+              Manage Schools
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="flex items-center flex-wrap gap-2">
+        <!-- Live URL Sync Indicator -->
+        <div id="link-save-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 transition-all">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="link-save-text">Auto-Saved in Link</span>
+        </div>
+
+        <!-- Copy Edit Link -->
+        <button onclick="copyShareableLink()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 shadow-xs" title="Copy shareable link with full editing permissions">
+          <i class="ph-bold ph-link-simple text-sm"></i>
+          <span>Copy Edit Link</span>
+        </button>
+
+        <!-- Copy View-Only Link -->
+        <button onclick="copyViewOnlyLink()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition flex items-center gap-1.5 shadow-xs" title="Share read-only timetable link for teachers & HM">
+          <i class="ph-bold ph-eye text-sm text-amber-600"></i>
+          <span>Share View-Only</span>
+        </button>
+
+        <!-- Print Current Slide -->
+        <button onclick="printCurrentSlide(state.activeSlide)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 shadow-xs">
+          <i class="ph-bold ph-printer text-sm"></i>
+          <span>Print Slide</span>
+        </button>
+
+        <!-- Excel Export -->
+        <button onclick="exportAllToExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-xs">
+          <i class="ph-bold ph-microsoft-excel-logo text-sm"></i>
+          <span>Export Excel</span>
+        </button>
+
+        <!-- Rules Modal Trigger -->
+        <button onclick="openRulesModal()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5 shadow-xs">
+          <i class="ph-bold ph-sliders text-sm"></i>
+          <span>Rules ?</span>
+        </button>
+      </div>
+
+    </div>
+
+    <nav class="bg-slate-50 border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-1.5 overflow-x-auto">
+      <div class="max-w-7xl mx-auto flex items-center gap-2 min-w-max">
+        <button onclick="goToSlide(1)" id="nav-pill-1" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-indigo-600 text-white shadow-xs">
+          <span class="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[10px]">1</span>
+          <span>School & Teachers</span>
+        </button>
+        <button onclick="goToSlide(2)" id="nav-pill-2" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+          <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">2</span>
+          <span>Assign Subjects & Limits</span>
+        </button>
+        <button onclick="goToSlide(3)" id="nav-pill-3" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+          <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">3</span>
+          <span>Class Timetables</span>
+        </button>
+        <button onclick="goToSlide(4)" id="nav-pill-4" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+          <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">4</span>
+          <span>Day-Wise Class TT</span>
+        </button>
+        <button onclick="goToSlide(5)" id="nav-pill-5" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+          <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">5</span>
+          <span>Day-Wise Teacher TT</span>
+        </button>
+        <button onclick="goToSlide(6)" id="nav-pill-6" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+          <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">6</span>
+          <span>Teacher Weekly TT</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- Global Conflict Alert Banner -->
+    <div id="global-conflict-banner" class="hidden mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-xs shadow-xs">
+      <i class="ph-bold ph-warning-circle text-lg text-rose-600 mt-0.5"></i>
+      <div class="flex-1">
+        <h4 class="font-extrabold text-sm text-rose-900 mb-0.5">Teacher Schedule Overlaps Detected</h4>
+        <p id="global-conflict-details" class="font-medium text-rose-700"></p>
+      </div>
+    </div>
+
+    <div id="slide-panel-1" class="space-y-6">
+      
+      <!-- Multi-School Profile Quick Toolbar -->
+      <div class="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white text-lg">
+            <i class="ph-bold ph-buildings"></i>
+          </div>
+          <div>
+            <div class="text-xs font-extrabold text-indigo-200 uppercase tracking-wider">Multi-School Workspace</div>
+            <div class="text-sm font-black flex items-center gap-2" id="workspace-active-school-label">
+              Active: PM SHRI KV GILL NAGAR, CHENNAI
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2">
+          <div id="slide1-school-pills" class="flex items-center gap-1.5">
+            <!-- Dynamically populated via renderSlide1SchoolPills() -->
+          </div>
+          <button onclick="openSchoolManagerModal()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-white text-indigo-900 hover:bg-indigo-50 transition shadow-xs flex items-center gap-1">
+            <i class="ph-bold ph-plus-circle"></i>
+            <span>Manage / Add School</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- School Information Panel -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-info text-xl text-indigo-600"></i>
+            <h2 class="text-base font-extrabold text-slate-900">Current School Information</h2>
+          </div>
+          <span class="text-xs font-bold text-slate-400">Primary Wing (Classes 1–5 • Sec A & B)</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">School Name</label>
+            <input type="text" id="school-name-input" value="PM SHRI KV GILL NAGAR,CHENNAI" onchange="updateSchoolInfo()" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Session</label>
+            <input type="text" id="school-session-input" value="2026-27" onchange="updateSchoolInfo()" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Number of Sections</label>
+            <select id="school-sections-select" onchange="updateSchoolInfo()" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+              <option value="2">2 (A, B)</option>
+              <option value="1">1 (A)</option>
+              <option value="3">3 (A, B, C)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teachers Details Panel -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-users text-xl text-indigo-600"></i>
+            <h2 class="text-base font-extrabold text-slate-900">Teachers Details</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-500">Total Staff:</span>
+            <span id="slide1-total-teachers-badge" class="px-2 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700">0</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Teachers List -->
+        <div id="teachers-list-container" class="space-y-3">
+          <!-- Rendered via renderSlide1Teachers() -->
+        </div>
+
+        <!-- Add Teacher Button below list -->
+        <div class="pt-2">
+          <button onclick="addNewTeacher()" class="px-4 py-2 rounded-xl text-xs font-bold border border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 flex items-center gap-1.5 transition">
+            <i class="ph-bold ph-plus"></i>
+            <span>Add Teacher</span>
+          </button>
+        </div>
+
+        <!-- Bottom Action Bar -->
+        <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <button onclick="printTeachersReport()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 transition shadow-xs">
+              <i class="ph-bold ph-file-text"></i>
+              <span>Generate Report</span>
+            </button>
+            <button onclick="printTeachersPreferenceList()" class="px-4 py-2.5 rounded-xl text-xs font-bold border border-indigo-400 text-indigo-600 hover:bg-indigo-50 flex items-center gap-2 transition">
+              <i class="ph-bold ph-list-dashes"></i>
+              <span>Print Preference List</span>
+            </button>
+          </div>
+
+          <button onclick="goToSlide(2)" class="px-6 py-2.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2 transition shadow-xs">
+            <span>Next Step</span>
+            <i class="ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div id="slide-panel-2" class="hidden space-y-6">
+
+      <!-- Slide 2 Header & Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div class="flex items-center gap-2.5">
+          <i class="ph-bold ph-notebook text-xl text-indigo-600"></i>
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">Assign Subjects & Periods</h2>
+            <p class="text-xs text-slate-500 font-medium">Allot weekly periods per subject to teachers for Classes 1 to 5</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openManageLimitsModal()" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 transition shadow-xs">
+            <i class="ph-bold ph-sliders-horizontal"></i>
+            <span>Manage Subjects & Limits</span>
+          </button>
+          <button onclick="openRulesModal()" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 transition shadow-xs">
+            <i class="ph-bold ph-question"></i>
+            <span>Rules ?</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KVS Rule Notice Banner -->
+      <div class="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-start gap-2.5 text-xs text-slate-700">
+        <span class="font-black text-indigo-900 shrink-0">नियम / Rules:</span>
+        <p class="font-semibold text-slate-700 leading-relaxed">
+          हर क्लास के लिए 48 पीरियड्स पूरे करें। क्लास टीचर (CT) को 6 से कम पीरियड मिलने या किसी टीचर का वर्कलोड 39+ होने पर लाल रंग की वार्निंग मिलेगी। Ensure 48 weekly periods per class; CT requires 6+ periods in own class.
+        </p>
+      </div>
+
+      <!-- Main Layout: Teachers Allotment (Left) + Class Workload Status (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Teacher Allotment Cards (8 Cols) -->
+        <div class="lg:col-span-8 space-y-4" id="slide2-teachers-allotment-container">
+          <!-- Rendered via renderSlide2Allotments() -->
+        </div>
+
+        <!-- Right: Class Workload Status Sticky Panel (4 Cols) -->
+        <div class="lg:col-span-4 sticky top-24 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-chart-pie-slice text-lg text-indigo-600"></i>
+              <h3 class="text-sm font-extrabold text-slate-900">Class Workload Status</h3>
+            </div>
+            <span class="text-[11px] font-bold text-slate-400">Target: 48 P/W</span>
+          </div>
+
+          <!-- Class Workload Gauges -->
+          <div id="slide2-class-workload-gauges" class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+            <!-- Rendered via renderSlide2WorkloadStatus() -->
+          </div>
+
+          <!-- Auto-Generate Timetable Trigger -->
+          <div class="pt-3 border-t border-slate-100">
+            <button onclick="autoGenerateFullTimetable()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 text-white flex items-center justify-center gap-2 transition shadow-xs">
+              <i class="ph-bold ph-lightning text-amber-300"></i>
+              <span>Auto-Generate Complete Schedule</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Nav -->
+      <div class="pt-4 border-t border-slate-200 flex justify-between items-center">
+        <button onclick="goToSlide(1)" class="px-5 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-600 hover:bg-slate-100 transition">
+          ← Back to Teachers
+        </button>
+        <button onclick="goToSlide(3)" class="px-6 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 transition shadow-xs">
+          <span>Go to Class Timetables</span>
+          <i class="ph-bold ph-arrow-right"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <div id="slide-panel-3" class="hidden space-y-6">
+
+      <!-- Class Selector & Controls -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <label class="text-xs font-extrabold text-slate-600">Select Class:</label>
+          <div id="slide3-class-pills" class="flex flex-wrap gap-1.5">
+            <!-- Class pills rendered via renderSlide3ClassPills() -->
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Dedicated Single-Command Multi-Class Print -->
+          <button onclick="printAllClassesTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
+            <i class="ph-bold ph-printer text-sm"></i>
+            <span>Review & Print All 10 Classes (1 File)</span>
+          </button>
+          <button id="slide3-regen-btn" onclick="handleSlide3Regenerate()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-sparkle"></i>
+            <span id="slide3-regen-label">Re-Generate This Class</span>
+          </button>
+          <button id="slide3-clear-btn" onclick="handleSlide3Clear()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-trash"></i>
+            <span id="slide3-clear-label">Clear Grid</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pedagogical Compliance Audit Card -->
+      <div class="bg-gradient-to-r from-indigo-50/70 to-slate-50 border border-indigo-100 rounded-2xl p-4 shadow-xs">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-shield-check text-indigo-600 text-lg"></i>
+            <h3 class="text-xs font-black uppercase tracking-wider text-indigo-900">Pedagogical Compliance Audit • <span id="audit-class-label">Class 1-A</span></h3>
+          </div>
+          <span id="audit-score-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800">100% Compliant</span>
+        </div>
+        <div id="slide3-pedagogical-audit-items" class="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
+          <!-- Rendered via runPedagogicalAudit() -->
+        </div>
+      </div>
+
+      <!-- Interactive Timetable Container -->
+      <div id="slide3-tables-container" class="space-y-6">
+        <!-- Rendered dynamically via renderSlide3Grid() -->
+      </div>
+
+    </div>
+
+    <div id="slide-panel-4" class="hidden space-y-6">
+
+      <!-- Header & Day Switcher -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <i class="ph-bold ph-calendar text-xl text-indigo-600"></i>
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">Day-Wise Class Timetable</h2>
+            <p class="text-xs text-slate-500 font-medium">Daily Master Schedule across all 10 Primary Sections (1-A to 5-B)</p>
+          </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2">
+          <!-- Day Selector Pills -->
+          <div class="flex items-center gap-1.5" id="slide4-day-pills">
+            <!-- Rendered via renderSlide4DayPills() -->
+          </div>
+          
+          <!-- Single-Command Multi-Day Booklet Print Button -->
+          <button onclick="printAllDaysClassTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
+            <i class="ph-bold ph-printer text-sm"></i>
+            <span>Review & Print All 6 Days (1 File)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Master Daily Grid Container -->
+      <div id="slide4-tables-container" class="space-y-6">
+        <!-- Rendered dynamically via renderSlide4DayWiseClasses() -->
+      </div>
+
+    </div>
+
+    <div id="slide-panel-5" class="hidden space-y-6">
+
+      <!-- Header & Day Switcher -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <i class="ph-bold ph-identification-badge text-xl text-indigo-600"></i>
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">Day-Wise Teacher Timetable</h2>
+            <p class="text-xs text-slate-500 font-medium">Daily Master Staff Deployment & Substitution Assistant</p>
+          </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2">
+          <!-- Day Pills -->
+          <div class="flex items-center gap-1.5" id="slide5-day-pills">
+            <!-- Rendered via renderSlide5DayPills() -->
+          </div>
+          <!-- Single-Command Print All Staff Days -->
+          <button onclick="printAllDaysTeacherTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
+            <i class="ph-bold ph-printer text-sm"></i>
+            <span>Review & Print All 6 Days Staff (1 File)</span>
+          </button>
+          <!-- One-click Switch to Slide 6 -->
+          <button onclick="goToSlide(6)" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
+            <i class="ph-bold ph-arrows-left-right"></i>
+            <span>Switch to Weekly (Slide 6)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Substitution / Leisure Staff Assistant -->
+      <div class="bg-gradient-to-r from-emerald-50/70 to-teal-50 border border-emerald-200 rounded-2xl p-4 shadow-xs">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-emerald-100">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-first-aid text-emerald-700 text-lg"></i>
+            <h3 class="text-xs font-black uppercase tracking-wider text-emerald-900">Instant Substitution & Leisure Staff Finder</h3>
+          </div>
+          <!-- Period Selector for Substitution Finder -->
+          <div class="flex items-center gap-1.5 text-xs font-bold" id="slide5-sub-period-pills">
+            <!-- P1-P8 pills rendered via renderSlide5SubPeriodPills() -->
+          </div>
+        </div>
+
+        <!-- Free Teachers Chips -->
+        <div class="flex flex-wrap items-center gap-2 pt-1" id="slide5-free-teachers-chips">
+          <!-- Free teachers chips rendered via renderSubstitutionAssistant() -->
+        </div>
+      </div>
+
+      <!-- Day-Wise Staff Grid -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase" id="slide5-current-day-label">Mon</span>
+            <h3 class="text-sm font-extrabold text-slate-900">Master Staff Assignment Sheet</h3>
+          </div>
+          <button onclick="printDayWiseTeacherTimetable(state.selectedDaySlide5)" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+            <i class="ph-bold ph-printer text-xs"></i>
+            <span>Print This Day</span>
+          </button>
+        </div>
+        <table class="w-full border-collapse text-center text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+              <th class="py-2.5 px-3 text-left w-48">Teacher</th>
+              <th class="py-2.5 px-2">P1</th>
+              <th class="py-2.5 px-2">P2</th>
+              <th class="py-2.5 px-2">P3</th>
+              <th class="py-2.5 px-2">P4</th>
+              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-2">P5</th>
+              <th class="py-2.5 px-2">P6</th>
+              <th class="py-2.5 px-2">P7</th>
+              <th class="py-2.5 px-2">P8</th>
+              <th class="py-2.5 px-2 text-right w-16">Daily Load</th>
+            </tr>
+          </thead>
+          <tbody id="slide5-teachers-tbody" class="divide-y divide-slate-100">
+            <!-- Rendered via renderSlide5DayWiseTeachers() -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <div id="slide-panel-6" class="hidden space-y-6">
+
+      <!-- Header & Teacher Selector -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <i class="ph-bold ph-user-list text-xl text-indigo-600"></i>
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">Teacher Weekly Timetable</h2>
+            <p class="text-xs text-slate-500 font-medium">Individual 6-Day Personal Timetable & Total Workload</p>
+          </div>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2">
+          <select id="slide6-teacher-select" onchange="renderSlide6TeacherGrid()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <!-- Populated via renderSlide6TeacherSelect() -->
+          </select>
+          <button onclick="printTeacherWeeklyTimetable(state.selectedTeacherSlide6)" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-700 transition flex items-center gap-1">
+            <i class="ph-bold ph-printer text-xs"></i>
+            <span>Print This Teacher</span>
+          </button>
+          <button onclick="printAllTeachersWeeklyTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
+            <i class="ph-bold ph-printer text-sm"></i>
+            <span>Review & Print All Teachers (1 File)</span>
+          </button>
+          <button onclick="goToSlide(5)" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
+            <i class="ph-bold ph-arrows-left-right"></i>
+            <span>Switch to Day-Wise (Slide 5)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Weekly Grid for Selected Teacher -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900" id="slide6-teacher-display-name">Teacher Schedule</h3>
+            <p class="text-[11px] text-slate-400" id="slide6-teacher-role-badge">PRT</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-500">Total Weekly Load:</span>
+            <span id="slide6-teacher-total-load" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700">0 Periods</span>
+          </div>
+        </div>
+
+        <table class="w-full border-collapse text-center text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+              <th class="py-2.5 px-3 text-left w-20">Day</th>
+              <th class="py-2.5 px-2">P1</th>
+              <th class="py-2.5 px-2">P2</th>
+              <th class="py-2.5 px-2">P3</th>
+              <th class="py-2.5 px-2">P4</th>
+              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-2">P5</th>
+              <th class="py-2.5 px-2">P6</th>
+              <th class="py-2.5 px-2">P7</th>
+              <th class="py-2.5 px-2">P8</th>
+              <th class="py-2.5 px-2 text-right w-16">Day Total</th>
+            </tr>
+          </thead>
+          <tbody id="slide6-teacher-grid-body" class="divide-y divide-slate-100">
+            <!-- Rendered via renderSlide6TeacherGrid() -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div id="slot-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-lg shadow-2xl p-6 space-y-4">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900" id="slot-modal-title">Edit Period Slot</h3>
+          <p class="text-xs text-slate-500 font-medium" id="slot-modal-subtitle">Class 1-A • Mon • Period 1</p>
+        </div>
+        <button onclick="closeSlotModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <!-- Subject Selection (Live Quota Progress Badges) -->
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1.5">Select Subject (Live Quota Progress):</label>
+        <div id="slot-modal-subject-badges" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-slate-50 rounded-xl border border-slate-200">
+          <!-- Injected via renderModalSubjectBadges() -->
+        </div>
+      </div>
+
+      <!-- Selected Subject & Block Period Option -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Subject Code</label>
+          <input type="text" id="slot-modal-subject-input" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50" readonly>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Slot Duration</label>
+          <select id="slot-modal-duration-select" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white">
+            <option value="1">Single Period (1P)</option>
+            <option value="2">Block Period (2P Consecutive)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Teacher Assignment with Green 🟢 / Red 🔴 Status -->
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1.5">Assigned Teacher (Live Availability for this slot):</label>
+        <div id="slot-modal-teacher-availability-list" class="max-h-40 overflow-y-auto space-y-1.5 p-1 bg-slate-50 rounded-xl border border-slate-200">
+          <!-- Injected via renderModalTeacherAvailability() -->
+        </div>
+      </div>
+
+      <!-- Hidden Input for selected teacher id -->
+      <input type="hidden" id="slot-modal-teacher-id">
+
+      <!-- Action Buttons -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <button onclick="clearCurrentSlot()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 transition">
+          Clear Slot
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeSlotModal()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button onclick="saveSlotModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+            Save Slot
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="manage-limits-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <i class="ph-bold ph-sliders-horizontal text-xl text-amber-500"></i>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Manage Subjects & Weekly Limits</h3>
+            <p class="text-xs text-slate-500">Configure max weekly periods per subject for each class</p>
+          </div>
+        </div>
+        <button onclick="closeManageLimitsModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <!-- Class Selector & Quick Replication Bar -->
+      <div class="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-extrabold text-amber-900">Select Class to Edit:</label>
+            <select id="modal-limits-class-select" onchange="renderLimitsGrid()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-amber-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <option value="Class 1">Class 1</option>
+              <option value="Class 2">Class 2</option>
+              <option value="Class 3">Class 3</option>
+              <option value="Class 4">Class 4</option>
+              <option value="Class 5">Class 5</option>
+            </select>
+          </div>
+
+          <!-- Multi-Class Target Checkboxes for Copying -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="copyLimitsToAllClasses()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-600 hover:bg-amber-700 text-white transition shadow-xs">
+              Copy this Class to All (1–5)
+            </button>
+          </div>
+        </div>
+
+        <!-- Specific Multi-Class Target Selection for Copying -->
+        <div class="pt-2 border-t border-amber-200/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span class="font-bold text-amber-900">Apply this Class limits to Multiple Classes:</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <label class="flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-amber-200 cursor-pointer text-[11px] font-semibold">
+              <input type="checkbox" id="copy-target-1" value="Class 1" class="rounded text-amber-600"> Class 1
+            </label>
+            <label class="flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-amber-200 cursor-pointer text-[11px] font-semibold">
+              <input type="checkbox" id="copy-target-2" value="Class 2" class="rounded text-amber-600"> Class 2
+            </label>
+            <label class="flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-amber-200 cursor-pointer text-[11px] font-semibold">
+              <input type="checkbox" id="copy-target-3" value="Class 3" class="rounded text-amber-600"> Class 3
+            </label>
+            <label class="flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-amber-200 cursor-pointer text-[11px] font-semibold">
+              <input type="checkbox" id="copy-target-4" value="Class 4" class="rounded text-amber-600"> Class 4
+            </label>
+            <label class="flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-amber-200 cursor-pointer text-[11px] font-semibold">
+              <input type="checkbox" id="copy-target-5" value="Class 5" class="rounded text-amber-600"> Class 5
+            </label>
+            <button onclick="applyLimitsToSelectedClasses()" class="ml-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-amber-700 hover:bg-amber-800 text-white transition">
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Class Subject Limits Grid -->
+      <div id="modal-limits-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto p-1">
+        <!-- Injected via renderLimitsGrid() -->
+      </div>
+
+      <!-- Add New Subject & Activity -->
+      <div class="pt-3 border-t border-slate-100 bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Add New Subject & Weekly Activity Limit</h4>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Subject Name / Code</label>
+            <input type="text" id="new-subj-name-input" placeholder="e.g. SANSKRIT, COMP" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 uppercase bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Max Periods / Week</label>
+            <input type="number" id="new-subj-limit-input" value="4" min="1" max="15" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Apply To Mode</label>
+            <select id="new-subj-apply-mode" onchange="toggleMultiClassSubjectTargetCheckboxes()" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white">
+              <option value="multiple">Apply to Multiple Classes</option>
+              <option value="current">Current Class Only</option>
+              <option value="all">All Classes (1 to 5)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Interactive Multiple Class Checkboxes for Adding Subject -->
+        <div id="new-subj-multi-class-container" class="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-[11px] font-bold text-slate-500">Target Classes:</span>
+            <label class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold">
+              <input type="checkbox" id="add-subj-target-1" value="Class 1" checked class="rounded text-indigo-600"> Class 1
+            </label>
+            <label class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold">
+              <input type="checkbox" id="add-subj-target-2" value="Class 2" checked class="rounded text-indigo-600"> Class 2
+            </label>
+            <label class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold">
+              <input type="checkbox" id="add-subj-target-3" value="Class 3" checked class="rounded text-indigo-600"> Class 3
+            </label>
+            <label class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold">
+              <input type="checkbox" id="add-subj-target-4" value="Class 4" checked class="rounded text-indigo-600"> Class 4
+            </label>
+            <label class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-[11px] font-semibold">
+              <input type="checkbox" id="add-subj-target-5" value="Class 5" checked class="rounded text-indigo-600"> Class 5
+            </label>
+          </div>
+          <button onclick="addNewSubjectWithMultiClassOption()" class="px-4 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+            + Add to Selected Classes
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-100 flex justify-end">
+        <button onclick="closeManageLimitsModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-xs">
+          Save & Close Settings
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="rules-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <i class="ph-bold ph-sliders text-xl text-indigo-600"></i>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">KVS Pedagogical Rules Engine</h3>
+            <p class="text-xs text-slate-500">Edit, remove, or create custom timetable constraints</p>
+          </div>
+        </div>
+        <button onclick="closeRulesModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <!-- Active Rules List -->
+      <div id="rules-list-container" class="space-y-2.5 max-h-64 overflow-y-auto p-1">
+        <!-- Rendered via renderRulesList() -->
+      </div>
+
+      <!-- Add New Custom Rule Form -->
+      <div class="pt-3 border-t border-slate-100 bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Add New Pedagogical Rule</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Rule Title</label>
+            <input type="text" id="new-rule-title" placeholder="e.g. Max 2 Library Periods/Week" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Subjects (comma-separated)</label>
+            <input type="text" id="new-rule-subjects" placeholder="e.g. LIB, GDN" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 uppercase bg-white">
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <button onclick="addNewCustomRule()" class="px-4 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+            + Add Custom Rule
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <button onclick="resetRulesToKVSDefaults()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+          Reset to KVS Defaults
+        </button>
+        <button onclick="closeRulesModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="school-manager-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <i class="ph-bold ph-buildings text-xl text-indigo-600"></i>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Schools & Timetables Workspace Manager</h3>
+            <p class="text-xs text-slate-500">Switch, clone, create, and backup multiple school profiles</p>
+          </div>
+        </div>
+        <button onclick="closeSchoolManagerModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <!-- School Profiles Cards List -->
+      <div id="school-manager-list" class="space-y-3 max-h-64 overflow-y-auto p-1">
+        <!-- Rendered dynamically via renderSchoolManagerList() -->
+      </div>
+
+      <!-- Create New School Form -->
+      <div class="pt-3 border-t border-slate-100 bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Create New School or Alternate Shift Plan</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">New School Name</label>
+            <input type="text" id="new-school-name" placeholder="e.g. PM SHRI KV IIT CHENNAI" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 uppercase bg-white">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Academic Session</label>
+            <input type="text" id="new-school-session" value="2026-27" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white">
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
+            <input type="checkbox" id="clone-from-current-checkbox" class="rounded text-indigo-600">
+            <span>Clone current teachers and allotments into new school</span>
+          </label>
+          <button onclick="createNewSchoolProfile()" class="px-4 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+            + Create School
+          </button>
+        </div>
+      </div>
+
+      <!-- Backup and Restore Controls -->
+      <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <button onclick="exportAllSchoolsJson()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1">
+            <i class="ph-bold ph-download-simple"></i>
+            <span>Backup JSON</span>
+          </button>
+          <label class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1 cursor-pointer">
+            <i class="ph-bold ph-upload-simple"></i>
+            <span>Restore JSON</span>
+            <input type="file" id="import-schools-input" accept=".json" onchange="importSchoolsJson(event)" class="hidden">
+          </label>
+        </div>
+        <button onclick="closeSchoolManagerModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+          Close Manager
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="print-preview-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-4xl shadow-2xl p-6 space-y-4 max-h-[92vh] flex flex-col">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <i class="ph-bold ph-printer text-xl text-indigo-600"></i>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-extrabold text-slate-900" id="print-modal-title">Print Preview</h3>
+              <span id="print-modal-sheet-count" class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">1 Sheet</span>
+            </div>
+            <p class="text-xs text-slate-500">Official KVS Primary Wing Printable Document</p>
+          </div>
+        </div>
+        <button onclick="closePrintPreviewModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <!-- Quick Sheet Jump Navigator for Multi-Page Documents -->
+      <div id="print-modal-sheet-nav" class="hidden items-center gap-2 px-3 py-2 rounded-xl bg-slate-100/70 border border-slate-200 text-xs shrink-0 overflow-x-auto">
+        <span class="font-extrabold text-slate-600 shrink-0">Quick Review:</span>
+        <div id="print-modal-sheet-links" class="flex items-center gap-1.5 min-w-max">
+          <!-- Dynamically populated via showPrintPreviewModal -->
+        </div>
+      </div>
+
+      <!-- Scrollable Preview Content -->
+      <div id="print-modal-content" class="flex-1 overflow-y-auto p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-6">
+        <!-- Injected via showPrintPreviewModal() -->
+      </div>
+
+      <!-- Action Footer -->
+      <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <button onclick="closePrintPreviewModal()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-100 transition">
+          Close
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="openPrintInNewWindow()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5">
+            <i class="ph-bold ph-arrow-square-out text-sm"></i>
+            <span>Open in New Tab</span>
+          </button>
+          <button onclick="executeBrowserPrint()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5 shadow-xs">
+            <i class="ph-bold ph-printer text-sm"></i>
+            <span>Print All Sheets (1 Single Command)</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Printable Area for Direct Printing -->
+  <div id="printable-report-area" class="hidden"></div>
+
+  <!-- Non-blocking Toast Notification Banner -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <script>
+    // Constants for KVS Operations
+    const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
+    const CLASSES = ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B", "4-A", "4-B", "5-A", "5-B"];
+
+    // Multi-School Repository Container
+    let schoolRepository = {
+      activeSchoolId: "sch_1",
+      schools: [
+        {
+          id: "sch_1",
+          name: "PM SHRI KV GILL NAGAR,CHENNAI",
+          session: "2026-27",
+          sectionsCount: "2",
+          teachers: [
+            { id: "t1", name: "Smt. R UMA MAHESWARI", shortName: "HM", isClassTeacher: false, classNum: "", section: "", isCommon: false, commonClasses: [] },
+            { id: "t2", name: "Smt. C NAGANANDINI", shortName: "NN", isClassTeacher: true, classNum: "5", section: "B", isCommon: false, commonClasses: [] },
+            { id: "t3", name: "Mr. SANTOSH SWAIN", shortName: "SS", isClassTeacher: true, classNum: "5", section: "A", isCommon: false, commonClasses: [] },
+            { id: "t4", name: "Ms. NEHA RAWAT", shortName: "NR", isClassTeacher: true, classNum: "2", section: "A", isCommon: false, commonClasses: [] },
+            { id: "t5", name: "PRT 20 (Games / Yoga)", shortName: "P20", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B", "4-A", "4-B", "5-A", "5-B"] },
+            { id: "t6", name: "PRT Specialist (Music / Art)", shortName: "P_ART", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B"] }
+          ],
+          subjectLimits: {
+            "Class 1": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 2": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 3": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 4": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 5": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 }
+          },
+          allotments: [
+            { id: "a1", teacherId: "t1", class: "2", section: "A", subject: "CLA", periods: 1 },
+            { id: "a2", teacherId: "t2", class: "5", section: "B", subject: "CLA", periods: 1 },
+            { id: "a3", teacherId: "t2", class: "5", section: "B", subject: "ENG", periods: 8 },
+            { id: "a4", teacherId: "t2", class: "5", section: "B", subject: "MATH", periods: 8 },
+            { id: "a5", teacherId: "t3", class: "5", section: "A", subject: "MATH", periods: 8 },
+            { id: "a6", teacherId: "t3", class: "5", section: "A", subject: "ENG", periods: 8 },
+            { id: "a7", teacherId: "t4", class: "2", section: "A", subject: "ENG", periods: 8 },
+            { id: "a8", teacherId: "t4", class: "2", section: "A", subject: "HIN", periods: 8 },
+            { id: "a9", teacherId: "t5", class: "1", section: "A", subject: "PE", periods: 4 },
+            { id: "a10", teacherId: "t5", class: "1", section: "B", subject: "PE", periods: 4 },
+            { id: "a11", teacherId: "t5", class: "2", section: "A", subject: "PE", periods: 4 },
+            { id: "a12", teacherId: "t5", class: "2", section: "B", subject: "PE", periods: 4 },
+            { id: "a13", teacherId: "t6", class: "1", section: "A", subject: "V.ART", periods: 4 },
+            { id: "a14", teacherId: "t6", class: "1", section: "B", subject: "V.ART", periods: 4 }
+          ],
+          schedules: {},
+          rules: [
+            { id: "r1", title: "Daily Core Cognitive Presence", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "EVS", "TWAU"], threshold: 1, active: true },
+            { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
+            { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "EVS"], threshold: 3, active: true },
+            { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
+            { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
+          ]
+        },
+        {
+          id: "sch_2",
+          name: "PM SHRI KV IIT CHENNAI",
+          session: "2026-27",
+          sectionsCount: "2",
+          teachers: [
+            { id: "t21", name: "Smt. K SANGEETHA", shortName: "HM", isClassTeacher: false, classNum: "", section: "", isCommon: false, commonClasses: [] },
+            { id: "t22", name: "Mr. V RAMAN", shortName: "VR", isClassTeacher: true, classNum: "1", section: "A", isCommon: false, commonClasses: [] },
+            { id: "t23", name: "Ms. PRIYA SHARMA", shortName: "PS", isClassTeacher: true, classNum: "1", section: "B", isCommon: false, commonClasses: [] },
+            { id: "t24", name: "Mr. A KANAGARAJ (PE)", shortName: "PET", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B", "4-A", "4-B", "5-A", "5-B"] }
+          ],
+          subjectLimits: {
+            "Class 1": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 2": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 3": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 4": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+            "Class 5": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 }
+          },
+          allotments: [
+            { id: "a21", teacherId: "t22", class: "1", section: "A", subject: "ENG", periods: 8 },
+            { id: "a22", teacherId: "t22", class: "1", section: "A", subject: "MATH", periods: 8 },
+            { id: "a23", teacherId: "t23", class: "1", section: "B", subject: "ENG", periods: 8 },
+            { id: "a24", teacherId: "t23", class: "1", section: "B", subject: "HIN", periods: 8 },
+            { id: "a25", teacherId: "t24", class: "1", section: "A", subject: "PE", periods: 4 },
+            { id: "a26", teacherId: "t24", class: "1", section: "B", subject: "PE", periods: 4 }
+          ],
+          schedules: {},
+          rules: [
+            { id: "r1", title: "Daily Core Cognitive Presence", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "EVS", "TWAU"], threshold: 1, active: true },
+            { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
+            { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "EVS"], threshold: 3, active: true },
+            { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
+            { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
+          ]
+        }
+      ]
+    };
+
+    // Central Active Working State (Mirrors Active School)
+    let state = {
+      isViewOnly: false,
+      activeSlide: 1,
+      selectedClassSlide3: "1-A",
+      selectedDaySlide4: "Mon",
+      selectedDaySlide5: "Mon",
+      subPeriodSlide5: 1,
+      selectedTeacherSlide6: "t1",
+      
+      schoolInfo: {
+        name: "PM SHRI KV GILL NAGAR,CHENNAI",
+        session: "2026-27",
+        sectionsCount: "2"
+      },
+      teachers: [],
+      subjectLimits: {},
+      allotments: [],
+      schedules: {},
+      rules: []
+    };
+
+    // Helper: Initialize Blank Grid for all Classes
+    function createEmptyClassSchedules() {
+      const sch = {};
+      CLASSES.forEach(c => {
+        sch[c] = {};
+        DAYS.forEach(d => {
+          sch[c][d] = {};
+          PERIODS.forEach(p => {
+            sch[c][d][p] = null;
+          });
+        });
+      });
+      return sch;
+    }
+
+    // Sync Working State from Active School in Repository
+    function syncActiveSchoolFromRepository() {
+      let sch = schoolRepository.schools.find(s => s.id === schoolRepository.activeSchoolId);
+      if (!sch && schoolRepository.schools.length > 0) {
+        sch = schoolRepository.schools[0];
+        schoolRepository.activeSchoolId = sch.id;
+      }
+      if (!sch) return;
+
+      if (!sch.schedules || Object.keys(sch.schedules).length === 0) {
+        sch.schedules = createEmptyClassSchedules();
+      }
+
+      state.schoolInfo = {
+        name: sch.name,
+        session: sch.session,
+        sectionsCount: sch.sectionsCount || "2"
+      };
+      state.teachers = sch.teachers || [];
+      state.subjectLimits = sch.subjectLimits || {};
+      state.allotments = sch.allotments || [];
+      state.schedules = sch.schedules || createEmptyClassSchedules();
+      state.rules = sch.rules || [];
+
+      if (state.teachers.length > 0) {
+        state.selectedTeacherSlide6 = state.teachers[0].id;
+      }
+
+      // Update Header Text
+      const nameEl = document.getElementById("header-school-name");
+      const sessEl = document.getElementById("header-session-badge");
+      const wsLabel = document.getElementById("workspace-active-school-label");
+      if (nameEl) nameEl.textContent = state.schoolInfo.name;
+      if (sessEl) sessEl.textContent = state.schoolInfo.session;
+      if (wsLabel) wsLabel.textContent = `Active: ${state.schoolInfo.name}`;
+
+      const nameInp = document.getElementById("school-name-input");
+      const sessInp = document.getElementById("school-session-input");
+      const secSel = document.getElementById("school-sections-select");
+      if (nameInp) nameInp.value = state.schoolInfo.name;
+      if (sessInp) sessInp.value = state.schoolInfo.session;
+      if (secSel) secSel.value = state.schoolInfo.sectionsCount;
+
+      renderSchoolSelectors();
+    }
+
+    // Push Active Working State Back into School Repository
+    function commitWorkingStateToRepository() {
+      const sch = schoolRepository.schools.find(s => s.id === schoolRepository.activeSchoolId);
+      if (sch) {
+        sch.name = state.schoolInfo.name;
+        sch.session = state.schoolInfo.session;
+        sch.sectionsCount = state.schoolInfo.sectionsCount;
+        sch.teachers = state.teachers;
+        sch.subjectLimits = state.subjectLimits;
+        sch.allotments = state.allotments;
+        sch.schedules = state.schedules;
+        sch.rules = state.rules;
+      }
+    }
+
+    function switchSchool(schoolId) {
+      if (schoolId === schoolRepository.activeSchoolId) return;
+      commitWorkingStateToRepository();
+      schoolRepository.activeSchoolId = schoolId;
+      syncActiveSchoolFromRepository();
+      goToSlide(state.activeSlide);
+      saveStateToUrl();
+      showNotification(`Switched active school to: ${state.schoolInfo.name}`, "info");
+    }
+
+    function renderSchoolSelectors() {
+      const topSelect = document.getElementById("global-school-selector");
+      const slide1Pills = document.getElementById("slide1-school-pills");
+
+      if (topSelect) {
+        topSelect.innerHTML = "";
+        schoolRepository.schools.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = s.name;
+          if (s.id === schoolRepository.activeSchoolId) opt.selected = true;
+          topSelect.appendChild(opt);
+        });
+      }
+
+      if (slide1Pills) {
+        slide1Pills.innerHTML = "";
+        schoolRepository.schools.forEach(s => {
+          const isAct = s.id === schoolRepository.activeSchoolId;
+          const btn = document.createElement("button");
+          btn.onclick = () => switchSchool(s.id);
+          btn.className = `px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${isAct ? 'bg-white text-indigo-900 shadow-xs' : 'bg-white/10 hover:bg-white/20 text-white'}`;
+          btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${isAct ? 'bg-indigo-600' : 'bg-white/60'}"></span><span class="truncate max-w-[140px]">${s.name}</span>`;
+          slide1Pills.appendChild(btn);
+        });
+      }
+    }
+
+    function openSchoolManagerModal() {
+      const modal = document.getElementById("school-manager-modal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        renderSchoolManagerList();
+      }
+    }
+
+    function closeSchoolManagerModal() {
+      const modal = document.getElementById("school-manager-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function renderSchoolManagerList() {
+      const container = document.getElementById("school-manager-list");
+      if (!container) return;
+      container.innerHTML = "";
+
+      schoolRepository.schools.forEach(s => {
+        const isCurrent = s.id === schoolRepository.activeSchoolId;
+        const totalTeachers = (s.teachers || []).length;
+        const card = document.createElement("div");
+        card.className = `p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${isCurrent ? 'bg-indigo-50/70 border-indigo-300' : 'bg-white border-slate-200 hover:border-slate-300'}`;
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl ${isCurrent ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-black text-xs">
+              <i class="ph-bold ph-chalkboard-simple"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="text-xs font-extrabold text-slate-900">${s.name}</h4>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-indigo-700 border border-indigo-200">${s.session}</span>
+                ${isCurrent ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white">Active</span>' : ''}
+              </div>
+              <p class="text-[11px] text-slate-500 font-semibold">${totalTeachers} Teachers • Primary Sections A & B</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            ${!isCurrent ? `
+              <button onclick="switchSchool('${s.id}'); closeSchoolManagerModal();" class="px-3 py-1 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+                Switch
+              </button>
+            ` : ''}
+            <button onclick="cloneSchoolProfile('${s.id}')" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="Duplicate Timetable Profile">
+              <i class="ph-bold ph-copy"></i>
+            </button>
+            ${schoolRepository.schools.length > 1 ? `
+              <button onclick="deleteSchoolProfile('${s.id}')" class="px-2 py-1 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 transition" title="Delete Profile">
+                <i class="ph-bold ph-trash"></i>
+              </button>
+            ` : ''}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    function createNewSchoolProfile() {
+      if (state.isViewOnly) return;
+      const nameInput = document.getElementById("new-school-name");
+      const sessionInput = document.getElementById("new-school-session");
+      const cloneCheckbox = document.getElementById("clone-from-current-checkbox");
+
+      const schoolName = (nameInput.value || "").trim().toUpperCase();
+      const sessionVal = (sessionInput.value || "2026-27").trim();
+
+      if (!schoolName) {
+        showNotification("Please enter a name for the new school.", "warning");
+        return;
+      }
+
+      commitWorkingStateToRepository();
+      const newId = "sch_" + Date.now();
+
+      let teachersList = [];
+      let subjectLimitsObj = JSON.parse(JSON.stringify(state.subjectLimits));
+      let allotmentsList = [];
+      let schedulesObj = createEmptyClassSchedules();
+      let rulesList = JSON.parse(JSON.stringify(state.rules));
+
+      if (cloneCheckbox && cloneCheckbox.checked) {
+        teachersList = JSON.parse(JSON.stringify(state.teachers));
+        allotmentsList = JSON.parse(JSON.stringify(state.allotments));
+        schedulesObj = JSON.parse(JSON.stringify(state.schedules));
+      } else {
+        teachersList = [
+          { id: "t_init_1", name: "PRT 1 (English)", shortName: "PRT1", isClassTeacher: true, classNum: "1", section: "A", isCommon: false, commonClasses: [] },
+          { id: "t_init_2", name: "PRT 2 (Maths)", shortName: "PRT2", isClassTeacher: true, classNum: "1", section: "B", isCommon: false, commonClasses: [] },
+          { id: "t_init_3", name: "PRT Games (PET)", shortName: "PET", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: CLASSES }
+        ];
+        allotmentsList = [
+          { id: "a_init_1", teacherId: "t_init_1", class: "1", section: "A", subject: "ENG", periods: 8 },
+          { id: "a_init_2", teacherId: "t_init_2", class: "1", section: "B", subject: "MATH", periods: 8 },
+          { id: "a_init_3", teacherId: "t_init_3", class: "1", section: "A", subject: "PE", periods: 4 }
+        ];
+      }
+
+      const newSchool = {
+        id: newId,
+        name: schoolName,
+        session: sessionVal,
+        sectionsCount: "2",
+        teachers: teachersList,
+        subjectLimits: subjectLimitsObj,
+        allotments: allotmentsList,
+        schedules: schedulesObj,
+        rules: rulesList
+      };
+
+      schoolRepository.schools.push(newSchool);
+      schoolRepository.activeSchoolId = newId;
+      syncActiveSchoolFromRepository();
+      nameInput.value = "";
+      closeSchoolManagerModal();
+      goToSlide(1);
+      saveStateToUrl();
+      showNotification(`Created and switched to: ${schoolName}!`, "success");
+    }
+
+    function cloneSchoolProfile(schoolId) {
+      if (state.isViewOnly) return;
+      commitWorkingStateToRepository();
+      const target = schoolRepository.schools.find(s => s.id === schoolId);
+      if (!target) return;
+
+      const newId = "sch_" + Date.now();
+      const cloned = JSON.parse(JSON.stringify(target));
+      cloned.id = newId;
+      cloned.name = `${target.name} (Copy / Shift 2)`;
+
+      schoolRepository.schools.push(cloned);
+      schoolRepository.activeSchoolId = newId;
+      syncActiveSchoolFromRepository();
+      closeSchoolManagerModal();
+      goToSlide(1);
+      saveStateToUrl();
+      showNotification(`Cloned timetable profile: ${cloned.name}`, "success");
+    }
+
+    function deleteSchoolProfile(schoolId) {
+      if (state.isViewOnly) return;
+      if (schoolRepository.schools.length <= 1) {
+        showNotification("Cannot delete the only remaining school profile.", "warning");
+        return;
+      }
+      schoolRepository.schools = schoolRepository.schools.filter(s => s.id !== schoolId);
+      if (schoolRepository.activeSchoolId === schoolId) {
+        schoolRepository.activeSchoolId = schoolRepository.schools[0].id;
+      }
+      syncActiveSchoolFromRepository();
+      renderSchoolManagerList();
+      saveStateToUrl();
+      showNotification("School profile deleted.", "info");
+    }
+
+    function exportAllSchoolsJson() {
+      commitWorkingStateToRepository();
+      const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(schoolRepository, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", jsonStr);
+      downloadAnchor.setAttribute("download", `KVS_All_Schools_Timetable_Backup_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showNotification("Downloaded multi-school JSON backup file!", "success");
+    }
+
+    function importSchoolsJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && Array.isArray(parsed.schools) && parsed.schools.length > 0) {
+            schoolRepository = parsed;
+            syncActiveSchoolFromRepository();
+            closeSchoolManagerModal();
+            goToSlide(1);
+            saveStateToUrl();
+            showNotification(`Restored ${parsed.schools.length} school profiles successfully!`, "success");
+          } else {
+            showNotification("Invalid schools JSON backup file structure.", "warning");
+          }
+        } catch (err) {
+          showNotification("Failed to parse JSON file.", "warning");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function saveStateToUrl() {
+      if (state.isViewOnly) return;
+      try {
+        commitWorkingStateToRepository();
+        const payload = {
+          schoolRepository: schoolRepository
+        };
+        const jsonStr = JSON.stringify(payload);
+        const compressed = LZString.compressToEncodedURIComponent(jsonStr);
+        window.history.replaceState(null, "", `#data=${compressed}`);
+        
+        const badge = document.getElementById("link-save-badge");
+        if (badge) {
+          badge.classList.remove("opacity-50");
+          document.getElementById("link-save-text").textContent = "Auto-Saved in Link";
+        }
+      } catch (err) {
+        console.warn("Could not compress state to URL:", err);
+      }
+    }
+
+    function loadStateFromUrl() {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      if (hash.includes("viewonly=1") || search.includes("viewonly=1")) {
+        state.isViewOnly = true;
+      }
+
+      try {
+        if (hash && hash.includes("data=")) {
+          const match = hash.match(/data=([^&]+)/);
+          const compressed = match ? match[1] : "";
+          if (compressed) {
+            const decompressed = LZString.decompressFromEncodedURIComponent(compressed);
+            if (decompressed) {
+              const parsed = JSON.parse(decompressed);
+              if (parsed.schoolRepository && Array.isArray(parsed.schoolRepository.schools)) {
+                schoolRepository = parsed.schoolRepository;
+                syncActiveSchoolFromRepository();
+                showNotification(state.isViewOnly ? "Loaded Multi-School Timetables (View-Only Mode)." : "Restored multi-school configurations from shareable link!", "success");
+                return true;
+              } else if (parsed.schoolInfo) {
+                // Backward Compatibility for Single School Links
+                schoolRepository.schools[0] = {
+                  id: "sch_1",
+                  name: parsed.schoolInfo.name,
+                  session: parsed.schoolInfo.session,
+                  sectionsCount: parsed.schoolInfo.sectionsCount || "2",
+                  teachers: parsed.teachers || [],
+                  subjectLimits: parsed.subjectLimits || {},
+                  allotments: parsed.allotments || [],
+                  schedules: parsed.schedules || createEmptyClassSchedules(),
+                  rules: parsed.rules || []
+                };
+                schoolRepository.activeSchoolId = "sch_1";
+                syncActiveSchoolFromRepository();
+                return true;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to read state from URL hash:", err);
+      }
+      return false;
+    }
+
+    function copyShareableLink() {
+      saveStateToUrl();
+      const currentUrl = window.location.href.replace(/[?&]viewonly=1/g, "");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(currentUrl).then(() => {
+          showNotification("Shareable Edit Link copied to clipboard!", "success");
+        }).catch(() => fallbackCopy(currentUrl));
+      } else {
+        fallbackCopy(currentUrl);
+      }
+    }
+
+    function copyViewOnlyLink() {
+      saveStateToUrl();
+      let url = window.location.href;
+      if (!url.includes("viewonly=1")) {
+        url += (url.includes("#") ? "&viewonly=1" : "#viewonly=1");
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          showNotification("View-Only Link copied to clipboard! Recipients cannot modify schedules.", "success");
+        }).catch(() => fallbackCopy(url));
+      } else {
+        fallbackCopy(url);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        showNotification("Link copied to clipboard!", "success");
+      } catch (e) {
+        showNotification("Please copy the URL from your browser address bar.", "info");
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function applyViewOnlyLocks() {
+      const banner = document.getElementById("view-only-banner");
+      if (!state.isViewOnly) {
+        if (banner) banner.classList.add("hidden");
+        return;
+      }
+
+      if (banner) banner.classList.remove("hidden");
+
+      ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = true;
+      });
+
+      ["slide3-regen-btn", "slide3-clear-btn"].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.disabled = true;
+          btn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+      });
+
+      document.querySelectorAll("button[onclick*='addNewTeacher']").forEach(b => b.classList.add("hidden"));
+      document.querySelectorAll("button[onclick*='openManageLimitsModal']").forEach(b => b.classList.add("hidden"));
+      document.querySelectorAll("button[onclick*='autoGenerateFullTimetable']").forEach(b => b.classList.add("hidden"));
+      document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.add("hidden"));
+      document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.add("hidden"));
+      document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.add("hidden"));
+    }
+
+    function goToSlide(slideNum) {
+      state.activeSlide = slideNum;
+      for (let i = 1; i <= 6; i++) {
+        const panel = document.getElementById(`slide-panel-${i}`);
+        const pill = document.getElementById(`nav-pill-${i}`);
+        if (panel) panel.classList.toggle("hidden", i !== slideNum);
+        if (pill) {
+          if (i === slideNum) {
+            pill.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-indigo-600 text-white shadow-xs";
+            pill.querySelector("span:first-child").className = "w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[10px]";
+          } else {
+            pill.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200";
+            pill.querySelector("span:first-child").className = "w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]";
+          }
+        }
+      }
+
+      if (slideNum === 1) renderSlide1Teachers();
+      if (slideNum === 2) { renderSlide2Allotments(); renderSlide2WorkloadStatus(); }
+      if (slideNum === 3) { renderSlide3ClassPills(); renderSlide3Grid(); runPedagogicalAudit(); }
+      if (slideNum === 4) { renderSlide4DayPills(); renderSlide4DayWiseClasses(); }
+      if (slideNum === 5) { 
+        renderSlide5DayPills(); 
+        renderSlide5SubPeriodPills(); 
+        renderSlide5DayWiseTeachers(); 
+        renderSubstitutionAssistant(); 
+        const dayLbl = document.getElementById("slide5-current-day-label");
+        if (dayLbl) dayLbl.textContent = state.selectedDaySlide5;
+      }
+      if (slideNum === 6) { renderSlide6TeacherSelect(); renderSlide6TeacherGrid(); }
+
+      auditGlobalCollisions();
+      applyViewOnlyLocks();
+    }
+
+    function updateSchoolInfo() {
+      state.schoolInfo.name = document.getElementById("school-name-input").value;
+      state.schoolInfo.session = document.getElementById("school-session-input").value;
+      state.schoolInfo.sectionsCount = document.getElementById("school-sections-select").value;
+      
+      document.getElementById("header-school-name").textContent = state.schoolInfo.name;
+      document.getElementById("header-session-badge").textContent = state.schoolInfo.session;
+      const wsLabel = document.getElementById("workspace-active-school-label");
+      if (wsLabel) wsLabel.textContent = `Active: ${state.schoolInfo.name}`;
+
+      commitWorkingStateToRepository();
+      renderSchoolSelectors();
+      saveStateToUrl();
+    }
+
+    function renderSlide1Teachers() {
+      const container = document.getElementById("teachers-list-container");
+      const badge = document.getElementById("slide1-total-teachers-badge");
+      if (!container) return;
+
+      badge.textContent = state.teachers.length;
+      container.innerHTML = "";
+
+      state.teachers.forEach((t) => {
+        const card = document.createElement("div");
+        card.className = "p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-200 transition space-y-3";
+
+        let classHeaderHtml = "";
+        if (t.isClassTeacher) {
+          classHeaderHtml = `
+            <div class="flex justify-end items-center gap-2">
+              <span class="text-xs font-bold text-slate-500">Class</span>
+              <select onchange="updateTeacherField('${t.id}', 'classNum', this.value)" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="1" ${t.classNum === "1" ? "selected" : ""}>1</option>
+                <option value="2" ${t.classNum === "2" ? "selected" : ""}>2</option>
+                <option value="3" ${t.classNum === "3" ? "selected" : ""}>3</option>
+                <option value="4" ${t.classNum === "4" ? "selected" : ""}>4</option>
+                <option value="5" ${t.classNum === "5" ? "selected" : ""}>5</option>
+              </select>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          ${classHeaderHtml}
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 items-end">
+            <div class="md:col-span-4">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Teacher Name</label>
+              <input type="text" value="${t.name}" onchange="updateTeacherField('${t.id}', 'name', this.value)" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Short Name</label>
+              <input type="text" value="${t.shortName}" onchange="updateTeacherField('${t.id}', 'shortName', this.value)" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Class Teacher?</label>
+              <select onchange="updateTeacherField('${t.id}', 'isClassTeacher', this.value === 'true')" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="false" ${!t.isClassTeacher ? "selected" : ""}>No</option>
+                <option value="true" ${t.isClassTeacher ? "selected" : ""}>Yes</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2 ${t.isClassTeacher ? '' : 'hidden'}">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Section</label>
+              <select onchange="updateTeacherField('${t.id}', 'section', this.value)" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="A" ${t.section === "A" ? "selected" : ""}>A</option>
+                <option value="B" ${t.section === "B" ? "selected" : ""}>B</option>
+              </select>
+            </div>
+
+            <div class="${t.isClassTeacher ? 'md:col-span-1' : 'md:col-span-3'}">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Common Teacher?</label>
+              <select onchange="updateTeacherField('${t.id}', 'isCommon', this.value === 'true')" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="false" ${!t.isCommon ? "selected" : ""}>No</option>
+                <option value="true" ${t.isCommon ? "selected" : ""}>Yes</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-1 flex justify-end">
+              <button onclick="deleteTeacher('${t.id}')" class="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition" title="Delete Teacher">
+                <i class="ph-bold ph-trash text-base"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function addNewTeacher() {
+      if (state.isViewOnly) return;
+      const newId = "t_" + Date.now();
+      state.teachers.push({
+        id: newId,
+        name: "New PRT Teacher",
+        shortName: "PRT",
+        isClassTeacher: false,
+        classNum: "1",
+        section: "A",
+        isCommon: false,
+        commonClasses: []
+      });
+      renderSlide1Teachers();
+      saveStateToUrl();
+      showNotification("New Teacher added. Please enter details.", "success");
+    }
+
+    function updateTeacherField(teacherId, field, value) {
+      const t = state.teachers.find(item => item.id === teacherId);
+      if (!t) return;
+      t[field] = value;
+      if (field === "isClassTeacher" && value === true && !t.classNum) {
+        t.classNum = "1";
+        t.section = "A";
+      }
+      renderSlide1Teachers();
+      saveStateToUrl();
+    }
+
+    function deleteTeacher(teacherId) {
+      if (state.isViewOnly) return;
+      if (state.teachers.length <= 1) {
+        showNotification("Cannot delete the only remaining teacher.", "warning");
+        return;
+      }
+      state.teachers = state.teachers.filter(t => t.id !== teacherId);
+      state.allotments = state.allotments.filter(a => a.teacherId !== teacherId);
+      CLASSES.forEach(c => {
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            if (state.schedules[c]?.[d]?.[p]?.teacherId === teacherId) {
+              state.schedules[c][d][p] = null;
+            }
+          });
+        });
+      });
+      renderSlide1Teachers();
+      saveStateToUrl();
+      showNotification("Teacher deleted and schedules updated.", "info");
+    }
+
+    function renderSlide2Allotments() {
+      const container = document.getElementById("slide2-teachers-allotment-container");
+      if (!container) return;
+      container.innerHTML = "";
+
+      state.teachers.forEach(t => {
+        const teacherAllots = state.allotments.filter(a => a.teacherId === t.id);
+        const totalPeriods = teacherAllots.reduce((sum, a) => sum + parseInt(a.periods || 0), 0);
+
+        let ctWarning = "";
+        if (t.isClassTeacher && t.classNum && t.section) {
+          const ownClassKey = `${t.classNum}-${t.section}`;
+          const ownPeriods = teacherAllots
+            .filter(a => `${a.class}-${a.section}` === ownClassKey)
+            .reduce((sum, a) => sum + parseInt(a.periods || 0), 0);
+
+          if (ownPeriods < 6) {
+            ctWarning = `
+              <div class="px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+                <i class="ph-bold ph-warning"></i>
+                <span>Warning: CT needs 6+ periods in own class (${ownClassKey})! (Currently: ${ownPeriods})</span>
+              </div>
+            `;
+          }
+        }
+
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4";
+        card.innerHTML = `
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-user text-indigo-600 text-base"></i>
+              <h3 class="text-sm font-extrabold text-slate-900">${t.name} (${t.shortName})</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${totalPeriods > 39 ? 'bg-rose-100 text-rose-700' : 'bg-indigo-50 text-indigo-700'}">Total: ${totalPeriods}</span>
+              <button onclick="addSubjectToTeacher('${t.id}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-indigo-300 text-indigo-600 hover:bg-indigo-50 transition flex items-center gap-1">
+                <i class="ph-bold ph-plus text-xs"></i>
+                <span>Subject</span>
+              </button>
+            </div>
+          </div>
+
+          ${ctWarning}
+
+          <div id="allot-rows-${t.id}" class="space-y-2.5"></div>
+        `;
+
+        container.appendChild(card);
+
+        const rowsContainer = card.querySelector(`#allot-rows-${t.id}`);
+        teacherAllots.forEach(a => {
+          const rowEl = document.createElement("div");
+          rowEl.className = "grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center p-3 rounded-xl bg-slate-50 border border-slate-200";
+          
+          const classKey = `Class ${a.class || 1}`;
+          const availableSubjects = Object.keys(state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {});
+
+          rowEl.innerHTML = `
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Class</label>
+              <select onchange="updateAllotmentField('${a.id}', 'class', this.value)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white">
+                <option value="1" ${a.class === "1" ? "selected" : ""}>1</option>
+                <option value="2" ${a.class === "2" ? "selected" : ""}>2</option>
+                <option value="3" ${a.class === "3" ? "selected" : ""}>3</option>
+                <option value="4" ${a.class === "4" ? "selected" : ""}>4</option>
+                <option value="5" ${a.class === "5" ? "selected" : ""}>5</option>
+              </select>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Section</label>
+              <select onchange="updateAllotmentField('${a.id}', 'section', this.value)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white">
+                <option value="A" ${a.section === "A" ? "selected" : ""}>A</option>
+                <option value="B" ${a.section === "B" ? "selected" : ""}>B</option>
+              </select>
+            </div>
+
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Subject</label>
+              <select onchange="updateAllotmentField('${a.id}', 'subject', this.value)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-extrabold border border-slate-200 bg-white">
+                ${availableSubjects.map(s => `<option value="${s}" ${a.subject === s ? "selected" : ""}>${s}</option>`).join("")}
+              </select>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Periods</label>
+              <input type="number" min="1" max="15" value="${a.periods}" onchange="updateAllotmentField('${a.id}', 'periods', parseInt(this.value) || 1)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-center">
+            </div>
+
+            <div class="sm:col-span-1 flex justify-end">
+              <button onclick="deleteAllotmentRow('${a.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition">
+                <i class="ph-bold ph-x text-sm"></i>
+              </button>
+            </div>
+          `;
+          rowsContainer.appendChild(rowEl);
+        });
+      });
+    }
+
+    function addSubjectToTeacher(teacherId) {
+      const newAllot = {
+        id: "a_" + Date.now(),
+        teacherId: teacherId,
+        class: "1",
+        section: "A",
+        subject: "ENG",
+        periods: 1
+      };
+      state.allotments.push(newAllot);
+      renderSlide2Allotments();
+      renderSlide2WorkloadStatus();
+      saveStateToUrl();
+    }
+
+    function updateAllotmentField(allotId, field, value) {
+      const a = state.allotments.find(item => item.id === allotId);
+      if (!a) return;
+      a[field] = value;
+      renderSlide2Allotments();
+      renderSlide2WorkloadStatus();
+      saveStateToUrl();
+    }
+
+    function deleteAllotmentRow(allotId) {
+      state.allotments = state.allotments.filter(a => a.id !== allotId);
+      renderSlide2Allotments();
+      renderSlide2WorkloadStatus();
+      saveStateToUrl();
+    }
+
+    function renderSlide2WorkloadStatus() {
+      const container = document.getElementById("slide2-class-workload-gauges");
+      if (!container) return;
+      container.innerHTML = "";
+
+      CLASSES.forEach(cls => {
+        const [cNum, cSec] = cls.split("-");
+        const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+        const total = classAllots.reduce((sum, a) => sum + parseInt(a.periods || 0), 0);
+
+        const isComplete = total === 48;
+        const isOver = total > 48;
+
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition";
+        row.innerHTML = `
+          <span class="text-xs font-extrabold text-slate-800">Class ${cls}</span>
+          <span class="text-xs font-black ${isComplete ? 'text-emerald-600' : isOver ? 'text-purple-600' : 'text-rose-600'}">
+            ${total}/48
+          </span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderSlide3ClassPills() {
+      const container = document.getElementById("slide3-class-pills");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const isAllSelected = state.selectedClassSlide3 === "ALL";
+      const allBtn = document.createElement("button");
+      allBtn.onclick = () => {
+        state.selectedClassSlide3 = "ALL";
+        renderSlide3ClassPills();
+        renderSlide3Grid();
+        runPedagogicalAudit();
+      };
+      allBtn.className = `px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${isAllSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+      allBtn.innerHTML = `<i class="ph-bold ph-squares-four text-xs"></i><span>All Classes</span>`;
+      container.appendChild(allBtn);
+
+      CLASSES.forEach(c => {
+        const isSelected = c === state.selectedClassSlide3;
+        const btn = document.createElement("button");
+        btn.onclick = () => {
+          state.selectedClassSlide3 = c;
+          renderSlide3ClassPills();
+          renderSlide3Grid();
+          runPedagogicalAudit();
+        };
+        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+        btn.textContent = c;
+        container.appendChild(btn);
+      });
+
+      const regenLabel = document.getElementById("slide3-regen-label");
+      const clearLabel = document.getElementById("slide3-clear-label");
+      const auditLabel = document.getElementById("audit-class-label");
+
+      if (regenLabel) regenLabel.textContent = isAllSelected ? "Re-Generate All Classes" : "Re-Generate This Class";
+      if (clearLabel) clearLabel.textContent = isAllSelected ? "Clear All Grids" : "Clear Grid";
+      if (auditLabel) auditLabel.textContent = isAllSelected ? "All Classes (1 to 5)" : `Class ${state.selectedClassSlide3}`;
+    }
+
+    function handleSlide3Regenerate() {
+      if (state.selectedClassSlide3 === "ALL") {
+        autoGenerateFullTimetable();
+      } else {
+        autoGenerateSingleClass(state.selectedClassSlide3);
+      }
+    }
+
+    function handleSlide3Clear() {
+      if (state.selectedClassSlide3 === "ALL") {
+        CLASSES.forEach(c => clearSingleClassSchedule(c, false));
+        renderSlide3Grid();
+        runPedagogicalAudit();
+        auditGlobalCollisions();
+        saveStateToUrl();
+        showNotification("Cleared timetable grids for all 10 classes.", "info");
+      } else {
+        clearSingleClassSchedule(state.selectedClassSlide3);
+      }
+    }
+
+    function createClassTimetableCard(cls) {
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto";
+
+      const [cNum, cSec] = cls.split("-");
+      const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+      const ctName = ct ? `${ct.name} (${ct.shortName})` : "Not Assigned";
+
+      let filledCount = 0;
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          if (state.schedules[cls]?.[d]?.[p]) filledCount++;
+        });
+      });
+
+      let tbodyRows = "";
+      DAYS.forEach(d => {
+        let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
+
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase tracking-wider">Break</td>`;
+          }
+
+          const slot = state.schedules[cls]?.[d]?.[p];
+          if (slot) {
+            const teacher = state.teachers.find(t => t.id === slot.teacherId);
+            const teacherName = teacher ? teacher.shortName || teacher.name : "N/A";
+            const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
+
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
+                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
+                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
+                </button>
+              </td>
+            `;
+          } else {
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
+                  <i class="ph-bold ph-plus text-xs"></i>
+                </button>
+              </td>
+            `;
+          }
+        });
+
+        rowHtml += `</tr>`;
+        tbodyRows += rowHtml;
+      });
+
+      card.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-100 gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-extrabold text-slate-900">Class ${cls} Timetable</h3>
+              <span class="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">CT: ${ctName}</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Click any period slot to assign, edit, or swap subjects with live collision detection</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="printClassTimetable('${cls}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+              <i class="ph-bold ph-printer text-xs"></i>
+              <span>Print This Class</span>
+            </button>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${filledCount === 48 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${filledCount}/48</span>
+          </div>
+        </div>
+
+        <table class="w-full border-collapse text-center text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+              <th class="py-2.5 px-3 text-left w-20">Day</th>
+              <th class="py-2.5 px-2">P1</th>
+              <th class="py-2.5 px-2">P2</th>
+              <th class="py-2.5 px-2">P3</th>
+              <th class="py-2.5 px-2">P4</th>
+              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-2">P5</th>
+              <th class="py-2.5 px-2">P6</th>
+              <th class="py-2.5 px-2">P7</th>
+              <th class="py-2.5 px-2">P8</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${tbodyRows}
+          </tbody>
+        </table>
+      `;
+
+      return card;
+    }
+
+    function renderSlide3Grid() {
+      const container = document.getElementById("slide3-tables-container");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const targetClasses = state.selectedClassSlide3 === "ALL" ? CLASSES : [state.selectedClassSlide3];
+      targetClasses.forEach(cls => {
+        container.appendChild(createClassTimetableCard(cls));
+      });
+    }
+
+    function isTeacherConflicted(teacherId, day, period) {
+      if (!teacherId) return false;
+      let count = 0;
+      CLASSES.forEach(c => {
+        if (state.schedules[c]?.[day]?.[period]?.teacherId === teacherId) {
+          count++;
+        }
+      });
+      return count > 1;
+    }
+
+    let currentSlotContext = { class: "1-A", day: "Mon", period: 1 };
+
+    function openSlotModal(cls, day, period) {
+      if (state.isViewOnly) {
+        showNotification("View-Only Mode: Period editing is disabled.", "warning");
+        return;
+      }
+      currentSlotContext = { class: cls, day: day, period: period };
+      document.getElementById("slot-modal-title").textContent = `Edit Period Slot • ${cls}`;
+      document.getElementById("slot-modal-subtitle").textContent = `${day} • Period ${period}`;
+
+      const existingSlot = state.schedules[cls]?.[day]?.[period];
+      document.getElementById("slot-modal-subject-input").value = existingSlot ? existingSlot.subject : "";
+      document.getElementById("slot-modal-teacher-id").value = existingSlot ? existingSlot.teacherId : "";
+      document.getElementById("slot-modal-duration-select").value = existingSlot && existingSlot.isBlock ? "2" : "1";
+
+      renderModalSubjectBadges();
+      renderModalTeacherAvailability();
+
+      const modal = document.getElementById("slot-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeSlotModal() {
+      const modal = document.getElementById("slot-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function renderModalSubjectBadges() {
+      const container = document.getElementById("slot-modal-subject-badges");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const cls = currentSlotContext.class;
+      const [cNum, cSec] = cls.split("-");
+      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+
+      if (classAllots.length === 0) {
+        container.innerHTML = `<span class="text-xs text-slate-400 p-2">No subjects allotted in Slide 2 yet.</span>`;
+        return;
+      }
+
+      classAllots.forEach(a => {
+        let scheduledCount = 0;
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            if (state.schedules[cls]?.[d]?.[p]?.subject === a.subject) {
+              scheduledCount++;
+            }
+          });
+        });
+
+        const target = a.periods;
+        const isComplete = scheduledCount >= target;
+
+        const badge = document.createElement("button");
+        badge.onclick = () => {
+          document.getElementById("slot-modal-subject-input").value = a.subject;
+          document.getElementById("slot-modal-teacher-id").value = a.teacherId;
+          renderModalTeacherAvailability();
+        };
+        badge.className = `px-2.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${isComplete ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400'}`;
+        badge.innerHTML = `
+          <span>${a.subject}</span>
+          <span class="text-[10px] font-black ${isComplete ? 'text-emerald-600' : 'text-indigo-600'}">${scheduledCount}/${target}</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    function renderModalTeacherAvailability() {
+      const container = document.getElementById("slot-modal-teacher-availability-list");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const { class: currentCls, day, period } = currentSlotContext;
+      const selectedTeacherId = document.getElementById("slot-modal-teacher-id").value;
+
+      state.teachers.forEach(t => {
+        let busyInClass = null;
+        CLASSES.forEach(c => {
+          if (c !== currentCls && state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
+            busyInClass = c;
+          }
+        });
+
+        const isBusy = busyInClass !== null;
+        const isSelected = t.id === selectedTeacherId;
+
+        const row = document.createElement("button");
+        row.onclick = () => {
+          document.getElementById("slot-modal-teacher-id").value = t.id;
+          renderModalTeacherAvailability();
+        };
+        row.className = `w-full p-2 rounded-xl text-left border flex items-center justify-between transition ${isSelected ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`;
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full ${isBusy ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
+            <span class="text-xs font-extrabold text-slate-800">${t.name} (${t.shortName})</span>
+          </div>
+          <span class="text-[10px] font-black ${isBusy ? 'text-rose-600' : 'text-emerald-700'}">
+            ${isBusy ? `🔴 [BUSY in ${busyInClass}]` : `🟢 [FREE] Available`}
+          </span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function saveSlotModal() {
+      const { class: cls, day, period } = currentSlotContext;
+      const subject = document.getElementById("slot-modal-subject-input").value.trim();
+      const teacherId = document.getElementById("slot-modal-teacher-id").value;
+      const duration = parseInt(document.getElementById("slot-modal-duration-select").value) || 1;
+
+      if (!subject || !teacherId) {
+        showNotification("Please select both Subject and Teacher.", "warning");
+        return;
+      }
+
+      if (isTeacherConflicted(teacherId, day, period)) {
+        showNotification("Warning: This teacher is already booked during this period!", "warning");
+      }
+
+      state.schedules[cls][day][period] = {
+        subject: subject,
+        teacherId: teacherId,
+        isBlock: duration === 2
+      };
+
+      if (duration === 2 && period < 8) {
+        state.schedules[cls][day][period + 1] = {
+          subject: subject,
+          teacherId: teacherId,
+          isBlock: true
+        };
+      }
+
+      closeSlotModal();
+      renderSlide3Grid();
+      runPedagogicalAudit();
+      auditGlobalCollisions();
+      saveStateToUrl();
+      showNotification("Period slot saved successfully!", "success");
+    }
+
+    function clearCurrentSlot() {
+      const { class: cls, day, period } = currentSlotContext;
+      state.schedules[cls][day][period] = null;
+      closeSlotModal();
+      renderSlide3Grid();
+      runPedagogicalAudit();
+      auditGlobalCollisions();
+      saveStateToUrl();
+      showNotification("Slot cleared.", "info");
+    }
+
+    function runPedagogicalAudit() {
+      const container = document.getElementById("slide3-pedagogical-audit-items");
+      const badge = document.getElementById("audit-score-badge");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const targetClasses = state.selectedClassSlide3 === "ALL" ? CLASSES : [state.selectedClassSlide3];
+      let totalPassed = 0;
+      let totalChecked = 0;
+
+      state.rules.filter(r => r.active).forEach(rule => {
+        targetClasses.forEach(cls => {
+          totalChecked++;
+          let passed = true;
+          let note = `${cls}: Compliant`;
+
+          if (rule.type === "MIN_DAILY_PRESENCE") {
+            DAYS.forEach(d => {
+              let coreCount = 0;
+              PERIODS.forEach(p => {
+                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
+                if (subj && rule.subjects.includes(subj)) coreCount++;
+              });
+              if (coreCount < rule.threshold) {
+                passed = false;
+                note = `${cls}: Missing core on ${d}`;
+              }
+            });
+          } else if (rule.type === "MAX_DAILY_ACTIVITY") {
+            DAYS.forEach(d => {
+              const counts = {};
+              PERIODS.forEach(p => {
+                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
+                if (subj && rule.subjects.includes(subj)) {
+                  counts[subj] = (counts[subj] || 0) + 1;
+                  if (counts[subj] > rule.threshold) {
+                    passed = false;
+                    note = `${cls}: Duplicate ${subj} on ${d}`;
+                  }
+                }
+              });
+            });
+          } else if (rule.type === "MAX_CONTINUOUS_PERIODS") {
+            DAYS.forEach(d => {
+              let streak = 0;
+              PERIODS.forEach(p => {
+                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
+                if (subj && rule.subjects.includes(subj)) {
+                  streak++;
+                  if (streak > rule.threshold) {
+                    passed = false;
+                    note = `${cls}: ${streak} continuous core on ${d}`;
+                  }
+                } else {
+                  streak = 0;
+                }
+              });
+            });
+          }
+
+          if (passed) totalPassed++;
+
+          if (state.selectedClassSlide3 !== "ALL" || !passed) {
+            const item = document.createElement("div");
+            item.className = `p-2.5 rounded-xl border flex items-center justify-between ${passed ? 'bg-white border-emerald-200 text-slate-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`;
+            item.innerHTML = `
+              <div>
+                <div class="font-extrabold text-[11px]">${rule.title}</div>
+                <div class="text-[10px] text-slate-500">${note}</div>
+              </div>
+              <i class="ph-bold ${passed ? 'ph-check-circle text-emerald-600' : 'ph-warning text-rose-600'} text-base"></i>
+            `;
+            container.appendChild(item);
+          }
+        });
+      });
+
+      if (state.selectedClassSlide3 === "ALL" && container.children.length === 0) {
+        const item = document.createElement("div");
+        item.className = "p-2.5 rounded-xl border border-emerald-200 bg-white text-slate-800 flex items-center justify-between md:col-span-4";
+        item.innerHTML = `
+          <div>
+            <div class="font-extrabold text-xs text-emerald-800">All 10 Classes Passed All Active Constraints</div>
+            <div class="text-[10px] text-slate-500">Core cognitive presence, activity spacing, and continuous core caps are 100% satisfied across all sections.</div>
+          </div>
+          <i class="ph-bold ph-check-circle text-emerald-600 text-xl"></i>
+        `;
+        container.appendChild(item);
+      }
+
+      if (totalChecked > 0) {
+        const pct = Math.round((totalPassed / totalChecked) * 100);
+        badge.textContent = `${pct}% Compliant`;
+        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${pct === 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+      }
+    }
+
+    function renderSlide4DayPills() {
+      const container = document.getElementById("slide4-day-pills");
+      if (!container) return;
+      container.innerHTML = "";
+
+      DAYS.forEach(d => {
+        const isSelected = d === state.selectedDaySlide4;
+        const btn = document.createElement("button");
+        btn.onclick = () => {
+          state.selectedDaySlide4 = d;
+          renderSlide4DayPills();
+          renderSlide4DayWiseClasses();
+        };
+        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+        btn.textContent = d;
+        container.appendChild(btn);
+      });
+    }
+
+    function createDayWiseClassTableCard(day) {
+      const dayNames = { "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday" };
+      const fullDay = dayNames[day] || day;
+
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-3";
+
+      let tbodyRows = "";
+      CLASSES.forEach(cls => {
+        let rowHtml = `<td class="py-2.5 px-3 text-left font-extrabold text-slate-800">Class ${cls}</td>`;
+
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
+          }
+
+          const slot = state.schedules[cls]?.[day]?.[p];
+          if (slot) {
+            const t = state.teachers.find(item => item.id === slot.teacherId);
+            const tName = t ? t.shortName || t.name : "N/A";
+            const conflict = isTeacherConflicted(slot.teacherId, day, p);
+
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center">
+                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
+                  <div class="text-[10px] text-slate-500 font-semibold truncate">${tName}</div>
+                </button>
+              </td>
+            `;
+          } else {
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-200 hover:bg-indigo-50/30 text-slate-300 transition flex items-center justify-center">
+                  <i class="ph-bold ph-plus text-xs"></i>
+                </button>
+              </td>
+            `;
+          }
+        });
+
+        tbodyRows += `<tr class="hover:bg-slate-50/50 transition">${rowHtml}</tr>`;
+      });
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
+            <h3 class="text-sm font-extrabold text-slate-900">${fullDay} Master Class Schedule</h3>
+          </div>
+          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+            <i class="ph-bold ph-printer text-xs"></i>
+            <span>Print ${day}</span>
+          </button>
+        </div>
+
+        <table class="w-full border-collapse text-center text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+              <th class="py-2.5 px-3 text-left w-24">Class</th>
+              <th class="py-2.5 px-2">P1</th>
+              <th class="py-2.5 px-2">P2</th>
+              <th class="py-2.5 px-2">P3</th>
+              <th class="py-2.5 px-2">P4</th>
+              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-2">P5</th>
+              <th class="py-2.5 px-2">P6</th>
+              <th class="py-2.5 px-2">P7</th>
+              <th class="py-2.5 px-2">P8</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${tbodyRows}
+          </tbody>
+        </table>
+      `;
+
+      return card;
+    }
+
+    function renderSlide4DayWiseClasses() {
+      const container = document.getElementById("slide4-tables-container");
+      if (!container) return;
+      container.innerHTML = "";
+      container.appendChild(createDayWiseClassTableCard(state.selectedDaySlide4));
+    }
+
+    function renderSlide5DayPills() {
+      const container = document.getElementById("slide5-day-pills");
+      if (!container) return;
+      container.innerHTML = "";
+
+      DAYS.forEach(d => {
+        const isSelected = d === state.selectedDaySlide5;
+        const btn = document.createElement("button");
+        btn.onclick = () => {
+          state.selectedDaySlide5 = d;
+          renderSlide5DayPills();
+          renderSlide5DayWiseTeachers();
+          renderSubstitutionAssistant();
+          const dayLbl = document.getElementById("slide5-current-day-label");
+          if (dayLbl) dayLbl.textContent = d;
+        };
+        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+        btn.textContent = d;
+        container.appendChild(btn);
+      });
+    }
+
+    function renderSlide5SubPeriodPills() {
+      const container = document.getElementById("slide5-sub-period-pills");
+      if (!container) return;
+      container.innerHTML = "";
+
+      PERIODS.forEach(p => {
+        const isSelected = p === state.subPeriodSlide5;
+        const btn = document.createElement("button");
+        btn.onclick = () => {
+          state.subPeriodSlide5 = p;
+          renderSlide5SubPeriodPills();
+          renderSubstitutionAssistant();
+        };
+        btn.className = `px-2 py-0.5 rounded-md text-[11px] font-extrabold transition ${isSelected ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-emerald-900 border border-emerald-200'}`;
+        btn.textContent = `P${p}`;
+        container.appendChild(btn);
+      });
+    }
+
+    function renderSubstitutionAssistant() {
+      const container = document.getElementById("slide5-free-teachers-chips");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const day = state.selectedDaySlide5;
+      const period = state.subPeriodSlide5;
+
+      const freeTeachers = [];
+      state.teachers.forEach(t => {
+        let isBusy = false;
+        CLASSES.forEach(c => {
+          if (state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
+            isBusy = true;
+          }
+        });
+        if (!isBusy) freeTeachers.push(t);
+      });
+
+      if (freeTeachers.length === 0) {
+        container.innerHTML = `<span class="text-xs text-rose-700 font-bold p-1">No free staff available during Period ${period} on ${day}.</span>`;
+        return;
+      }
+
+      freeTeachers.forEach(t => {
+        const chip = document.createElement("div");
+        chip.className = "px-2.5 py-1 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-1.5 shadow-xs";
+        chip.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>${t.name} (${t.shortName})</span>
+        `;
+        container.appendChild(chip);
+      });
+    }
+
+    function renderSlide5DayWiseTeachers() {
+      const tbody = document.getElementById("slide5-teachers-tbody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      const day = state.selectedDaySlide5;
+
+      state.teachers.forEach(t => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50/50 transition";
+
+        let rowHtml = `
+          <td class="py-2.5 px-3 text-left font-extrabold text-slate-800">
+            <div>${t.name}</div>
+            <div class="text-[10px] text-slate-400 font-semibold">${t.isClassTeacher ? `CT (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT'}</div>
+          </td>
+        `;
+
+        let dailyCount = 0;
+
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
+          }
+
+          let teachingSlots = [];
+          CLASSES.forEach(c => {
+            const slot = state.schedules[c]?.[day]?.[p];
+            if (slot && slot.teacherId === t.id) {
+              teachingSlots.push({ class: c, subject: slot.subject });
+            }
+          });
+
+          if (teachingSlots.length > 0) {
+            dailyCount += teachingSlots.length;
+            const hasConflict = teachingSlots.length > 1;
+
+            rowHtml += `
+              <td class="p-1">
+                <div class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900'} text-center">
+                  <div class="font-extrabold text-[11px]">${teachingSlots.map(s => s.class).join(", ")}</div>
+                  <div class="text-[10px] text-slate-500 font-semibold">${teachingSlots.map(s => s.subject).join(", ")}</div>
+                </div>
+              </td>
+            `;
+          } else {
+            rowHtml += `<td class="p-1"><div class="py-2 rounded-xl text-slate-300 font-bold text-[11px]">-</div></td>`;
+          }
+        });
+
+        rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dailyCount} P</td>`;
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderSlide6TeacherSelect() {
+      const select = document.getElementById("slide6-teacher-select");
+      if (!select) return;
+      select.innerHTML = "";
+
+      state.teachers.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = `${t.name} (${t.shortName})`;
+        if (t.id === state.selectedTeacherSlide6) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderSlide6TeacherGrid() {
+      const select = document.getElementById("slide6-teacher-select");
+      if (select) state.selectedTeacherSlide6 = select.value;
+
+      const t = state.teachers.find(item => item.id === state.selectedTeacherSlide6);
+      if (!t) return;
+
+      document.getElementById("slide6-teacher-display-name").textContent = `${t.name} (${t.shortName})`;
+      document.getElementById("slide6-teacher-role-badge").textContent = t.isClassTeacher ? `Class Teacher: ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
+
+      const tbody = document.getElementById("slide6-teacher-grid-body");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      let totalWeeklyLoad = 0;
+
+      DAYS.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50/50 transition";
+
+        let rowHtml = `<td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
+        let dayCount = 0;
+
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
+          }
+
+          let assignedSlots = [];
+          CLASSES.forEach(c => {
+            const slot = state.schedules[c]?.[d]?.[p];
+            if (slot && slot.teacherId === t.id) {
+              assignedSlots.push({ class: c, subject: slot.subject });
+            }
+          });
+
+          if (assignedSlots.length > 0) {
+            dayCount += assignedSlots.length;
+            totalWeeklyLoad += assignedSlots.length;
+            const conflict = assignedSlots.length > 1;
+
+            rowHtml += `
+              <td class="p-1">
+                <div class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900'} text-center">
+                  <div class="font-extrabold text-[11px]">${assignedSlots.map(s => s.class).join(", ")}</div>
+                  <div class="text-[10px] text-slate-500 font-semibold">${assignedSlots.map(s => s.subject).join(", ")}</div>
+                </div>
+              </td>
+            `;
+          } else {
+            rowHtml += `<td class="p-1"><div class="py-2 rounded-xl text-slate-300 font-bold text-[11px]">-</div></td>`;
+          }
+        });
+
+        rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dayCount} P</td>`;
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("slide6-teacher-total-load").textContent = `${totalWeeklyLoad} Periods`;
+    }
+
+    function openManageLimitsModal() {
+      const modal = document.getElementById("manage-limits-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      renderLimitsGrid();
+      toggleMultiClassSubjectTargetCheckboxes();
+    }
+
+    function closeManageLimitsModal() {
+      const modal = document.getElementById("manage-limits-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      renderSlide2Allotments();
+      renderSlide2WorkloadStatus();
+      saveStateToUrl();
+    }
+
+    function renderLimitsGrid() {
+      const container = document.getElementById("modal-limits-grid");
+      const activeClass = document.getElementById("modal-limits-class-select").value;
+      if (!container) return;
+      container.innerHTML = "";
+
+      const limits = state.subjectLimits[activeClass] || {};
+      Object.keys(limits).forEach(subj => {
+        const item = document.createElement("div");
+        item.className = "p-2.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-2 shadow-2xs";
+        item.innerHTML = `
+          <span class="text-xs font-extrabold text-slate-800">${subj}</span>
+          <div class="flex items-center gap-2">
+            <input type="number" min="1" max="15" value="${limits[subj]}" onchange="updateSingleSubjectLimit('${activeClass}', '${subj}', parseInt(this.value) || 1)" class="w-16 px-2 py-1 rounded-lg text-xs font-bold border border-slate-200 text-center">
+            <button onclick="deleteSubjectFromClass('${activeClass}', '${subj}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition">
+              <i class="ph-bold ph-trash text-xs"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateSingleSubjectLimit(classKey, subj, val) {
+      if (!state.subjectLimits[classKey]) state.subjectLimits[classKey] = {};
+      state.subjectLimits[classKey][subj] = val;
+      saveStateToUrl();
+    }
+
+    function deleteSubjectFromClass(classKey, subj) {
+      if (state.subjectLimits[classKey] && state.subjectLimits[classKey][subj]) {
+        delete state.subjectLimits[classKey][subj];
+        renderLimitsGrid();
+        saveStateToUrl();
+        showNotification(`Removed ${subj} from ${classKey}`, "info");
+      }
+    }
+
+    function copyLimitsToAllClasses() {
+      const activeClass = document.getElementById("modal-limits-class-select").value;
+      const sourceLimits = state.subjectLimits[activeClass];
+      ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5"].forEach(c => {
+        state.subjectLimits[c] = JSON.parse(JSON.stringify(sourceLimits));
+      });
+      saveStateToUrl();
+      showNotification(`Replicated ${activeClass} limits to all Classes (1 to 5)!`, "success");
+    }
+
+    function applyLimitsToSelectedClasses() {
+      const activeClass = document.getElementById("modal-limits-class-select").value;
+      const sourceLimits = state.subjectLimits[activeClass];
+      let appliedCount = 0;
+
+      for (let i = 1; i <= 5; i++) {
+        const chk = document.getElementById(`copy-target-${i}`);
+        if (chk && chk.checked) {
+          const targetClass = `Class ${i}`;
+          if (targetClass !== activeClass) {
+            state.subjectLimits[targetClass] = JSON.parse(JSON.stringify(sourceLimits));
+            appliedCount++;
+          }
+        }
+      }
+
+      if (appliedCount > 0) {
+        saveStateToUrl();
+        showNotification(`Copied ${activeClass} limits to ${appliedCount} selected classes!`, "success");
+      } else {
+        showNotification("Please select at least one different target class.", "warning");
+      }
+    }
+
+    function toggleMultiClassSubjectTargetCheckboxes() {
+      const mode = document.getElementById("new-subj-apply-mode").value;
+      const container = document.getElementById("new-subj-multi-class-container");
+      if (container) {
+        container.classList.toggle("hidden", mode !== "multiple");
+      }
+    }
+
+    function addNewSubjectWithMultiClassOption() {
+      const nameInput = document.getElementById("new-subj-name-input");
+      const limitInput = document.getElementById("new-subj-limit-input");
+      const mode = document.getElementById("new-subj-apply-mode").value;
+      const currentClass = document.getElementById("modal-limits-class-select").value;
+
+      const subjName = nameInput.value.trim().toUpperCase();
+      const limitVal = parseInt(limitInput.value) || 4;
+
+      if (!subjName) {
+        showNotification("Please enter a subject name.", "warning");
+        return;
+      }
+
+      let targets = [];
+      if (mode === "current") {
+        targets = [currentClass];
+      } else if (mode === "all") {
+        targets = ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5"];
+      } else {
+        for (let i = 1; i <= 5; i++) {
+          const chk = document.getElementById(`add-subj-target-${i}`);
+          if (chk && chk.checked) targets.push(`Class ${i}`);
+        }
+      }
+
+      if (targets.length === 0) {
+        showNotification("Please select at least one class to apply this subject.", "warning");
+        return;
+      }
+
+      targets.forEach(c => {
+        if (!state.subjectLimits[c]) state.subjectLimits[c] = {};
+        state.subjectLimits[c][subjName] = limitVal;
+      });
+
+      nameInput.value = "";
+      renderLimitsGrid();
+      saveStateToUrl();
+      showNotification(`Added ${subjName} (Max: ${limitVal}) to ${targets.join(", ")}`, "success");
+    }
+
+    function openRulesModal() {
+      const modal = document.getElementById("rules-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      renderRulesList();
+    }
+
+    function closeRulesModal() {
+      const modal = document.getElementById("rules-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      runPedagogicalAudit();
+      saveStateToUrl();
+    }
+
+    function renderRulesList() {
+      const container = document.getElementById("rules-list-container");
+      if (!container) return;
+      container.innerHTML = "";
+
+      state.rules.forEach((r) => {
+        const item = document.createElement("div");
+        item.className = "p-3 rounded-2xl border border-slate-200 bg-white flex items-center justify-between gap-3 shadow-2xs";
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <input type="checkbox" ${r.active ? 'checked' : ''} onchange="toggleRuleActive('${r.id}', this.checked)" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
+            <div>
+              <div class="text-xs font-extrabold text-slate-800">${r.title}</div>
+              <div class="text-[10px] text-slate-400 font-semibold">${r.subjects.length > 0 ? `Target: ${r.subjects.join(", ")}` : 'School-Wide Constraint'}</div>
+            </div>
+          </div>
+          <button onclick="deleteCustomRule('${r.id}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition">
+            <i class="ph-bold ph-trash text-xs"></i>
+          </button>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function toggleRuleActive(ruleId, isActive) {
+      const r = state.rules.find(item => item.id === ruleId);
+      if (r) {
+        r.active = isActive;
+        saveStateToUrl();
+      }
+    }
+
+    function deleteCustomRule(ruleId) {
+      state.rules = state.rules.filter(r => r.id !== ruleId);
+      renderRulesList();
+      saveStateToUrl();
+      showNotification("Rule deleted.", "info");
+    }
+
+    function addNewCustomRule() {
+      const title = document.getElementById("new-rule-title").value.trim();
+      const subjs = document.getElementById("new-rule-subjects").value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+
+      if (!title) {
+        showNotification("Please enter a rule title.", "warning");
+        return;
+      }
+
+      state.rules.push({
+        id: "r_" + Date.now(),
+        title: title,
+        type: "MAX_DAILY_ACTIVITY",
+        subjects: subjs,
+        threshold: 1,
+        active: true
+      });
+
+      document.getElementById("new-rule-title").value = "";
+      document.getElementById("new-rule-subjects").value = "";
+      renderRulesList();
+      saveStateToUrl();
+      showNotification("Custom pedagogical rule added.", "success");
+    }
+
+    function resetRulesToKVSDefaults() {
+      state.rules = [
+        { id: "r1", title: "Daily Core Cognitive Presence", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "EVS", "TWAU"], threshold: 1, active: true },
+        { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
+        { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "EVS"], threshold: 3, active: true },
+        { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
+        { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
+      ];
+      renderRulesList();
+      saveStateToUrl();
+      showNotification("Reset to standard KVS rules!", "info");
+    }
+
+    function auditGlobalCollisions() {
+      const banner = document.getElementById("global-conflict-banner");
+      const details = document.getElementById("global-conflict-details");
+      if (!banner) return;
+
+      const conflicts = [];
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.teachers.forEach(t => {
+            const classesTeaching = [];
+            CLASSES.forEach(c => {
+              if (state.schedules[c]?.[d]?.[p]?.teacherId === t.id) {
+                classesTeaching.push(c);
+              }
+            });
+            if (classesTeaching.length > 1) {
+              conflicts.push(`${t.name} on ${d} P${p} (${classesTeaching.join(" & ")})`);
+            }
+          });
+        });
+      });
+
+      if (conflicts.length > 0) {
+        banner.classList.remove("hidden");
+        details.textContent = conflicts.slice(0, 3).join("; ") + (conflicts.length > 3 ? ` and ${conflicts.length - 3} more.` : ".");
+      } else {
+        banner.classList.add("hidden");
+      }
+    }
+
+    function autoGenerateSingleClass(targetClass) {
+      if (state.isViewOnly) return;
+      const [cNum, cSec] = targetClass.split("-");
+      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+
+      if (classAllots.length === 0) {
+        showNotification(`No teacher allotments found for ${targetClass} in Slide 2.`, "warning");
+        return;
+      }
+
+      let taskPool = [];
+      classAllots.forEach(a => {
+        for (let i = 0; i < a.periods; i++) {
+          taskPool.push({ subject: a.subject, teacherId: a.teacherId });
+        }
+      });
+
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.schedules[targetClass][d][p] = null;
+        });
+      });
+
+      let taskIdx = 0;
+      for (let p of PERIODS) {
+        for (let d of DAYS) {
+          if (taskIdx >= taskPool.length) break;
+
+          let chosenIdx = -1;
+          for (let i = 0; i < taskPool.length; i++) {
+            const candidate = taskPool[i];
+            if (candidate.assigned) continue;
+
+            let teacherBusy = false;
+            CLASSES.forEach(other => {
+              if (other !== targetClass && state.schedules[other]?.[d]?.[p]?.teacherId === candidate.teacherId) {
+                teacherBusy = true;
+              }
+            });
+
+            if (!teacherBusy) {
+              chosenIdx = i;
+              break;
+            }
+          }
+
+          if (chosenIdx !== -1) {
+            const t = taskPool[chosenIdx];
+            t.assigned = true;
+            state.schedules[targetClass][d][p] = {
+              subject: t.subject,
+              teacherId: t.teacherId,
+              isBlock: false
+            };
+            taskIdx++;
+          }
+        }
+      }
+
+      renderSlide3Grid();
+      runPedagogicalAudit();
+      auditGlobalCollisions();
+      saveStateToUrl();
+      showNotification(`Schedule generated for Class ${targetClass}!`, "success");
+    }
+
+    function autoGenerateFullTimetable() {
+      showNotification("Generating clash-free timetable for all 10 sections...", "info");
+      CLASSES.forEach(c => autoGenerateSingleClass(c));
+      goToSlide(3);
+      showNotification("All 10 Class Timetables generated successfully!", "success");
+    }
+
+    function clearSingleClassSchedule(cls, notify = true) {
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.schedules[cls][d][p] = null;
+        });
+      });
+      if (notify) {
+        renderSlide3Grid();
+        runPedagogicalAudit();
+        auditGlobalCollisions();
+        saveStateToUrl();
+        showNotification(`Cleared schedule for Class ${cls}.`, "info");
+      }
+    }
+
+    function exportAllToExcel() {
+      try {
+        const wb = XLSX.utils.book_new();
+
+        CLASSES.forEach(cls => {
+          const rows = [];
+          rows.push(["Day", "P1", "P2", "P3", "P4", "Recess", "P5", "P6", "P7", "P8"]);
+          DAYS.forEach(d => {
+            const r = [d];
+            PERIODS.forEach(p => {
+              if (p === 5) r.push("Break");
+              const slot = state.schedules[cls]?.[d]?.[p];
+              if (slot) {
+                const t = state.teachers.find(item => item.id === slot.teacherId);
+                r.push(`${slot.subject} (${t ? t.shortName : ''})`);
+              } else {
+                r.push("-");
+              }
+            });
+            rows.push(r);
+          });
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, `Class_${cls}`);
+        });
+
+        const allotRows = [["Teacher Name", "Short Name", "Role", "Class", "Section", "Subject", "Periods/Wk"]];
+        state.teachers.forEach(t => {
+          const tAllots = state.allotments.filter(a => a.teacherId === t.id);
+          tAllots.forEach(a => {
+            allotRows.push([t.name, t.shortName, t.isClassTeacher ? "CT" : t.isCommon ? "Specialist" : "PRT", a.class, a.section, a.subject, a.periods]);
+          });
+        });
+        const wsAllot = XLSX.utils.aoa_to_sheet(allotRows);
+        XLSX.utils.book_append_sheet(wb, wsAllot, "Allotments");
+
+        const cleanSchoolName = state.schoolInfo.name.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 25);
+        XLSX.writeFile(wb, `${cleanSchoolName}_Timetable_${state.schoolInfo.session}.xlsx`);
+        showNotification(`Exported full timetable for ${state.schoolInfo.name} to Excel!`, "success");
+      } catch (err) {
+        showNotification("Failed to export Excel file.", "warning");
+      }
+    }
+
+    let activePrintHtml = "";
+
+    function renderOfficialHeader(title, subtitle = "") {
+      const schoolName = state.schoolInfo?.name || "KENDRIYA VIDYALAYA";
+      const session = state.schoolInfo?.session || "2026-27";
+      return `
+        <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px;">
+          <div style="font-size: 16px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">${schoolName}</div>
+          <div style="font-size: 11px; font-weight: 700; color: #475569; margin-top: 2px;">PRIMARY SECTION • ACADEMIC SESSION ${session}</div>
+          <div style="margin-top: 8px; display: inline-block; padding: 3px 12px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${title}</div>
+          ${subtitle ? `<div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderOfficialFooter(showClassTeacher = true) {
+      return `
+        <div style="margin-top: 24px; padding-top: 16px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #1e293b;">
+          ${showClassTeacher ? '<div>________________________<br>Class Teacher Signature</div>' : '<div>________________________<br>Prepared By (PRT)</div>'}
+          <div style="text-align: center;">________________________<br>Timetable In-Charge</div>
+          <div style="text-align: center;">________________________<br>HM / Vice-Principal</div>
+          <div style="text-align: right;">________________________<br>Principal Signature</div>
+        </div>
+      `;
+    }
+
+    function printTeachersReport() {
+      let rowsHtml = "";
+      state.teachers.forEach((t, i) => {
+        const tAllots = state.allotments.filter(a => a.teacherId === t.id);
+        const totalPeriods = tAllots.reduce((sum, a) => sum + parseInt(a.periods || 0), 0);
+        const subjectsSummary = tAllots.map(a => `${a.class}-${a.section} (${a.subject}: ${a.periods}P)`).join(", ") || "None";
+        const role = t.isClassTeacher ? `Class Teacher (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT';
+
+        rowsHtml += `
+          <tr style="border-bottom: 1px solid #cbd5e1; text-align: left;">
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center;">${i + 1}</td>
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-weight: 700;">${t.name}</td>
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800;">${t.shortName}</td>
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1;">${role}</td>
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-size: 10px;">${subjectsSummary}</td>
+            <td style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; ${totalPeriods > 39 ? 'color: red;' : ''}">${totalPeriods}</td>
+          </tr>
+        `;
+      });
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader("STAFF MASTER ALLOTMENT & WORKLOAD REPORT", `Total Staff: ${state.teachers.length} Teachers`)}
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1; font-weight: 800;">
+                <th style="padding: 6px; border: 1px solid #cbd5e1; width: 30px;">#</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Name</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 60px;">Code</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 140px;">Role / Designation</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Allotted Classes & Subjects</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 60px; text-align: center;">Load</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          ${renderOfficialFooter(false)}
+        </div>
+      `;
+
+      showPrintPreviewModal("Teachers Master Allotment Report", html);
+    }
+
+    function printTeachersPreferenceList() {
+      let rowsHtml = "";
+      state.teachers.forEach((t, i) => {
+        rowsHtml += `
+          <tr style="border-bottom: 1px solid #cbd5e1; text-align: left;">
+            <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${i + 1}</td>
+            <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700;">${t.name} (${t.shortName})</td>
+            <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${t.isClassTeacher ? `Class ${t.classNum}-${t.section}` : 'N/A'}</td>
+            <td style="padding: 8px; border: 1px solid #cbd5e1;">${t.isCommon ? 'Physical Edu / Art / Music / Yoga / Library' : 'Core Primary (Hindi / Eng / Math / EVS)'}</td>
+            <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${t.isCommon ? 'All Primary Sections (1 to 5)' : `Class ${t.classNum || '1-5'}`}</td>
+            <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 120px;"></td>
+          </tr>
+        `;
+      });
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader("TEACHERS PREFERENCE & CHARGE VERIFICATION LIST", "Primary Section 2026-27")}
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1; font-weight: 800;">
+                <th style="padding: 6px; border: 1px solid #cbd5e1; width: 30px;">#</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Name</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 110px;">Class Teacher</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Preferred Subjects</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 140px;">Preferred Classes</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Sign</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          ${renderOfficialFooter(false)}
+        </div>
+      `;
+
+      showPrintPreviewModal("Teachers Preference List", html);
+    }
+
+    function printClassTimetable(cls) {
+      let gridRows = "";
+      DAYS.forEach(d => {
+        let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
+          }
+          const slot = state.schedules[cls]?.[d]?.[p];
+          if (slot) {
+            const t = state.teachers.find(item => item.id === slot.teacherId);
+            rowHtml += `
+              <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">
+                <div style="font-weight: 800; font-size: 11px;">${slot.subject}</div>
+                <div style="font-size: 10px; color: #475569;">${t ? t.shortName : ''}</div>
+              </td>
+            `;
+          } else {
+            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8;">-</td>`;
+          }
+        });
+        gridRows += `<tr>${rowHtml}</tr>`;
+      });
+
+      const [cNum, cSec] = cls.split("-");
+      const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+      const ctName = ct ? `${ct.name} (${ct.shortName})` : "Not Assigned";
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, `Class Teacher: ${ctName}`)}
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1; font-weight: 800;">
+                <th style="padding: 8px; border: 1px solid #cbd5e1; width: 60px;">Day</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P1</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P2</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P3</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P4</th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1; width: 50px; background: #fef3c7;">Break</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P5</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P6</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P7</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P8</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gridRows}
+            </tbody>
+          </table>
+          ${renderOfficialFooter(true)}
+        </div>
+      `;
+
+      showPrintPreviewModal(`Class ${cls} Timetable`, html);
+    }
+
+    function printAllClassesTimetables() {
+      let fullHtml = "";
+      const totalClasses = CLASSES.length;
+      
+      CLASSES.forEach((cls, idx) => {
+        let gridRows = "";
+        DAYS.forEach(d => {
+          let rowHtml = `<td style="padding: 7px 10px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+          PERIODS.forEach(p => {
+            if (p === 5) {
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 9px; text-align: center; background: #fef3c7; color: #92400e;">RECESS</td>`;
+            }
+            const slot = state.schedules[cls]?.[d]?.[p];
+            if (slot) {
+              const t = state.teachers.find(item => item.id === slot.teacherId);
+              rowHtml += `
+                <td style="padding: 5px; border: 1px solid #94a3b8; text-align: center;">
+                  <div style="font-weight: 800; font-size: 11px; color: #1e1b4b;">${slot.subject}</div>
+                  <div style="font-size: 9.5px; color: #475569; font-weight: 600;">${t ? (t.shortName || t.name) : ''}</div>
+                </td>
+              `;
+            } else {
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+            }
+          });
+          gridRows += `<tr>${rowHtml}</tr>`;
+        });
+
+        const [cNum, cSec] = cls.split("-");
+        const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+        const ctName = ct ? `${ct.name} (${ct.shortName})` : "Not Assigned";
+        const isLastPage = idx === totalClasses - 1;
+
+        fullHtml += `
+          <div class="print-page" style="page-break-after: ${isLastPage ? 'avoid' : 'always'}; break-after: ${isLastPage ? 'avoid' : 'page'}; padding: 16px 20px; background: white; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 9px; font-weight: bold; color: #64748b;">KVS PRIMARY TIMETABLE MASTER BOOK</span>
+              <span style="font-size: 10px; font-weight: 800; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 9999px;">SHEET ${idx + 1} OF ${totalClasses}</span>
+            </div>
+            ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, `Class Teacher: ${ctName}`)}
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; margin-top: 6px;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1px solid #94a3b8; font-weight: 800; color: #0f172a;">
+                  <th style="padding: 7px; border: 1px solid #94a3b8; width: 65px;">Day</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P1</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P2</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P3</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P4</th>
+                  <th style="padding: 4px; border: 1px solid #94a3b8; width: 55px; background: #fef3c7; color: #92400e;">Break</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P5</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P6</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P7</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P8</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${gridRows}
+              </tbody>
+            </table>
+            ${renderOfficialFooter(true)}
+          </div>
+        `;
+      });
+
+      showPrintPreviewModal("Master Timetable Book • All 10 Classes (1 File / 10 Sheets)", fullHtml);
+    }
+
+    function printDayWiseClassTimetable(day) {
+      let gridRows = "";
+      CLASSES.forEach(cls => {
+        let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">Class ${cls}</td>`;
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
+          }
+          const slot = state.schedules[cls]?.[day]?.[p];
+          if (slot) {
+            const t = state.teachers.find(item => item.id === slot.teacherId);
+            rowHtml += `
+              <td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">
+                <div style="font-weight: 800; font-size: 11px;">${slot.subject}</div>
+                <div style="font-size: 10px; color: #475569;">${t ? t.shortName : ''}</div>
+              </td>
+            `;
+          } else {
+            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8;">-</td>`;
+          }
+        });
+        gridRows += `<tr>${rowHtml}</tr>`;
+      });
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader(`DAILY MASTER CLASS TIMETABLE • ${day.toUpperCase()}`, "All Primary Sections (1-A to 5-B)")}
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1; font-weight: 800;">
+                <th style="padding: 8px; border: 1px solid #cbd5e1; width: 90px;">Class</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P1</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P2</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P3</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P4</th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1; width: 50px; background: #fef3c7;">Break</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P5</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P6</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P7</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P8</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gridRows}
+            </tbody>
+          </table>
+          ${renderOfficialFooter(false)}
+        </div>
+      `;
+
+      showPrintPreviewModal(`Day-Wise Class Schedule (${day})`, html);
+    }
+
+    function printAllDaysClassTimetables() {
+      let fullHtml = "";
+      const totalDays = DAYS.length;
+
+      DAYS.forEach((day, idx) => {
+        let gridRows = "";
+        CLASSES.forEach(cls => {
+          let rowHtml = `<td style="padding: 6px 8px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">Class ${cls}</td>`;
+          PERIODS.forEach(p => {
+            if (p === 5) {
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 9px; text-align: center; background: #fef3c7; color: #92400e;">RECESS</td>`;
+            }
+            const slot = state.schedules[cls]?.[day]?.[p];
+            if (slot) {
+              const t = state.teachers.find(item => item.id === slot.teacherId);
+              rowHtml += `
+                <td style="padding: 5px; border: 1px solid #94a3b8; text-align: center;">
+                  <div style="font-weight: 800; font-size: 11px; color: #1e1b4b;">${slot.subject}</div>
+                  <div style="font-size: 9.5px; color: #475569; font-weight: 600;">${t ? (t.shortName || t.name) : ''}</div>
+                </td>
+              `;
+            } else {
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+            }
+          });
+          gridRows += `<tr>${rowHtml}</tr>`;
+        });
+
+        const isLastPage = idx === totalDays - 1;
+        const dayNames = { "Mon": "MONDAY", "Tue": "TUESDAY", "Wed": "WEDNESDAY", "Thu": "THURSDAY", "Fri": "FRIDAY", "Sat": "SATURDAY" };
+        const fullDayName = dayNames[day] || day.toUpperCase();
+
+        fullHtml += `
+          <div class="print-page" style="page-break-after: ${isLastPage ? 'avoid' : 'always'}; break-after: ${isLastPage ? 'avoid' : 'page'}; padding: 16px 20px; background: white; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 9px; font-weight: bold; color: #64748b;">KVS DAILY MASTER CLASS SCHEDULE BOOK</span>
+              <span style="font-size: 10px; font-weight: 800; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 9999px;">SHEET ${idx + 1} OF ${totalDays} (${fullDayName})</span>
+            </div>
+            ${renderOfficialHeader(`DAILY MASTER CLASS TIMETABLE • ${fullDayName}`, "All Primary Sections (1-A to 5-B)")}
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; margin-top: 6px;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1px solid #94a3b8; font-weight: 800; color: #0f172a;">
+                  <th style="padding: 7px; border: 1px solid #94a3b8; width: 85px;">Class</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P1</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P2</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P3</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P4</th>
+                  <th style="padding: 4px; border: 1px solid #94a3b8; width: 55px; background: #fef3c7; color: #92400e;">Break</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P5</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P6</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P7</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P8</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${gridRows}
+              </tbody>
+            </table>
+            ${renderOfficialFooter(false)}
+          </div>
+        `;
+      });
+
+      showPrintPreviewModal("Daily Master Class Timetable • All 6 Days (1 File / 6 Sheets)", fullHtml);
+    }
+
+    function printDayWiseTeacherTimetable(day) {
+      let gridRows = "";
+      state.teachers.forEach(t => {
+        let rowHtml = `
+          <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-weight: 700; text-align: left;">
+            <div>${t.name}</div>
+            <div style="font-size: 9px; color: #64748b;">${t.shortName} • ${t.isClassTeacher ? `CT ${t.classNum}-${t.section}` : t.isCommon ? 'Specialist' : 'PRT'}</div>
+          </td>
+        `;
+
+        let dailyCount = 0;
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td style="padding: 2px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 8px; text-align: center; background: #fef3c7;">RECESS</td>`;
+          }
+          let assigned = [];
+          CLASSES.forEach(c => {
+            const slot = state.schedules[c]?.[day]?.[p];
+            if (slot && slot.teacherId === t.id) {
+              assigned.push(`${c}: ${slot.subject}`);
+            }
+          });
+
+          if (assigned.length > 0) {
+            dailyCount += assigned.length;
+            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: 700; font-size: 10px;">${assigned.join("<br>")}</td>`;
+          } else {
+            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8; font-size: 10px;">[Free]</td>`;
+          }
+        });
+
+        rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center;">${dailyCount}</td>`;
+        gridRows += `<tr>${rowHtml}</tr>`;
+      });
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader(`DAILY MASTER STAFF DEPLOYMENT • ${day.toUpperCase()}`, "Teacher-Wise Assignment & Leisure Roster")}
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1; font-weight: 800;">
+                <th style="padding: 6px; border: 1px solid #cbd5e1; width: 140px; text-align: left;">Teacher Name</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P1</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P2</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P3</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P4</th>
+                <th style="padding: 2px; border: 1px solid #cbd5e1; width: 40px; text-align: center; background: #fef3c7;">Break</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P5</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P6</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P7</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;">P8</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1; width: 50px; text-align: center;">Load</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gridRows}
+            </tbody>
+          </table>
+          ${renderOfficialFooter(false)}
+        </div>
+      `;
+
+      showPrintPreviewModal(`Day-Wise Staff Timetable (${day})`, html);
+    }
+
+    function printAllDaysTeacherTimetables() {
+      let fullHtml = "";
+      const totalDays = DAYS.length;
+      const dayNames = { "Mon": "MONDAY", "Tue": "TUESDAY", "Wed": "WEDNESDAY", "Thu": "THURSDAY", "Fri": "FRIDAY", "Sat": "SATURDAY" };
+
+      DAYS.forEach((day, idx) => {
+        let gridRows = "";
+        state.teachers.forEach(t => {
+          let rowHtml = `
+            <td style="padding: 5px 8px; border: 1px solid #94a3b8; font-weight: 700; text-align: left;">
+              <div style="font-weight: 800; font-size: 11px; color: #0f172a;">${t.name}</div>
+              <div style="font-size: 9px; color: #64748b;">${t.shortName} • ${t.isClassTeacher ? `CT ${t.classNum}-${t.section}` : t.isCommon ? 'Specialist' : 'PRT'}</div>
+            </td>
+          `;
+
+          let dailyCount = 0;
+          PERIODS.forEach(p => {
+            if (p === 5) {
+              rowHtml += `<td style="padding: 2px; border: 1px solid #94a3b8; font-weight: 800; font-size: 8px; text-align: center; background: #fef3c7; color: #92400e;">RECESS</td>`;
+            }
+            let assigned = [];
+            CLASSES.forEach(c => {
+              const slot = state.schedules[c]?.[day]?.[p];
+              if (slot && slot.teacherId === t.id) {
+                assigned.push(`${c}: ${slot.subject}`);
+              }
+            });
+
+            if (assigned.length > 0) {
+              dailyCount += assigned.length;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+            } else {
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #94a3b8; font-size: 9.5px;">[Free]</td>`;
+            }
+          });
+
+          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount}</td>`;
+          gridRows += `<tr>${rowHtml}</tr>`;
+        });
+
+        const isLastPage = idx === totalDays - 1;
+        const fullDayName = dayNames[day] || day.toUpperCase();
+
+        fullHtml += `
+          <div class="print-page" style="page-break-after: ${isLastPage ? 'avoid' : 'always'}; break-after: ${isLastPage ? 'avoid' : 'page'}; padding: 16px 20px; background: white; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 9px; font-weight: bold; color: #64748b;">KVS DAILY MASTER STAFF DEPLOYMENT BOOK</span>
+              <span style="font-size: 10px; font-weight: 800; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 9999px;">SHEET ${idx + 1} OF ${totalDays} (${fullDayName})</span>
+            </div>
+            ${renderOfficialHeader(`DAILY MASTER STAFF DEPLOYMENT • ${fullDayName}`, "Teacher-Wise Assignment & Leisure Roster")}
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 6px;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1px solid #94a3b8; font-weight: 800; color: #0f172a;">
+                  <th style="padding: 6px; border: 1px solid #94a3b8; width: 140px; text-align: left;">Teacher Name</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P1</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P2</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P3</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P4</th>
+                  <th style="padding: 2px; border: 1px solid #94a3b8; width: 45px; text-align: center; background: #fef3c7; color: #92400e;">Break</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P5</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P6</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P7</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; text-align: center;">P8</th>
+                  <th style="padding: 6px; border: 1px solid #94a3b8; width: 50px; text-align: center;">Load</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${gridRows}
+              </tbody>
+            </table>
+            ${renderOfficialFooter(false)}
+          </div>
+        `;
+      });
+
+      showPrintPreviewModal("Daily Master Staff Deployment • All 6 Days (1 File / 6 Sheets)", fullHtml);
+    }
+
+    function printTeacherWeeklyTimetable(teacherId) {
+      const t = state.teachers.find(item => item.id === teacherId);
+      if (!t) return;
+
+      let gridRows = "";
+      let totalWeekly = 0;
+
+      DAYS.forEach(d => {
+        let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+        let dayCount = 0;
+
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
+          }
+          let assigned = [];
+          CLASSES.forEach(c => {
+            const slot = state.schedules[c]?.[d]?.[p];
+            if (slot && slot.teacherId === t.id) {
+              assigned.push(`${c}: ${slot.subject}`);
+            }
+          });
+
+          if (assigned.length > 0) {
+            dayCount += assigned.length;
+            totalWeekly += assigned.length;
+            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; font-size: 11px;">${assigned.join("<br>")}</td>`;
+          } else {
+            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8;">-</td>`;
+          }
+        });
+
+        rowHtml += `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center;">${dayCount} P</td>`;
+        gridRows += `<tr>${rowHtml}</tr>`;
+      });
+
+      const roleBadge = t.isClassTeacher ? `Class Teacher: Class ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader(`TEACHER WEEKLY TIMETABLE • ${t.name} (${t.shortName})`, `${roleBadge} • Total Workload: ${totalWeekly} Periods/Week`)}
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1; font-weight: 800;">
+                <th style="padding: 8px; border: 1px solid #cbd5e1; width: 60px;">Day</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P1</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P2</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P3</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P4</th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1; width: 50px; background: #fef3c7;">Break</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P5</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P6</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P7</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1;">P8</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; width: 70px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gridRows}
+            </tbody>
+          </table>
+          ${renderOfficialFooter(false)}
+        </div>
+      `;
+
+      showPrintPreviewModal(`${t.name} Weekly Timetable`, html);
+    }
+
+    function printAllTeachersWeeklyTimetables() {
+      let fullHtml = "";
+      const totalTeachers = state.teachers.length;
+
+      state.teachers.forEach((t, idx) => {
+        let gridRows = "";
+        let totalWeekly = 0;
+
+        DAYS.forEach(d => {
+          let rowHtml = `<td style="padding: 7px 10px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+          let dayCount = 0;
+
+          PERIODS.forEach(p => {
+            if (p === 5) {
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 9px; text-align: center; background: #fef3c7; color: #92400e;">RECESS</td>`;
+            }
+            let assigned = [];
+            CLASSES.forEach(c => {
+              const slot = state.schedules[c]?.[d]?.[p];
+              if (slot && slot.teacherId === t.id) {
+                assigned.push(`${c}: ${slot.subject}`);
+              }
+            });
+
+            if (assigned.length > 0) {
+              dayCount += assigned.length;
+              totalWeekly += assigned.length;
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+            } else {
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+            }
+          });
+
+          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
+          gridRows += `<tr>${rowHtml}</tr>`;
+        });
+
+        const roleBadge = t.isClassTeacher ? `Class Teacher: Class ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
+        const isLastPage = idx === totalTeachers - 1;
+
+        fullHtml += `
+          <div class="print-page" style="page-break-after: ${isLastPage ? 'avoid' : 'always'}; break-after: ${isLastPage ? 'avoid' : 'page'}; padding: 16px 20px; background: white; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 9px; font-weight: bold; color: #64748b;">KVS TEACHERS PERSONAL WEEKLY TIMETABLE BOOK</span>
+              <span style="font-size: 10px; font-weight: 800; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 9999px;">SHEET ${idx + 1} OF ${totalTeachers} (${t.shortName})</span>
+            </div>
+            ${renderOfficialHeader(`TEACHER WEEKLY TIMETABLE • ${t.name} (${t.shortName})`, `${roleBadge} • Total Workload: ${totalWeekly} Periods/Week`)}
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; margin-top: 6px;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1px solid #94a3b8; font-weight: 800; color: #0f172a;">
+                  <th style="padding: 7px; border: 1px solid #94a3b8; width: 65px;">Day</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P1</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P2</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P3</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P4</th>
+                  <th style="padding: 4px; border: 1px solid #94a3b8; width: 55px; background: #fef3c7; color: #92400e;">Break</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P5</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P6</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P7</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8;">P8</th>
+                  <th style="padding: 7px; border: 1px solid #94a3b8; width: 70px;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${gridRows}
+              </tbody>
+            </table>
+            ${renderOfficialFooter(false)}
+          </div>
+        `;
+      });
+
+      showPrintPreviewModal(`All Teachers Weekly Timetables (${totalTeachers} Teachers • 1 File)`, fullHtml);
+    }
+
+    function showPrintPreviewModal(title, html) {
+      activePrintHtml = html;
+      const titleEl = document.getElementById("print-modal-title");
+      if (titleEl) titleEl.textContent = title;
+
+      const contentEl = document.getElementById("print-modal-content");
+      if (contentEl) contentEl.innerHTML = html;
+
+      const printableArea = document.getElementById("printable-report-area");
+      if (printableArea) printableArea.innerHTML = html;
+
+      const countEl = document.getElementById("print-modal-sheet-count");
+      const navEl = document.getElementById("print-modal-sheet-nav");
+      const linksEl = document.getElementById("print-modal-sheet-links");
+      
+      const pages = contentEl ? contentEl.querySelectorAll(".print-page") : [];
+      const totalPages = pages.length;
+
+      if (countEl) {
+        countEl.textContent = totalPages > 1 ? `${totalPages} Sheets in 1 Document` : "1 Sheet";
+        countEl.className = totalPages > 1 
+          ? "px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200"
+          : "px-2.5 py-0.5 rounded-full text-[11px] font-black bg-slate-100 text-slate-700 border border-slate-200";
+      }
+
+      if (navEl && linksEl) {
+        if (totalPages > 1) {
+          navEl.classList.remove("hidden");
+          navEl.classList.add("flex");
+          linksEl.innerHTML = "";
+          pages.forEach((page, i) => {
+            page.id = `preview-sheet-${i + 1}`;
+            page.classList.add("bg-white", "rounded-2xl", "shadow-sm", "border", "border-slate-200");
+            const btn = document.createElement("button");
+            btn.onclick = () => {
+              page.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition";
+            btn.textContent = `Sheet ${i + 1}`;
+            linksEl.appendChild(btn);
+          });
+        } else {
+          navEl.classList.add("hidden");
+          navEl.classList.remove("flex");
+          if (pages.length === 1) {
+            pages[0].classList.add("bg-white", "rounded-2xl", "shadow-sm", "border", "border-slate-200");
+          }
+        }
+      }
+
+      const modal = document.getElementById("print-preview-modal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    }
+
+    function closePrintPreviewModal() {
+      const modal = document.getElementById("print-preview-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function executeBrowserPrint() {
+      window.focus();
+      try {
+        window.print();
+      } catch (err) {
+        openPrintInNewWindow();
+      }
+    }
+
+    function openPrintInNewWindow() {
+      if (!activePrintHtml) return;
+      const printWin = window.open("", "_blank", "width=1100,height=800");
+      if (!printWin) {
+        showNotification("Please allow popups to open the print view.", "warning");
+        return;
+      }
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${document.getElementById("print-modal-title").textContent}</title>
+          <style>
+            body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 12px; color: #0f172a; margin: 0; background: white; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+            th, td { border: 1px solid #334155; padding: 6px 8px; }
+            @page { size: landscape; margin: 8mm; }
+            .print-page { 
+              page-break-after: always !important; 
+              break-after: page !important; 
+              margin: 0 0 20px 0;
+            }
+            .print-page:last-child {
+              page-break-after: avoid !important;
+              break-after: avoid !important;
+            }
+            @media print {
+              .no-print { display: none !important; }
+              body { padding: 0 !important; }
+              .print-page { margin-bottom: 0 !important; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="no-print" style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <div>
+              <strong style="color: #1e1b4b; font-size: 13px;">${document.getElementById("print-modal-title").textContent}</strong>
+              <div style="font-size: 11px; color: #64748b;">Ready to print or save as 1 combined PDF document with separate pages.</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button onclick="window.print()" style="padding: 8px 18px; background: #4338ca; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">Print / Save as PDF</button>
+              <button onclick="window.close()" style="padding: 8px 16px; background: #e2e8f0; color: #334155; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Close</button>
+            </div>
+          </div>
+          ${activePrintHtml}
+          <script>
+            window.onload = function() {
+              setTimeout(() => { window.print(); }, 350);
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    }
+
+    function printCurrentSlide(slideNum) {
+      if (slideNum === 1) printTeachersReport();
+      else if (slideNum === 2) showNotification("Please view or print class timetables from Slide 3.", "info");
+      else if (slideNum === 3) {
+        if (state.selectedClassSlide3 === "ALL") printAllClassesTimetables();
+        else printClassTimetable(state.selectedClassSlide3);
+      }
+      else if (slideNum === 4) printDayWiseClassTimetable(state.selectedDaySlide4);
+      else if (slideNum === 5) printDayWiseTeacherTimetable(state.selectedDaySlide5);
+      else if (slideNum === 6) printTeacherWeeklyTimetable(state.selectedTeacherSlide6);
+    }
+
+    function showNotification(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+
+      const toast = document.createElement("div");
+      const colors = {
+        success: "bg-emerald-600 text-white shadow-lg",
+        warning: "bg-amber-500 text-white shadow-lg",
+        info: "bg-indigo-600 text-white shadow-lg"
+      };
+
+      toast.className = `px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 transform translate-y-2 pointer-events-auto flex items-center gap-2 ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <i class="ph-bold ${type === 'success' ? 'ph-check-circle' : type === 'warning' ? 'ph-warning' : 'ph-info'} text-base"></i>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => { toast.classList.remove("translate-y-2"); }, 10);
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    window.onload = function () {
+      const loadedFromHash = loadStateFromUrl();
+      if (!loadedFromHash) {
+        syncActiveSchoolFromRepository();
+        autoGenerateSingleClass("1-A");
+      } else {
+        syncActiveSchoolFromRepository();
+      }
+      goToSlide(1);
+      updateSchoolInfo();
+      applyViewOnlyLocks();
+      initPwaAndMobileApp();
+    };
+  </script>
+
+</body>
+</html>

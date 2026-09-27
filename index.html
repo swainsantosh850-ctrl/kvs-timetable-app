@@ -55,7 +55,7 @@
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
 
   <!-- Role Access / Authentication Modal -->
-  <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="auth-modal" style="display: flex;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-sm shadow-2xl p-6 space-y-4">
       <div class="text-center space-y-1">
         <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-2xl shadow-sm">
@@ -3239,18 +3239,18 @@
 
             if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #94a3b8; font-size: 9.5px;">[Free]</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
 
-          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount}</td>`;
+          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
         const roleBadge = t.isClassTeacher ? `Class Teacher: Class ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
-        const isLastPage = idx === totalTeachers - 1;
+        const isLastPage = idx === totalDays - 1;
         const fullDayName = dayNames[day] || day.toUpperCase();
 
         fullHtml += `
@@ -3604,8 +3604,7 @@
     function openAuthModal() {
       const modal = document.getElementById("auth-modal");
       if (modal) {
-        modal.classList.remove("hidden");
-        modal.classList.add("flex");
+        modal.style.display = "flex";
       }
     }
 
@@ -3631,8 +3630,8 @@
         if (passInput === ADMIN_PASSWORD) {
           state.isViewOnly = false;
           sessionStorage.setItem("kvs_user_role", "admin");
-          document.getElementById("auth-modal").classList.add("hidden");
-          document.getElementById("auth-modal").classList.remove("flex");
+          const modal = document.getElementById("auth-modal");
+          if (modal) modal.style.display = "none";
           applyViewOnlyLocks();
           showNotification("Welcome Admin! Editing and publishing enabled.", "success");
         } else {
@@ -3641,8 +3640,8 @@
       } else {
         state.isViewOnly = true;
         sessionStorage.setItem("kvs_user_role", "teacher");
-        document.getElementById("auth-modal").classList.add("hidden");
-        document.getElementById("auth-modal").classList.remove("flex");
+        const modal = document.getElementById("auth-modal");
+        if (modal) modal.style.display = "none";
         applyViewOnlyLocks();
         showNotification("Viewing in Staff mode (View-Only).", "info");
       }
@@ -3654,21 +3653,12 @@
 
       if (savedRole === "admin") {
         state.isViewOnly = false;
-        if (modal) {
-          modal.classList.add("hidden");
-          modal.classList.remove("flex");
-        }
+        if (modal) modal.style.display = "none";
       } else if (savedRole === "teacher") {
         state.isViewOnly = true;
-        if (modal) {
-          modal.classList.add("hidden");
-          modal.classList.remove("flex");
-        }
+        if (modal) modal.style.display = "none";
       } else {
-        if (modal) {
-          modal.classList.remove("hidden");
-          modal.classList.add("flex");
-        }
+        if (modal) modal.style.display = "flex";
       }
     }
 

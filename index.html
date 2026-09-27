@@ -1518,14 +1518,16 @@
 
     function applyViewOnlyLocks() {
       const banner = document.getElementById("view-only-banner");
+      const publishBtn = document.getElementById("btn-publish-sync");
+
       if (!state.isViewOnly) {
         if (banner) banner.classList.add("hidden");
+        if (publishBtn) publishBtn.classList.remove("hidden");
         return;
       }
-      document.getElementById("btn-publish-sync")?.classList.remove("hidden");
-      document.getElementById("btn-publish-sync")?.classList.add("hidden");
 
       if (banner) banner.classList.remove("hidden");
+      if (publishBtn) publishBtn.classList.add("hidden");
 
       ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
         const el = document.getElementById(id);

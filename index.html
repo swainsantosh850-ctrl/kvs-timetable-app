@@ -3846,14 +3846,19 @@ timetableCloudRef.on("value", (snapshot) => {
     try {
       const decompressed = LZString.decompressFromEncodedURIComponent(cloudData.compressed);
       if (decompressed) {
-        window.appState = JSON.parse(decompressed);
-        syncActiveSchoolFromRepository();
-        updateSchoolInfo();
-        if (typeof renderCurrentSlide === "function") renderCurrentSlide();
-        if (typeof renderMatrix === "function") renderMatrix();
+        const parsed = JSON.parse(decompressed);
+        if (typeof state !== "undefined") {
+          Object.assign(state, parsed);
+        }
+        if (typeof syncActiveSchoolFromRepository === "function") syncActiveSchoolFromRepository();
+        if (typeof updateSchoolInfo === "function") updateSchoolInfo();
+        if (typeof goToSlide === "function") {
+          goToSlide((typeof state !== "undefined" && state.activeSlide) ? state.activeSlide : 1);
+        }
+        console.log("Cloud sync applied successfully!");
       }
     } catch (e) {
-      console.error("Error applying cloud timetable sync:", e);
+      console.error("Error applying cloud sync:", e);
     }
   }
 });
@@ -3861,18 +3866,25 @@ timetableCloudRef.on("value", (snapshot) => {
 // 2. BROADCAST FUNCTION (Pushes your updates to all devices)
 window.syncToAllTeachers = function () {
   try {
-    const raw = JSON.stringify(window.appState);
+    const dataToSave = (typeof state !== "undefined") ? state : window.appState;
+    if (!dataToSave) {
+      alert("Error: No timetable data found in memory to sync.");
+      return;
+    }
+    const raw = JSON.stringify(dataToSave);
     const compressed = LZString.compressToEncodedURIComponent(raw);
     timetableCloudRef.set({
       compressed: compressed,
       updatedAt: new Date().toISOString()
     }).then(() => {
-      alert("Timetable synced live! All teachers will see this updated version immediately.");
+      alert("Timetable synced live! All teachers will now see these changes.");
     }).catch((err) => {
       alert("Cloud sync failed: " + err.message);
     });
   } catch (err) {
-    console.error("Sync error:", err);
+    alert("Sync error: " + err.message);
+  }
+};
   }
 };
     window.onload = function () {

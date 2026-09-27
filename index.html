@@ -17,14 +17,14 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then((reg) => console.log('PWA ServiceWorker registered:', reg.scope))
-        .catch((err) => console.warn('ServiceWorker error:', err));
-    });
-  }
-</script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('PWA ServiceWorker registered:', reg.scope))
+          .catch((err) => console.warn('ServiceWorker error:', err));
+      });
+    }
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -36,7 +36,7 @@
 
     @media print {
       body { background: white !important; padding: 0 !important; color: black !important; }
-      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal { display: none !important; }
+      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal { display: none !important; }
       .print-page { 
         page-break-after: always !important; 
         break-after: page !important; 
@@ -573,6 +573,54 @@
 
   </main>
 
+  <!-- Secondary Wing Busy Slots Modal -->
+  <div id="secondary-busy-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-black">
+            <i class="ph-bold ph-calendar-x text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900" id="secondary-busy-teacher-name">Secondary Wing Lockout</h3>
+            <p class="text-xs text-slate-500">Tap slots where this teacher is teaching in Secondary / High School</p>
+          </div>
+        </div>
+        <button onclick="closeSecondaryBusyModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full border-collapse text-center text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+              <th class="py-2 px-3 text-left w-20">Day</th>
+              <th class="py-2 px-1">P1</th>
+              <th class="py-2 px-1">P2</th>
+              <th class="py-2 px-1">P3</th>
+              <th class="py-2 px-1">P4</th>
+              <th class="py-2 px-1 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Break</th>
+              <th class="py-2 px-1">P5</th>
+              <th class="py-2 px-1">P6</th>
+              <th class="py-2 px-1">P7</th>
+              <th class="py-2 px-1">P8</th>
+            </tr>
+          </thead>
+          <tbody id="secondary-busy-grid-body" class="divide-y divide-slate-100">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+        <span class="text-slate-500 font-medium">Selected slots will be blocked from Primary timetable generation.</span>
+        <button onclick="closeSecondaryBusyModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+          Done & Save Slots
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="slot-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-lg shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -917,12 +965,12 @@
           session: "2026-27",
           sectionsCount: "2",
           teachers: [
-            { id: "t1", name: "Smt. R UMA MAHESWARI", shortName: "HM", isClassTeacher: false, classNum: "", section: "", isCommon: false, commonClasses: [] },
-            { id: "t2", name: "Smt. C NAGANANDINI", shortName: "NN", isClassTeacher: true, classNum: "5", section: "B", isCommon: false, commonClasses: [] },
-            { id: "t3", name: "Mr. SANTOSH SWAIN", shortName: "SS", isClassTeacher: true, classNum: "5", section: "A", isCommon: false, commonClasses: [] },
-            { id: "t4", name: "Ms. NEHA RAWAT", shortName: "NR", isClassTeacher: true, classNum: "2", section: "A", isCommon: false, commonClasses: [] },
-            { id: "t5", name: "PRT 20 (Games / Yoga)", shortName: "P20", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B", "4-A", "4-B", "5-A", "5-B"] },
-            { id: "t6", name: "PRT Specialist (Music / Art)", shortName: "P_ART", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B"] }
+            { id: "t1", name: "Smt. R UMA MAHESWARI", shortName: "HM", isClassTeacher: false, classNum: "", section: "", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
+            { id: "t2", name: "Smt. C NAGANANDINI", shortName: "NN", isClassTeacher: true, classNum: "5", section: "B", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
+            { id: "t3", name: "Mr. SANTOSH SWAIN", shortName: "SS", isClassTeacher: true, classNum: "5", section: "A", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
+            { id: "t4", name: "Ms. NEHA RAWAT", shortName: "NR", isClassTeacher: true, classNum: "2", section: "A", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
+            { id: "t5", name: "PRT 20 (Games / Yoga)", shortName: "P20", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B", "4-A", "4-B", "5-A", "5-B"], secondaryBusySlots: {} },
+            { id: "t6", name: "PRT Specialist (Music / Art)", shortName: "P_ART", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B"], secondaryBusySlots: {} }
           ],
           subjectLimits: {
             "Class 1": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
@@ -1180,9 +1228,9 @@
         schedulesObj = JSON.parse(JSON.stringify(state.schedules));
       } else {
         teachersList = [
-          { id: "t_init_1", name: "PRT 1 (English)", shortName: "PRT1", isClassTeacher: true, classNum: "1", section: "A", isCommon: false, commonClasses: [] },
-          { id: "t_init_2", name: "PRT 2 (Maths)", shortName: "PRT2", isClassTeacher: true, classNum: "1", section: "B", isCommon: false, commonClasses: [] },
-          { id: "t_init_3", name: "PRT Games (PET)", shortName: "PET", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: CLASSES }
+          { id: "t_init_1", name: "PRT 1 (English)", shortName: "PRT1", isClassTeacher: true, classNum: "1", section: "A", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
+          { id: "t_init_2", name: "PRT 2 (Maths)", shortName: "PRT2", isClassTeacher: true, classNum: "1", section: "B", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
+          { id: "t_init_3", name: "PRT Games (PET)", shortName: "PET", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: CLASSES, secondaryBusySlots: {} }
         ];
         allotmentsList = [
           { id: "a_init_1", teacherId: "t_init_1", class: "1", section: "A", subject: "ENG", periods: 8 },
@@ -1311,6 +1359,7 @@
         document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.remove("hidden"));
         document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.remove("hidden"));
         document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.remove("hidden"));
+        document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.remove("hidden"));
         return;
       }
 
@@ -1337,6 +1386,7 @@
       document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.add("hidden"));
       document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.add("hidden"));
       document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.add("hidden"));
+      document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.add("hidden"));
     }
 
     function goToSlide(slideNum) {
@@ -1397,6 +1447,8 @@
       container.innerHTML = "";
 
       state.teachers.forEach((t) => {
+        if (!t.secondaryBusySlots) t.secondaryBusySlots = {};
+
         const card = document.createElement("div");
         card.className = "p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-200 transition space-y-3";
 
@@ -1415,6 +1467,8 @@
             </div>
           `;
         }
+
+        const busyCount = Object.values(t.secondaryBusySlots || {}).flat().length;
 
         card.innerHTML = `
           ${classHeaderHtml}
@@ -1459,6 +1513,16 @@
               </button>
             </div>
           </div>
+
+          ${t.isCommon ? `
+            <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500">Secondary / High School Engagement:</span>
+              <button onclick="openSecondaryBusyModal('${t.id}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center gap-1.5 transition">
+                <i class="ph-bold ph-clock text-xs"></i>
+                <span>Set Secondary Busy Periods (${busyCount} Locked)</span>
+              </button>
+            </div>
+          ` : ''}
         `;
         container.appendChild(card);
       });
@@ -1475,7 +1539,8 @@
         classNum: "1",
         section: "A",
         isCommon: false,
-        commonClasses: []
+        commonClasses: [],
+        secondaryBusySlots: {}
       });
       renderSlide1Teachers();
       showNotification("New Teacher added. Please enter details.", "success");
@@ -1511,6 +1576,86 @@
       });
       renderSlide1Teachers();
       showNotification("Teacher deleted and schedules updated.", "info");
+    }
+
+    let activeSecondaryBusyTeacherId = null;
+
+    function openSecondaryBusyModal(teacherId) {
+      if (state.isViewOnly) return;
+      activeSecondaryBusyTeacherId = teacherId;
+      const t = state.teachers.find(item => item.id === teacherId);
+      if (!t) return;
+
+      document.getElementById("secondary-busy-teacher-name").textContent = `${t.name} (${t.shortName}) - Secondary School Slots`;
+      renderSecondaryBusyGrid();
+
+      const modal = document.getElementById("secondary-busy-modal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    }
+
+    function closeSecondaryBusyModal() {
+      const modal = document.getElementById("secondary-busy-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+      renderSlide1Teachers();
+    }
+
+    function toggleSecondaryBusyPeriod(day, period) {
+      const t = state.teachers.find(item => item.id === activeSecondaryBusyTeacherId);
+      if (!t) return;
+      if (!t.secondaryBusySlots) t.secondaryBusySlots = {};
+      if (!t.secondaryBusySlots[day]) t.secondaryBusySlots[day] = [];
+
+      const idx = t.secondaryBusySlots[day].indexOf(period);
+      if (idx > -1) {
+        t.secondaryBusySlots[day].splice(idx, 1);
+      } else {
+        t.secondaryBusySlots[day].push(period);
+      }
+      renderSecondaryBusyGrid();
+    }
+
+    function renderSecondaryBusyGrid() {
+      const tbody = document.getElementById("secondary-busy-grid-body");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      const t = state.teachers.find(item => item.id === activeSecondaryBusyTeacherId);
+      if (!t) return;
+      const busyMap = t.secondaryBusySlots || {};
+
+      DAYS.forEach(d => {
+        const tr = document.createElement("tr");
+        let rowHtml = `<td class="py-2 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
+
+        PERIODS.forEach(p => {
+          if (p === 5) {
+            rowHtml += `<td class="py-2 px-1 bg-amber-50/50 text-amber-700 font-extrabold text-[10px]">Break</td>`;
+          }
+
+          const isLocked = (busyMap[d] || []).includes(p);
+
+          rowHtml += `
+            <td class="p-1">
+              <button type="button" onclick="toggleSecondaryBusyPeriod('${d}', ${p})" class="w-full py-1.5 rounded-lg border font-bold text-xs transition ${
+                isLocked 
+                  ? 'bg-rose-500 border-rose-600 text-white shadow-xs' 
+                  : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
+              }">
+                ${isLocked ? 'Secondary' : '-'}
+              </button>
+            </td>
+          `;
+        });
+
+        tr.innerHTML = rowHtml;
+        tbody.appendChild(tr);
+      });
     }
 
     function renderSlide2Allotments() {
@@ -1925,6 +2070,8 @@
       const selectedTeacherId = document.getElementById("slot-modal-teacher-id").value;
 
       state.teachers.forEach(t => {
+        const isSecondaryBusy = (t.secondaryBusySlots && t.secondaryBusySlots[day] && t.secondaryBusySlots[day].includes(period));
+        
         let busyInClass = null;
         CLASSES.forEach(c => {
           if (c !== currentCls && state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
@@ -1932,22 +2079,33 @@
           }
         });
 
-        const isBusy = busyInClass !== null;
+        const isBusy = isSecondaryBusy || (busyInClass !== null);
         const isSelected = t.id === selectedTeacherId;
 
         const row = document.createElement("button");
+        row.disabled = isSecondaryBusy;
         row.onclick = () => {
           document.getElementById("slot-modal-teacher-id").value = t.id;
           renderModalTeacherAvailability();
         };
-        row.className = `w-full p-2 rounded-xl text-left border flex items-center justify-between transition ${isSelected ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-slate-200 hover:bg-slate-50'}`;
+        row.className = `w-full p-2 rounded-xl text-left border flex items-center justify-between transition ${
+          isSelected ? 'bg-indigo-50 border-indigo-300' : 'bg-white border-slate-200 hover:bg-slate-50'
+        } ${isSecondaryBusy ? 'opacity-60 cursor-not-allowed bg-slate-100' : ''}`;
+        
+        let statusText = `🟢 [FREE] Available`;
+        if (isSecondaryBusy) {
+          statusText = `🔴 [BUSY in Secondary School]`;
+        } else if (busyInClass) {
+          statusText = `🔴 [BUSY in ${busyInClass}]`;
+        }
+
         row.innerHTML = `
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full ${isBusy ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
             <span class="text-xs font-extrabold text-slate-800">${t.name} (${t.shortName})</span>
           </div>
           <span class="text-[10px] font-black ${isBusy ? 'text-rose-600' : 'text-emerald-700'}">
-            ${isBusy ? `🔴 [BUSY in ${busyInClass}]` : `🟢 [FREE] Available`}
+            ${statusText}
           </span>
         `;
         container.appendChild(row);
@@ -1962,6 +2120,12 @@
 
       if (!subject || !teacherId) {
         showNotification("Please select both Subject and Teacher.", "warning");
+        return;
+      }
+
+      const assignedT = state.teachers.find(t => t.id === teacherId);
+      if (assignedT?.secondaryBusySlots?.[day]?.includes(period)) {
+        showNotification("Cannot assign: Teacher is booked in Secondary School during this period!", "warning");
         return;
       }
 
@@ -2254,12 +2418,16 @@
 
       const freeTeachers = [];
       state.teachers.forEach(t => {
-        let isBusy = false;
-        CLASSES.forEach(c => {
-          if (state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
-            isBusy = true;
-          }
-        });
+        const isSecondaryBusy = (t.secondaryBusySlots && t.secondaryBusySlots[day] && t.secondaryBusySlots[day].includes(period));
+        let isBusy = isSecondaryBusy;
+
+        if (!isBusy) {
+          CLASSES.forEach(c => {
+            if (state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
+              isBusy = true;
+            }
+          });
+        }
         if (!isBusy) freeTeachers.push(t);
       });
 
@@ -2304,6 +2472,7 @@
             rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
           }
 
+          const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
           let teachingSlots = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[day]?.[p];
@@ -2312,7 +2481,16 @@
             }
           });
 
-          if (teachingSlots.length > 0) {
+          if (isSecBusy) {
+            rowHtml += `
+              <td class="p-1">
+                <div class="w-full p-1.5 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
+                  <div class="font-extrabold text-[11px]">Secondary</div>
+                  <div class="text-[10px] text-rose-500 font-semibold">High School</div>
+                </div>
+              </td>
+            `;
+          } else if (teachingSlots.length > 0) {
             dailyCount += teachingSlots.length;
             const hasConflict = teachingSlots.length > 1;
 
@@ -2377,6 +2555,7 @@
             rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
           }
 
+          const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
           let assignedSlots = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[d]?.[p];
@@ -2385,7 +2564,16 @@
             }
           });
 
-          if (assignedSlots.length > 0) {
+          if (isSecBusy) {
+            rowHtml += `
+              <td class="p-1">
+                <div class="w-full p-1.5 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
+                  <div class="font-extrabold text-[11px]">Secondary</div>
+                  <div class="text-[10px] text-rose-500 font-semibold">High School</div>
+                </div>
+              </td>
+            `;
+          } else if (assignedSlots.length > 0) {
             dayCount += assignedSlots.length;
             totalWeeklyLoad += assignedSlots.length;
             const conflict = assignedSlots.length > 1;
@@ -2695,11 +2883,21 @@
             if (candidate.assigned) continue;
 
             let teacherBusy = false;
-            CLASSES.forEach(other => {
-              if (other !== targetClass && state.schedules[other]?.[d]?.[p]?.teacherId === candidate.teacherId) {
-                teacherBusy = true;
-              }
-            });
+            const candTeacher = state.teachers.find(t => t.id === candidate.teacherId);
+            
+            // Block if teacher has Secondary classes during this day and period
+            if (candTeacher?.secondaryBusySlots?.[d]?.includes(p)) {
+              teacherBusy = true;
+            }
+
+            // Block if teacher is already assigned to another Primary class during this period
+            if (!teacherBusy) {
+              CLASSES.forEach(other => {
+                if (other !== targetClass && state.schedules[other]?.[d]?.[p]?.teacherId === candidate.teacherId) {
+                  teacherBusy = true;
+                }
+              });
+            }
 
             if (!teacherBusy) {
               chosenIdx = i;
@@ -2886,7 +3084,7 @@
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Name</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 110px;">Class Teacher</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Preferred Subjects</th>
-                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 140px;">Preferred Classes</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Preferred Classes</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Sign</th>
               </tr>
             </thead>
@@ -3159,6 +3357,7 @@
           if (p === 5) {
             rowHtml += `<td style="padding: 2px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 8px; text-align: center; background: #fef3c7;">RECESS</td>`;
           }
+          const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
           let assigned = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[day]?.[p];
@@ -3167,7 +3366,9 @@
             }
           });
 
-          if (assigned.length > 0) {
+          if (isSecBusy) {
+            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; font-size: 9px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
+          } else if (assigned.length > 0) {
             dailyCount += assigned.length;
             rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: 700; font-size: 10px;">${assigned.join("<br>")}</td>`;
           } else {
@@ -3229,6 +3430,7 @@
             if (p === 5) {
               rowHtml += `<td style="padding: 2px; border: 1px solid #94a3b8; font-weight: 800; font-size: 8px; text-align: center; background: #fef3c7; color: #92400e;">RECESS</td>`;
             }
+            const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
             let assigned = [];
             CLASSES.forEach(c => {
               const slot = state.schedules[c]?.[day]?.[p];
@@ -3237,15 +3439,17 @@
               }
             });
 
-            if (assigned.length > 0) {
+            if (isSecBusy) {
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
+            } else if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #94a3b8; font-size: 9.5px;">[Free]</td>`;
             }
           });
 
-          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
+          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount}</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
@@ -3303,6 +3507,7 @@
           if (p === 5) {
             rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
           }
+          const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
           let assigned = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[d]?.[p];
@@ -3311,7 +3516,9 @@
             }
           });
 
-          if (assigned.length > 0) {
+          if (isSecBusy) {
+            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; font-size: 10px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
+          } else if (assigned.length > 0) {
             dayCount += assigned.length;
             totalWeekly += assigned.length;
             rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; font-size: 11px;">${assigned.join("<br>")}</td>`;
@@ -3372,6 +3579,7 @@
             if (p === 5) {
               rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 9px; text-align: center; background: #fef3c7; color: #92400e;">RECESS</td>`;
             }
+            const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
             let assigned = [];
             CLASSES.forEach(c => {
               const slot = state.schedules[c]?.[d]?.[p];
@@ -3380,7 +3588,9 @@
               }
             });
 
-            if (assigned.length > 0) {
+            if (isSecBusy) {
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9.5px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
+            } else if (assigned.length > 0) {
               dayCount += assigned.length;
               totalWeekly += assigned.length;
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;

@@ -3839,45 +3839,57 @@ if (!firebase.apps.length) {
 const rtdb = firebase.database();
 const timetableCloudRef = rtdb.ref("kvs_live_timetable");
 
-// 1. LIVE SYNC RECEIVER (Runs automatically on all staff devices)
-timetableCloudRef.on("value", (snapshot) => {
-  const cloudData = snapshot.val();
-  if (cloudData && cloudData.compressed) {
-    try {
-      const decompressed = LZString.decompressFromEncodedURIComponent(cloudData.compressed);
-      if (decompressed) {
-        const parsed = JSON.parse(decompressed);
-        if (typeof state !== "undefined") {
-          Object.assign(state, parsed);
-        }
-        if (typeof syncActiveSchoolFromRepository === "function") syncActiveSchoolFromRepository();
-        if (typeof updateSchoolInfo === "function") updateSchoolInfo();
-        if (typeof goToSlide === "function") {
-          goToSlide((typeof state !== "undefined" && state.activeSlide) ? state.activeSlide : 1);
-        }
-        console.log("Cloud sync applied successfully!");
-      }
-    } catch (e) {
-      console.error("Error applying cloud sync:", e);
+// 1. HELPER TO LOAD & APPLY CLOUD DATA
+function applyCloudMasterData(cloudData) {
+  if (!cloudData || !cloudData.compressed) return false;
+  try {
+    const decompressed = LZString.decompressFromEncodedURIComponent(cloudData.compressed);
+    if (!decompressed) return false;
+    const parsed = JSON.parse(decompressed);
+
+    if (parsed.schoolRepository && Array.isArray(parsed.schoolRepository.schools)) {
+      schoolRepository = parsed.schoolRepository;
+      syncActiveSchoolFromRepository();
+    } else if (parsed.teachers) {
+      Object.assign(state, parsed);
+      commitWorkingStateToRepository();
+      syncActiveSchoolFromRepository();
     }
+
+    goToSlide(state.activeSlide || 1);
+    applyViewOnlyLocks();
+    console.log("Master timetable updated from cloud!");
+    return true;
+  } catch (err) {
+    console.error("Cloud unpack error:", err);
+    return false;
+  }
+}
+
+// 2. LIVE LISTENER (Instant sync across devices without reloading)
+timetableCloudRef.on("value", (snapshot) => {
+  const val = snapshot.val();
+  if (val) {
+    applyCloudMasterData(val);
   }
 });
 
-// 2. BROADCAST FUNCTION (Pushes your updates to all devices)
+// 3. BROADCAST FUNCTION (Syncs everything to teachers)
 window.syncToAllTeachers = function () {
   try {
-    const dataToSave = (typeof state !== "undefined") ? state : window.appState;
-    if (!dataToSave) {
-      alert("Error: No timetable data found in memory to sync.");
-      return;
-    }
-    const raw = JSON.stringify(dataToSave);
+    commitWorkingStateToRepository();
+    const payload = {
+      schoolRepository: schoolRepository,
+      state: state
+    };
+    const raw = JSON.stringify(payload);
     const compressed = LZString.compressToEncodedURIComponent(raw);
+
     timetableCloudRef.set({
       compressed: compressed,
       updatedAt: new Date().toISOString()
     }).then(() => {
-      alert("Timetable synced live! All teachers will now see these changes.");
+      alert("Timetable synced live! All teachers will see this updated version immediately.");
     }).catch((err) => {
       alert("Cloud sync failed: " + err.message);
     });
@@ -3885,22 +3897,43 @@ window.syncToAllTeachers = function () {
     alert("Sync error: " + err.message);
   }
 };
+
+// 4. APP INITIALIZATION ON PAGE LOAD
+window.onload = function () {
+  const hash = window.location.hash || "";
+  const search = window.location.search || "";
+  if (hash.includes("viewonly=1") || search.includes("viewonly=1")) {
+    state.isViewOnly = true;
   }
-};
-    window.onload = function () {
+
+  // Fetch master cloud data first
+  timetableCloudRef.once("value").then((snapshot) => {
+    const val = snapshot.val();
+    const loaded = applyCloudMasterData(val);
+
+    if (!loaded) {
       const loadedFromHash = loadStateFromUrl();
       if (!loadedFromHash) {
         syncActiveSchoolFromRepository();
         autoGenerateSingleClass("1-A");
-      } else {
-        syncActiveSchoolFromRepository();
       }
       goToSlide(1);
       updateSchoolInfo();
-      applyViewOnlyLocks();
-      initPwaAndMobileApp();
-    };
-  </script>
+    }
+
+    applyViewOnlyLocks();
+    if (typeof initPwaAndMobileApp === "function") initPwaAndMobileApp();
+  }).catch((err) => {
+    console.warn("Cloud connection error, using local/hash state:", err);
+    loadStateFromUrl();
+    syncActiveSchoolFromRepository();
+    goToSlide(1);
+    updateSchoolInfo();
+    applyViewOnlyLocks();
+    if (typeof initPwaAndMobileApp === "function") initPwaAndMobileApp();
+  });
+};
+</script>
 
 </body>
 </html>

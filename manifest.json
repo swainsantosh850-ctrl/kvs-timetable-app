@@ -1,1 +1,24 @@
-
+{
+  "name": "KVS Timetable Studio",
+  "short_name": "KVS Timetable",
+  "description": "KVS Primary School Timetable Synchronizer Studio",
+  "start_url": "/kvs-timetable-app/",
+  "scope": "/kvs-timetable-app/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2602/2602414.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/192/2602/2602414.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -16,9 +16,13 @@
   <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script>
+ <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/kvs-timetable-app/sw.js');
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for(let registration of registrations) {
+        registration.unregister();
+      }
+    });
   }
 </script>
   <style>

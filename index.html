@@ -3250,7 +3250,7 @@
         });
 
         const roleBadge = t.isClassTeacher ? `Class Teacher: Class ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
-        const isLastPage = idx === totalDays - 1;
+        const isLastPage = idx === totalTeachers - 1;
         const fullDayName = dayNames[day] || day.toUpperCase();
 
         fullHtml += `
@@ -3285,7 +3285,7 @@
         `;
       });
 
-      showPrintPreviewModal("Daily Master Staff Deployment • All 6 Days (1 File / 6 Sheets)", fullHtml);
+      showPrintPreviewModal(`All Teachers Weekly Timetables (${totalTeachers} Teachers • 1 File)`, fullHtml);
     }
 
     function printTeacherWeeklyTimetable(teacherId) {

@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.swainsantosh850_ctrl.twa",
+        "sha256_cert_fingerprints": ["D4:AA:0D:91:11:EA:5E:83:89:81:7F:15:E3:66:84:AD:99:CD:6A:D2:74:F9:C5:A9:53:B8:E1:3A:0D:4B:40:67"]
+      }
+    }]

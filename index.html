@@ -126,31 +126,26 @@
 
       <!-- Quick Action Controls -->
       <div class="flex items-center flex-wrap gap-2">
-        <!-- Live Cloud Sync to Teachers -->
         <button id="btn-publish-sync" onclick="window.syncToAllTeachers()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition flex items-center gap-1.5">
           <i class="ph-bold ph-broadcast text-sm"></i>
           <span>Publish to Teachers</span>
         </button>
 
-        <!-- Role Indicator / Switcher -->
         <button onclick="openAuthModal()" id="btn-role-switcher" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1.5 shadow-xs">
           <i class="ph-bold ph-user-switch text-sm"></i>
           <span id="role-switcher-label">Role: Staff</span>
         </button>
 
-        <!-- Print Current Slide -->
         <button onclick="printCurrentSlide(state.activeSlide)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 shadow-xs">
           <i class="ph-bold ph-printer text-sm"></i>
           <span>Print Slide</span>
         </button>
 
-        <!-- Excel Export -->
         <button onclick="exportAllToExcel()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-xs">
           <i class="ph-bold ph-microsoft-excel-logo text-sm"></i>
           <span>Export Excel</span>
         </button>
 
-        <!-- Rules Modal Trigger -->
         <button onclick="openRulesModal()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5 shadow-xs">
           <i class="ph-bold ph-sliders text-sm"></i>
           <span>Rules ?</span>
@@ -665,14 +660,14 @@
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Method 1: Choose from Teacher Allotments</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Available Allotments & Unassigned Subjects for this Teacher:</label>
           <select id="teacher-slot-allotment-select" onchange="syncTeacherSlotInputsFromAllotment(this.value)" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </select>
         </div>
 
         <div class="relative flex py-1 items-center">
           <div class="flex-grow border-t border-slate-200"></div>
-          <span class="flex-shrink mx-2 text-[10px] font-bold text-slate-400 uppercase">OR Pick Manually</span>
+          <span class="flex-shrink mx-2 text-[10px] font-bold text-slate-400 uppercase">OR Custom Target</span>
           <div class="flex-grow border-t border-slate-200"></div>
         </div>
 
@@ -1827,18 +1822,48 @@
 
     function createClassTimetableCard(cls) {
       const card = document.createElement("div");
-      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto";
+      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
 
       const [cNum, cSec] = cls.split("-");
       const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
       const ctName = ct ? `${ct.name} (${ct.shortName})` : "Not Assigned";
 
       let filledCount = 0;
+      const scheduledCounts = {};
       DAYS.forEach(d => {
         PERIODS.forEach(p => {
-          if (state.schedules[cls]?.[d]?.[p]) filledCount++;
+          const slot = state.schedules[cls]?.[d]?.[p];
+          if (slot) {
+            filledCount++;
+            scheduledCounts[slot.subject] = (scheduledCounts[slot.subject] || 0) + 1;
+          }
         });
       });
+
+      // Calculate pending subjects to assign
+      const classKey = `Class ${cNum}`;
+      const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+      const pendingSubjects = [];
+
+      Object.keys(limits).forEach(subj => {
+        const required = limits[subj];
+        const assigned = scheduledCounts[subj] || 0;
+        if (assigned < required) {
+          pendingSubjects.push({ subject: subj, remaining: required - assigned, total: required });
+        }
+      });
+
+      let pendingChipsHtml = "";
+      if (pendingSubjects.length === 0) {
+        pendingChipsHtml = `<span class="text-xs text-emerald-700 font-extrabold flex items-center gap-1"><i class="ph-bold ph-check-circle"></i> All subjects 100% assigned for this class!</span>`;
+      } else {
+        pendingChipsHtml = pendingSubjects.map(item => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <strong>${item.subject}:</strong> ${item.remaining} left
+          </span>
+        `).join("");
+      }
 
       let tbodyRows = "";
       DAYS.forEach(d => {
@@ -1879,7 +1904,7 @@
       });
 
       card.innerHTML = `
-        <div class="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-100 gap-2">
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-extrabold text-slate-900">Class ${cls} Timetable</h3>
@@ -1894,6 +1919,14 @@
             </button>
             <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${filledCount === 48 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${filledCount}/48</span>
           </div>
+        </div>
+
+        <!-- Pending Subjects Indicator -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center gap-2">
+          <span class="text-[11px] font-black uppercase tracking-wider text-slate-600 mr-1 flex items-center gap-1">
+            <i class="ph-bold ph-hourglass-high text-amber-500"></i> Pending Subjects to Assign:
+          </span>
+          ${pendingChipsHtml}
         </div>
 
         <table class="w-full border-collapse text-center text-xs">
@@ -1981,25 +2014,27 @@
 
       const cls = currentSlotContext.class;
       const [cNum, cSec] = cls.split("-");
+      const classKey = `Class ${cNum}`;
+      const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+
+      // 1. Calculate how many periods each subject already has scheduled
+      const scheduledCounts = {};
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          const s = state.schedules[cls]?.[d]?.[p];
+          if (s) {
+            scheduledCounts[s.subject] = (scheduledCounts[s.subject] || 0) + 1;
+          }
+        });
+      });
+
+      // 2. Pre-Allotted Subjects from Slide 2
       const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
 
-      if (classAllots.length === 0) {
-        container.innerHTML = `<span class="text-xs text-slate-400 p-2">No subjects allotted in Slide 2 yet.</span>`;
-        return;
-      }
-
       classAllots.forEach(a => {
-        let scheduledCount = 0;
-        DAYS.forEach(d => {
-          PERIODS.forEach(p => {
-            if (state.schedules[cls]?.[d]?.[p]?.subject === a.subject) {
-              scheduledCount++;
-            }
-          });
-        });
-
+        const scheduled = scheduledCounts[a.subject] || 0;
         const target = a.periods;
-        const isComplete = scheduledCount >= target;
+        const isComplete = scheduled >= target;
 
         const badge = document.createElement("button");
         badge.onclick = () => {
@@ -2010,9 +2045,31 @@
         badge.className = `px-2.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${isComplete ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400'}`;
         badge.innerHTML = `
           <span>${a.subject}</span>
-          <span class="text-[10px] font-black ${isComplete ? 'text-emerald-600' : 'text-indigo-600'}">${scheduledCount}/${target}</span>
+          <span class="text-[10px] font-black ${isComplete ? 'text-emerald-600' : 'text-indigo-600'}">${scheduled}/${target}</span>
         `;
         container.appendChild(badge);
+      });
+
+      // 3. Unallotted subjects from Class Limits that can also be selected on the fly
+      Object.keys(classLimits).forEach(subj => {
+        const isPreAllotted = classAllots.some(a => a.subject === subj);
+        if (!isPreAllotted) {
+          const scheduled = scheduledCounts[subj] || 0;
+          const limit = classLimits[subj];
+          const isComplete = scheduled >= limit;
+
+          const unassignedBadge = document.createElement("button");
+          unassignedBadge.onclick = () => {
+            document.getElementById("slot-modal-subject-input").value = subj;
+            renderModalTeacherAvailability();
+          };
+          unassignedBadge.className = `px-2.5 py-1.5 rounded-xl text-xs font-bold border border-dashed transition flex items-center gap-1.5 ${isComplete ? 'bg-slate-100 border-slate-300 text-slate-500' : 'bg-amber-50/70 border-amber-300 text-amber-900 hover:border-amber-400'}`;
+          unassignedBadge.innerHTML = `
+            <span>+ ${subj}</span>
+            <span class="text-[10px] font-black text-amber-700">${scheduled}/${limit}</span>
+          `;
+          container.appendChild(unassignedBadge);
+        }
       });
     }
 
@@ -2141,26 +2198,42 @@
       select.innerHTML = "";
 
       const teacherAllots = state.allotments.filter(a => a.teacherId === teacherId);
-      if (teacherAllots.length === 0) {
-        select.innerHTML = `<option value="">No pre-allotted subjects in Slide 2</option>`;
-      } else {
-        teacherAllots.forEach((a, idx) => {
-          const opt = document.createElement("option");
-          const targetKey = `${a.class}-${a.section}`;
-          opt.value = JSON.stringify({ classKey: targetKey, subject: a.subject });
-          
-          const currentOccupant = state.schedules[targetKey]?.[day]?.[period];
-          let statusLabel = "";
-          if (currentOccupant) {
-            const occT = state.teachers.find(item => item.id === currentOccupant.teacherId);
-            statusLabel = ` [Class Busy: ${currentOccupant.subject} (${occT ? occT.shortName : 'N/A'})]`;
-          }
 
-          opt.textContent = `Class ${targetKey} • ${a.subject} (${a.periods} P/W)${statusLabel}`;
-          select.appendChild(opt);
-          if (idx === 0) syncTeacherSlotInputsFromAllotment(opt.value);
+      // Pre-Allotted options
+      teacherAllots.forEach((a, idx) => {
+        const opt = document.createElement("option");
+        const targetKey = `${a.class}-${a.section}`;
+        opt.value = JSON.stringify({ classKey: targetKey, subject: a.subject });
+        
+        const currentOccupant = state.schedules[targetKey]?.[day]?.[period];
+        let statusLabel = "";
+        if (currentOccupant) {
+          const occT = state.teachers.find(item => item.id === currentOccupant.teacherId);
+          statusLabel = ` [Class Busy: ${currentOccupant.subject} (${occT ? occT.shortName : 'N/A'})]`;
+        }
+
+        opt.textContent = `Allotted: Class ${targetKey} • ${a.subject} (${a.periods} P/W)${statusLabel}`;
+        select.appendChild(opt);
+        if (idx === 0) syncTeacherSlotInputsFromAllotment(opt.value);
+      });
+
+      // Also append unassigned class subjects that can be assigned directly
+      CLASSES.forEach(cKey => {
+        const [cNum, cSec] = cKey.split("-");
+        const classKey = `Class ${cNum}`;
+        const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+        
+        Object.keys(limits).forEach(subj => {
+          // If not already allotted to this teacher
+          const alreadyAllotted = teacherAllots.some(a => `${a.class}-${a.section}` === cKey && a.subject === subj);
+          if (!alreadyAllotted) {
+            const opt = document.createElement("option");
+            opt.value = JSON.stringify({ classKey: cKey, subject: subj });
+            opt.textContent = `Unassigned: Class ${cKey} • ${subj}`;
+            select.appendChild(opt);
+          }
         });
-      }
+      });
 
       // Check if this teacher already teaches something on this period
       let existingClass = null;
@@ -2582,7 +2655,6 @@
               </td>
             `;
           } else {
-            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
                 <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 transition flex items-center justify-center font-black">
@@ -2673,7 +2745,6 @@
               </td>
             `;
           } else {
-            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
                 <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 transition flex items-center justify-center font-black">
@@ -3525,12 +3596,12 @@
             });
 
             if (isSecBusy) {
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9.5px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
             } else if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
 
@@ -3684,7 +3755,7 @@
             }
           });
 
-          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
+          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 

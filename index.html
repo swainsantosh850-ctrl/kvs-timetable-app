@@ -36,7 +36,7 @@
 
     @media print {
       body { background: white !important; padding: 0 !important; color: black !important; }
-      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal { display: none !important; }
+      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal { display: none !important; }
       .print-page { 
         page-break-after: always !important; 
         break-after: page !important; 
@@ -199,8 +199,8 @@
       </div>
     </div>
 
+    <!-- Slide 1 -->
     <div id="slide-panel-1" class="space-y-6">
-      
       <div class="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-white text-lg">
@@ -215,8 +215,7 @@
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
-          <div id="slide1-school-pills" class="flex items-center gap-1.5">
-          </div>
+          <div id="slide1-school-pills" class="flex items-center gap-1.5"></div>
           <button onclick="openSchoolManagerModal()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-white text-indigo-900 hover:bg-indigo-50 transition shadow-xs flex items-center gap-1">
             <i class="ph-bold ph-plus-circle"></i>
             <span>Manage / Add School</span>
@@ -265,8 +264,7 @@
           </div>
         </div>
 
-        <div id="teachers-list-container" class="space-y-3">
-        </div>
+        <div id="teachers-list-container" class="space-y-3"></div>
 
         <div class="pt-2">
           <button onclick="addNewTeacher()" class="px-4 py-2 rounded-xl text-xs font-bold border border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 flex items-center gap-1.5 transition">
@@ -292,13 +290,11 @@
             <i class="ph-bold ph-arrow-right"></i>
           </button>
         </div>
-
       </div>
-
     </div>
 
+    <!-- Slide 2 -->
     <div id="slide-panel-2" class="hidden space-y-6">
-
       <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div class="flex items-center gap-2.5">
           <i class="ph-bold ph-notebook text-xl text-indigo-600"></i>
@@ -323,15 +319,12 @@
       <div class="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-start gap-2.5 text-xs text-slate-700">
         <span class="font-black text-indigo-900 shrink-0">नियम / Rules:</span>
         <p class="font-semibold text-slate-700 leading-relaxed">
-          हर क्लास के लिए 48 पीरियड्स पूरे करें। क्लास टीचर (CT) को 6 से कम पीरियड मिलने या किसी टीचर का वर्कलोड 39+ होने पर लाल रंग की वार्निंग मिलेगी। Ensure 48 weekly periods per class; CT requires 6+ periods in own class.
+          हर क्लास के लिए 48 पीरियड्स पूरे करें। कोर विषय (MATH, ENG, HIN, TWAU) का दैनिक संतुलन रखें (शनिवार को छूट)। CT को 6 से कम पीरियड मिलने पर लाल वार्निंग मिलेगी।
         </p>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        <div class="lg:col-span-8 space-y-4" id="slide2-teachers-allotment-container">
-        </div>
-
+        <div class="lg:col-span-8 space-y-4" id="slide2-teachers-allotment-container"></div>
         <div class="lg:col-span-4 sticky top-24 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <div class="flex items-center gap-2">
@@ -341,8 +334,7 @@
             <span class="text-[11px] font-bold text-slate-400">Target: 48 P/W</span>
           </div>
 
-          <div id="slide2-class-workload-gauges" class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
-          </div>
+          <div id="slide2-class-workload-gauges" class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1"></div>
 
           <div class="pt-3 border-t border-slate-100">
             <button onclick="autoGenerateFullTimetable()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 text-white flex items-center justify-center gap-2 transition shadow-xs">
@@ -351,7 +343,6 @@
             </button>
           </div>
         </div>
-
       </div>
 
       <div class="pt-4 border-t border-slate-200 flex justify-between items-center">
@@ -363,16 +354,14 @@
           <i class="ph-bold ph-arrow-right"></i>
         </button>
       </div>
-
     </div>
 
+    <!-- Slide 3 -->
     <div id="slide-panel-3" class="hidden space-y-6">
-
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3 flex-wrap">
           <label class="text-xs font-extrabold text-slate-600">Select Class:</label>
-          <div id="slide3-class-pills" class="flex flex-wrap gap-1.5">
-          </div>
+          <div id="slide3-class-pills" class="flex flex-wrap gap-1.5"></div>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
@@ -399,29 +388,25 @@
           </div>
           <span id="audit-score-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800">100% Compliant</span>
         </div>
-        <div id="slide3-pedagogical-audit-items" class="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs">
-        </div>
+        <div id="slide3-pedagogical-audit-items" class="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs"></div>
       </div>
 
-      <div id="slide3-tables-container" class="space-y-6">
-      </div>
-
+      <div id="slide3-tables-container" class="space-y-6"></div>
     </div>
 
+    <!-- Slide 4 -->
     <div id="slide-panel-4" class="hidden space-y-6">
-
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <i class="ph-bold ph-calendar text-xl text-indigo-600"></i>
           <div>
             <h2 class="text-base font-extrabold text-slate-900">Day-Wise Class Timetable</h2>
-            <p class="text-xs text-slate-500 font-medium">Daily Master Schedule across all 10 Primary Sections (1-A to 5-B)</p>
+            <p class="text-xs text-slate-500 font-medium">Daily Master Schedule across all 10 Primary Sections (1-A to 5-B) • Click any slot to edit</p>
           </div>
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
-          <div class="flex items-center gap-1.5" id="slide4-day-pills">
-          </div>
+          <div class="flex items-center gap-1.5" id="slide4-day-pills"></div>
           <button onclick="printAllDaysClassTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
             <i class="ph-bold ph-printer text-sm"></i>
             <span>Review & Print All 6 Days (1 File)</span>
@@ -429,25 +414,22 @@
         </div>
       </div>
 
-      <div id="slide4-tables-container" class="space-y-6">
-      </div>
-
+      <div id="slide4-tables-container" class="space-y-6"></div>
     </div>
 
+    <!-- Slide 5 -->
     <div id="slide-panel-5" class="hidden space-y-6">
-
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <i class="ph-bold ph-identification-badge text-xl text-indigo-600"></i>
           <div>
             <h2 class="text-base font-extrabold text-slate-900">Day-Wise Teacher Timetable</h2>
-            <p class="text-xs text-slate-500 font-medium">Daily Master Staff Deployment & Substitution Assistant</p>
+            <p class="text-xs text-slate-500 font-medium">Daily Master Staff Deployment & Substitution Assistant • Click any cell to assign / edit</p>
           </div>
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
-          <div class="flex items-center gap-1.5" id="slide5-day-pills">
-          </div>
+          <div class="flex items-center gap-1.5" id="slide5-day-pills"></div>
           <button onclick="printAllDaysTeacherTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
             <i class="ph-bold ph-printer text-sm"></i>
             <span>Review & Print All 6 Days Staff (1 File)</span>
@@ -465,19 +447,17 @@
             <i class="ph-bold ph-first-aid text-emerald-700 text-lg"></i>
             <h3 class="text-xs font-black uppercase tracking-wider text-emerald-900">Instant Substitution & Leisure Staff Finder</h3>
           </div>
-          <div class="flex items-center gap-1.5 text-xs font-bold" id="slide5-sub-period-pills">
-          </div>
+          <div class="flex items-center gap-1.5 text-xs font-bold" id="slide5-sub-period-pills"></div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 pt-1" id="slide5-free-teachers-chips">
-        </div>
+        <div class="flex flex-wrap items-center gap-2 pt-1" id="slide5-free-teachers-chips"></div>
       </div>
 
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto">
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
           <div class="flex items-center gap-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase" id="slide5-current-day-label">Mon</span>
-            <h3 class="text-sm font-extrabold text-slate-900">Master Staff Assignment Sheet</h3>
+            <h3 class="text-sm font-extrabold text-slate-900">Master Staff Assignment Sheet (Click any cell to edit / assign)</h3>
           </div>
           <button onclick="printDayWiseTeacherTimetable(state.selectedDaySlide5)" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
             <i class="ph-bold ph-printer text-xs"></i>
@@ -500,21 +480,19 @@
               <th class="py-2.5 px-2 text-right w-16">Daily Load</th>
             </tr>
           </thead>
-          <tbody id="slide5-teachers-tbody" class="divide-y divide-slate-100">
-          </tbody>
+          <tbody id="slide5-teachers-tbody" class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
-
     </div>
 
+    <!-- Slide 6 -->
     <div id="slide-panel-6" class="hidden space-y-6">
-
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <i class="ph-bold ph-user-list text-xl text-indigo-600"></i>
           <div>
             <h2 class="text-base font-extrabold text-slate-900">Teacher Weekly Timetable</h2>
-            <p class="text-xs text-slate-500 font-medium">Individual 6-Day Personal Timetable & Total Workload</p>
+            <p class="text-xs text-slate-500 font-medium">Individual 6-Day Personal Timetable • Click any cell to assign or edit periods</p>
           </div>
         </div>
 
@@ -564,17 +542,14 @@
               <th class="py-2.5 px-2 text-right w-16">Day Total</th>
             </tr>
           </thead>
-          <tbody id="slide6-teacher-grid-body" class="divide-y divide-slate-100">
-          </tbody>
+          <tbody id="slide6-teacher-grid-body" class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
-
     </div>
-
   </main>
 
   <!-- Secondary Wing Busy Slots Modal -->
-  <div id="secondary-busy-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+  <div id="secondary-busy-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div class="flex items-center gap-2.5">
@@ -607,8 +582,7 @@
               <th class="py-2 px-1">P8</th>
             </tr>
           </thead>
-          <tbody id="secondary-busy-grid-body" class="divide-y divide-slate-100">
-          </tbody>
+          <tbody id="secondary-busy-grid-body" class="divide-y divide-slate-100"></tbody>
         </table>
       </div>
 
@@ -621,7 +595,8 @@
     </div>
   </div>
 
-  <div id="slot-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+  <!-- Class-Based Slot Edit Modal (Used by Slide 3 & Slide 4) -->
+  <div id="slot-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-lg shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
@@ -635,8 +610,7 @@
 
       <div>
         <label class="block text-xs font-bold text-slate-600 mb-1.5">Select Subject (Live Quota Progress):</label>
-        <div id="slot-modal-subject-badges" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-slate-50 rounded-xl border border-slate-200">
-        </div>
+        <div id="slot-modal-subject-badges" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-slate-50 rounded-xl border border-slate-200"></div>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
@@ -655,8 +629,7 @@
 
       <div>
         <label class="block text-xs font-bold text-slate-600 mb-1.5">Assigned Teacher (Live Availability for this slot):</label>
-        <div id="slot-modal-teacher-availability-list" class="max-h-40 overflow-y-auto space-y-1.5 p-1 bg-slate-50 rounded-xl border border-slate-200">
-        </div>
+        <div id="slot-modal-teacher-availability-list" class="max-h-40 overflow-y-auto space-y-1.5 p-1 bg-slate-50 rounded-xl border border-slate-200"></div>
       </div>
 
       <input type="hidden" id="slot-modal-teacher-id">
@@ -677,7 +650,73 @@
     </div>
   </div>
 
-  <div id="manage-limits-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+  <!-- Teacher-Based Slot Edit Modal (Used by Slide 5 & Slide 6) -->
+  <div id="teacher-slot-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900" id="teacher-slot-modal-title">Edit Teacher Slot</h3>
+          <p class="text-xs text-slate-500 font-medium" id="teacher-slot-modal-subtitle">Teacher Schedule</p>
+        </div>
+        <button onclick="closeTeacherSlotModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Method 1: Choose from Teacher Allotments</label>
+          <select id="teacher-slot-allotment-select" onchange="syncTeacherSlotInputsFromAllotment(this.value)" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </select>
+        </div>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-2 text-[10px] font-bold text-slate-400 uppercase">OR Pick Manually</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Class</label>
+            <select id="teacher-slot-class-select" class="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50">
+              <option value="1-A">1-A</option>
+              <option value="1-B">1-B</option>
+              <option value="2-A">2-A</option>
+              <option value="2-B">2-B</option>
+              <option value="3-A">3-A</option>
+              <option value="3-B">3-B</option>
+              <option value="4-A">4-A</option>
+              <option value="4-B">4-B</option>
+              <option value="5-A">5-A</option>
+              <option value="5-B">5-B</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Subject</label>
+            <input type="text" id="teacher-slot-subject-input" placeholder="e.g. MATH, ENG" class="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase border border-slate-200 bg-slate-50">
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <button onclick="clearTeacherSlot()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 transition">
+          Clear Slot (Set Free)
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeTeacherSlotModal()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-100 transition">
+            Cancel
+          </button>
+          <button onclick="saveTeacherSlotModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+            Save Slot
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Limits Modal -->
+  <div id="manage-limits-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div class="flex items-center gap-2.5">
@@ -737,12 +776,10 @@
         </div>
       </div>
 
-      <div id="modal-limits-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto p-1">
-      </div>
+      <div id="modal-limits-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto p-1"></div>
 
       <div class="pt-3 border-t border-slate-100 bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
         <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Add New Subject & Weekly Activity Limit</h4>
-        
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <div>
             <label class="block text-[11px] font-bold text-slate-600 mb-1">Subject Name / Code</label>
@@ -795,159 +832,6 @@
     </div>
   </div>
 
-  <div id="rules-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-2.5">
-          <i class="ph-bold ph-sliders text-xl text-indigo-600"></i>
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900">KVS Pedagogical Rules Engine</h3>
-            <p class="text-xs text-slate-500">Edit, remove, or create custom timetable constraints</p>
-          </div>
-        </div>
-        <button onclick="closeRulesModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
-          <i class="ph-bold ph-x text-base"></i>
-        </button>
-      </div>
-
-      <div id="rules-list-container" class="space-y-2.5 max-h-64 overflow-y-auto p-1">
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Add New Pedagogical Rule</h4>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Rule Title</label>
-            <input type="text" id="new-rule-title" placeholder="e.g. Max 2 Library Periods/Week" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Subjects (comma-separated)</label>
-            <input type="text" id="new-rule-subjects" placeholder="e.g. LIB, GDN" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 uppercase bg-white">
-          </div>
-        </div>
-        <div class="flex justify-end">
-          <button onclick="addNewCustomRule()" class="px-4 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
-            + Add Custom Rule
-          </button>
-        </div>
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-        <button onclick="resetRulesToKVSDefaults()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
-          Reset to KVS Defaults
-        </button>
-        <button onclick="closeRulesModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
-          Done
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div id="school-manager-modal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-2.5">
-          <i class="ph-bold ph-buildings text-xl text-indigo-600"></i>
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900">Schools & Timetables Workspace Manager</h3>
-            <p class="text-xs text-slate-500">Switch, clone, create, and backup multiple school profiles</p>
-          </div>
-        </div>
-        <button onclick="closeSchoolManagerModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
-          <i class="ph-bold ph-x text-base"></i>
-        </button>
-      </div>
-
-      <div id="school-manager-list" class="space-y-3 max-h-64 overflow-y-auto p-1">
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-        <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Create New School or Alternate Shift Plan</h4>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">New School Name</label>
-            <input type="text" id="new-school-name" placeholder="e.g. PM SHRI KV IIT CHENNAI" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 uppercase bg-white">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Academic Session</label>
-            <input type="text" id="new-school-session" value="2026-27" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white">
-          </div>
-        </div>
-        <div class="flex items-center justify-between pt-1">
-          <label class="flex items-center gap-1.5 text-xs text-slate-600 font-semibold cursor-pointer">
-            <input type="checkbox" id="clone-from-current-checkbox" class="rounded text-indigo-600">
-            <span>Clone current teachers and allotments into new school</span>
-          </label>
-          <button onclick="createNewSchoolProfile()" class="px-4 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
-            + Create School
-          </button>
-        </div>
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <button onclick="exportAllSchoolsJson()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1">
-            <i class="ph-bold ph-download-simple"></i>
-            <span>Backup JSON</span>
-          </button>
-          <label class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1 cursor-pointer">
-            <i class="ph-bold ph-upload-simple"></i>
-            <span>Restore JSON</span>
-            <input type="file" id="import-schools-input" accept=".json" onchange="importSchoolsJson(event)" class="hidden">
-          </label>
-        </div>
-        <button onclick="closeSchoolManagerModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
-          Close Manager
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div id="print-preview-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-4xl shadow-2xl p-6 space-y-4 max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
-        <div class="flex items-center gap-2.5">
-          <i class="ph-bold ph-printer text-xl text-indigo-600"></i>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-base font-extrabold text-slate-900" id="print-modal-title">Print Preview</h3>
-              <span id="print-modal-sheet-count" class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">1 Sheet</span>
-            </div>
-            <p class="text-xs text-slate-500">Official KVS Primary Wing Printable Document</p>
-          </div>
-        </div>
-        <button onclick="closePrintPreviewModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
-          <i class="ph-bold ph-x text-base"></i>
-        </button>
-      </div>
-
-      <div id="print-modal-sheet-nav" class="hidden items-center gap-2 px-3 py-2 rounded-xl bg-slate-100/70 border border-slate-200 text-xs shrink-0 overflow-x-auto">
-        <span class="font-extrabold text-slate-600 shrink-0">Quick Review:</span>
-        <div id="print-modal-sheet-links" class="flex items-center gap-1.5 min-w-max">
-        </div>
-      </div>
-
-      <div id="print-modal-content" class="flex-1 overflow-y-auto p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-6">
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 shrink-0">
-        <button onclick="closePrintPreviewModal()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-100 transition">
-          Close
-        </button>
-        <div class="flex items-center gap-2">
-          <button onclick="openPrintInNewWindow()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5">
-            <i class="ph-bold ph-arrow-square-out text-sm"></i>
-            <span>Open in New Tab</span>
-          </button>
-          <button onclick="executeBrowserPrint()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5 shadow-xs">
-            <i class="ph-bold ph-printer text-sm"></i>
-            <span>Print All Sheets (1 Single Command)</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="printable-report-area" class="hidden"></div>
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
@@ -973,11 +857,11 @@
             { id: "t6", name: "PRT Specialist (Music / Art)", shortName: "P_ART", isClassTeacher: false, classNum: "", section: "", isCommon: true, commonClasses: ["1-A", "1-B", "2-A", "2-B", "3-A", "3-B"], secondaryBusySlots: {} }
           ],
           subjectLimits: {
-            "Class 1": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-            "Class 2": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-            "Class 3": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-            "Class 4": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-            "Class 5": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10 }
+            "Class 1": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+            "Class 2": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+            "Class 3": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+            "Class 4": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+            "Class 5": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 }
           },
           allotments: [
             { id: "a1", teacherId: "t1", class: "2", section: "A", subject: "CLA", periods: 1 },
@@ -997,9 +881,9 @@
           ],
           schedules: {},
           rules: [
-            { id: "r1", title: "Daily Core Cognitive Presence", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "EVS", "TWAU"], threshold: 1, active: true },
+            { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
             { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
-            { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "EVS"], threshold: 3, active: true },
+            { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 3, active: true },
             { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
             { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
           ]
@@ -1139,8 +1023,7 @@
     function openSchoolManagerModal() {
       const modal = document.getElementById("school-manager-modal");
       if (modal) {
-        modal.classList.remove("hidden");
-        modal.classList.add("flex");
+        modal.style.display = "flex";
         renderSchoolManagerList();
       }
     }
@@ -1148,8 +1031,7 @@
     function closeSchoolManagerModal() {
       const modal = document.getElementById("school-manager-modal");
       if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
+        modal.style.display = "none";
       }
     }
 
@@ -1389,6 +1271,22 @@
       document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.add("hidden"));
     }
 
+    function refreshAllScheduleViews() {
+      if (state.activeSlide === 3) {
+        renderSlide3Grid();
+        runPedagogicalAudit();
+      } else if (state.activeSlide === 4) {
+        renderSlide4DayWiseClasses();
+      } else if (state.activeSlide === 5) {
+        renderSlide5DayWiseTeachers();
+        renderSubstitutionAssistant();
+      } else if (state.activeSlide === 6) {
+        renderSlide6TeacherGrid();
+      }
+      auditGlobalCollisions();
+      commitWorkingStateToRepository();
+    }
+
     function goToSlide(slideNum) {
       state.activeSlide = slideNum;
       for (let i = 1; i <= 6; i++) {
@@ -1575,6 +1473,7 @@
         });
       });
       renderSlide1Teachers();
+      refreshAllScheduleViews();
       showNotification("Teacher deleted and schedules updated.", "info");
     }
 
@@ -1591,18 +1490,17 @@
 
       const modal = document.getElementById("secondary-busy-modal");
       if (modal) {
-        modal.classList.remove("hidden");
-        modal.classList.add("flex");
+        modal.style.display = "flex";
       }
     }
 
     function closeSecondaryBusyModal() {
       const modal = document.getElementById("secondary-busy-modal");
       if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
+        modal.style.display = "none";
       }
       renderSlide1Teachers();
+      refreshAllScheduleViews();
     }
 
     function toggleSecondaryBusyPeriod(day, period) {
@@ -1616,6 +1514,11 @@
         t.secondaryBusySlots[day].splice(idx, 1);
       } else {
         t.secondaryBusySlots[day].push(period);
+        CLASSES.forEach(c => {
+          if (state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
+            state.schedules[c][day][period] = null;
+          }
+        });
       }
       renderSecondaryBusyGrid();
     }
@@ -1717,7 +1620,6 @@
           const limitsForClass = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
           const availableSubjects = Object.keys(limitsForClass);
 
-          // Calculate total allotted for this class & subject excluding current row
           const totalAllottedOthers = state.allotments
             .filter(item => item.id !== a.id && item.class === a.class && item.section === a.section && item.subject === a.subject)
             .reduce((sum, item) => sum + parseInt(item.periods || 0), 0);
@@ -1916,9 +1818,7 @@
     function handleSlide3Clear() {
       if (state.selectedClassSlide3 === "ALL") {
         CLASSES.forEach(c => clearSingleClassSchedule(c, false));
-        renderSlide3Grid();
-        runPedagogicalAudit();
-        auditGlobalCollisions();
+        refreshAllScheduleViews();
         showNotification("Cleared timetable grids for all 10 classes.", "info");
       } else {
         clearSingleClassSchedule(state.selectedClassSlide3);
@@ -2050,7 +1950,7 @@
         return;
       }
       currentSlotContext = { class: cls, day: day, period: period };
-      document.getElementById("slot-modal-title").textContent = `Edit Period Slot • ${cls}`;
+      document.getElementById("slot-modal-title").textContent = `Edit Period Slot • Class ${cls}`;
       document.getElementById("slot-modal-subtitle").textContent = `${day} • Period ${period}`;
 
       const existingSlot = state.schedules[cls]?.[day]?.[period];
@@ -2062,14 +1962,16 @@
       renderModalTeacherAvailability();
 
       const modal = document.getElementById("slot-modal");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
+      if (modal) {
+        modal.style.display = "flex";
+      }
     }
 
     function closeSlotModal() {
       const modal = document.getElementById("slot-modal");
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
+      if (modal) {
+        modal.style.display = "none";
+      }
     }
 
     function renderModalSubjectBadges() {
@@ -2201,9 +2103,7 @@
       }
 
       closeSlotModal();
-      renderSlide3Grid();
-      runPedagogicalAudit();
-      auditGlobalCollisions();
+      refreshAllScheduleViews();
       showNotification("Period slot saved successfully!", "success");
     }
 
@@ -2211,10 +2111,118 @@
       const { class: cls, day, period } = currentSlotContext;
       state.schedules[cls][day][period] = null;
       closeSlotModal();
-      renderSlide3Grid();
-      runPedagogicalAudit();
-      auditGlobalCollisions();
+      refreshAllScheduleViews();
       showNotification("Slot cleared.", "info");
+    }
+
+    // Teacher-Centric Slot Modal (Slides 5 & 6)
+    let currentTeacherSlotContext = { teacherId: null, day: "Mon", period: 1 };
+
+    function openTeacherSlotModal(teacherId, day, period) {
+      if (state.isViewOnly) {
+        showNotification("View-Only Mode: Period editing is disabled.", "warning");
+        return;
+      }
+
+      const t = state.teachers.find(item => item.id === teacherId);
+      if (!t) return;
+
+      if (t.secondaryBusySlots?.[day]?.includes(period)) {
+        showNotification("This teacher has a Secondary / High School lockout on this slot!", "warning");
+        return;
+      }
+
+      currentTeacherSlotContext = { teacherId, day, period };
+
+      document.getElementById("teacher-slot-modal-title").textContent = `Assign Slot • ${t.name} (${t.shortName})`;
+      document.getElementById("teacher-slot-modal-subtitle").textContent = `${day} • Period ${period}`;
+
+      const select = document.getElementById("teacher-slot-allotment-select");
+      select.innerHTML = "";
+
+      const teacherAllots = state.allotments.filter(a => a.teacherId === teacherId);
+      if (teacherAllots.length === 0) {
+        select.innerHTML = `<option value="">No pre-allotted subjects in Slide 2</option>`;
+      } else {
+        teacherAllots.forEach((a, idx) => {
+          const opt = document.createElement("option");
+          const targetKey = `${a.class}-${a.section}`;
+          opt.value = JSON.stringify({ classKey: targetKey, subject: a.subject });
+          
+          const currentOccupant = state.schedules[targetKey]?.[day]?.[period];
+          let statusLabel = "";
+          if (currentOccupant) {
+            const occT = state.teachers.find(item => item.id === currentOccupant.teacherId);
+            statusLabel = ` [Class Busy: ${currentOccupant.subject} (${occT ? occT.shortName : 'N/A'})]`;
+          }
+
+          opt.textContent = `Class ${targetKey} • ${a.subject} (${a.periods} P/W)${statusLabel}`;
+          select.appendChild(opt);
+          if (idx === 0) syncTeacherSlotInputsFromAllotment(opt.value);
+        });
+      }
+
+      const modal = document.getElementById("teacher-slot-modal");
+      if (modal) {
+        modal.style.display = "flex";
+      }
+    }
+
+    function syncTeacherSlotInputsFromAllotment(jsonVal) {
+      if (!jsonVal) return;
+      try {
+        const { classKey, subject } = JSON.parse(jsonVal);
+        document.getElementById("teacher-slot-class-select").value = classKey;
+        document.getElementById("teacher-slot-subject-input").value = subject;
+      } catch (e) {}
+    }
+
+    function closeTeacherSlotModal() {
+      const modal = document.getElementById("teacher-slot-modal");
+      if (modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    function saveTeacherSlotModal() {
+      const { teacherId, day, period } = currentTeacherSlotContext;
+      const classKey = document.getElementById("teacher-slot-class-select").value;
+      const subject = document.getElementById("teacher-slot-subject-input").value.trim().toUpperCase();
+
+      if (!classKey || !subject) {
+        showNotification("Please specify both Class and Subject.", "warning");
+        return;
+      }
+
+      // Clear teacher if assigned elsewhere at same time
+      CLASSES.forEach(c => {
+        if (state.schedules[c]?.[day]?.[period]?.teacherId === teacherId) {
+          state.schedules[c][day][period] = null;
+        }
+      });
+
+      // Save new slot
+      state.schedules[classKey][day][period] = {
+        subject: subject,
+        teacherId: teacherId,
+        isBlock: false
+      };
+
+      closeTeacherSlotModal();
+      refreshAllScheduleViews();
+      showNotification(`Assigned ${subject} to Class ${classKey} on ${day} P${period}!`, "success");
+    }
+
+    function clearTeacherSlot() {
+      const { teacherId, day, period } = currentTeacherSlotContext;
+      CLASSES.forEach(c => {
+        if (state.schedules[c]?.[day]?.[period]?.teacherId === teacherId) {
+          state.schedules[c][day][period] = null;
+        }
+      });
+      closeTeacherSlotModal();
+      refreshAllScheduleViews();
+      showNotification("Cleared period for this teacher.", "info");
     }
 
     function runPedagogicalAudit() {
@@ -2234,7 +2242,9 @@
           let note = `${cls}: Compliant`;
 
           if (rule.type === "MIN_DAILY_PRESENCE") {
-            DAYS.forEach(d => {
+            // Strictly check core presence for Monday through Friday (Saturday exempted)
+            const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+            weekdays.forEach(d => {
               let coreCount = 0;
               PERIODS.forEach(p => {
                 const subj = state.schedules[cls]?.[d]?.[p]?.subject;
@@ -2300,7 +2310,7 @@
         item.innerHTML = `
           <div>
             <div class="font-extrabold text-xs text-emerald-800">All 10 Classes Passed All Active Constraints</div>
-            <div class="text-[10px] text-slate-500">Core cognitive presence, activity spacing, and continuous core caps are 100% satisfied across all sections.</div>
+            <div class="text-[10px] text-slate-500">Core cognitive presence (Mon-Fri), activity spacing, and continuous core caps are 100% satisfied across all sections.</div>
           </div>
           <i class="ph-bold ph-check-circle text-emerald-600 text-xl"></i>
         `;
@@ -2357,7 +2367,7 @@
 
             rowHtml += `
               <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center">
+                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center">
                   <div class="font-extrabold text-[11px]">${slot.subject}</div>
                   <div class="text-[10px] text-slate-500 font-semibold truncate">${tName}</div>
                 </button>
@@ -2366,7 +2376,7 @@
           } else {
             rowHtml += `
               <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-200 hover:bg-indigo-50/30 text-slate-300 transition flex items-center justify-center">
+                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
                   <i class="ph-bold ph-plus text-xs"></i>
                 </button>
               </td>
@@ -2381,7 +2391,7 @@
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
           <div class="flex items-center gap-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
-            <h3 class="text-sm font-extrabold text-slate-900">${fullDay} Master Class Schedule</h3>
+            <h3 class="text-sm font-extrabold text-slate-900">${fullDay} Master Class Schedule (Click any slot to edit)</h3>
           </div>
           <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
             <i class="ph-bold ph-printer text-xs"></i>
@@ -2549,14 +2559,20 @@
 
             rowHtml += `
               <td class="p-1">
-                <div class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900'} text-center">
+                <button onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
                   <div class="font-extrabold text-[11px]">${teachingSlots.map(s => s.class).join(", ")}</div>
                   <div class="text-[10px] text-slate-500 font-semibold">${teachingSlots.map(s => s.subject).join(", ")}</div>
-                </div>
+                </button>
               </td>
             `;
           } else {
-            rowHtml += `<td class="p-1"><div class="py-2 rounded-xl text-slate-300 font-bold text-[11px]">-</div></td>`;
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2 rounded-xl text-slate-300 hover:text-indigo-600 hover:bg-indigo-50/30 border border-transparent hover:border-indigo-200 transition font-bold text-[11px]">
+                  -
+                </button>
+              </td>
+            `;
           }
         });
 
@@ -2588,7 +2604,7 @@
       if (!t) return;
 
       document.getElementById("slide6-teacher-display-name").textContent = `${t.name} (${t.shortName})`;
-      document.getElementById("slide6-teacher-role-badge").textContent = t.isClassTeacher ? `Class Teacher: Class ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
+      document.getElementById("slide6-teacher-role-badge").textContent = t.isClassTeacher ? `Class Teacher: ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
 
       const tbody = document.getElementById("slide6-teacher-grid-body");
       if (!tbody) return;
@@ -2633,14 +2649,20 @@
 
             rowHtml += `
               <td class="p-1">
-                <div class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900'} text-center">
+                <button onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
                   <div class="font-extrabold text-[11px]">${assignedSlots.map(s => s.class).join(", ")}</div>
                   <div class="text-[10px] text-slate-500 font-semibold">${assignedSlots.map(s => s.subject).join(", ")}</div>
-                </div>
+                </button>
               </td>
             `;
           } else {
-            rowHtml += `<td class="p-1"><div class="py-2 rounded-xl text-slate-300 font-bold text-[11px]">-</div></td>`;
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2 rounded-xl text-slate-300 hover:text-indigo-600 hover:bg-indigo-50/30 border border-transparent hover:border-indigo-200 transition font-bold text-[11px]">
+                  -
+                </button>
+              </td>
+            `;
           }
         });
 
@@ -2654,16 +2676,14 @@
 
     function openManageLimitsModal() {
       const modal = document.getElementById("manage-limits-modal");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
+      if (modal) modal.style.display = "flex";
       renderLimitsGrid();
       toggleMultiClassSubjectTargetCheckboxes();
     }
 
     function closeManageLimitsModal() {
       const modal = document.getElementById("manage-limits-modal");
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
+      if (modal) modal.style.display = "none";
       renderSlide2Allotments();
       renderSlide2WorkloadStatus();
     }
@@ -2787,15 +2807,13 @@
 
     function openRulesModal() {
       const modal = document.getElementById("rules-modal");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
+      if (modal) modal.style.display = "flex";
       renderRulesList();
     }
 
     function closeRulesModal() {
       const modal = document.getElementById("rules-modal");
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
+      if (modal) modal.style.display = "none";
       runPedagogicalAudit();
     }
 
@@ -2862,9 +2880,9 @@
 
     function resetRulesToKVSDefaults() {
       state.rules = [
-        { id: "r1", title: "Daily Core Cognitive Presence", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "EVS", "TWAU"], threshold: 1, active: true },
+        { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
         { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
-        { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "EVS"], threshold: 3, active: true },
+        { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 3, active: true },
         { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
         { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
       ];
@@ -2971,9 +2989,7 @@
         }
       }
 
-      renderSlide3Grid();
-      runPedagogicalAudit();
-      auditGlobalCollisions();
+      refreshAllScheduleViews();
       showNotification(`Schedule generated for Class ${targetClass}!`, "success");
     }
 
@@ -2991,9 +3007,7 @@
         });
       });
       if (notify) {
-        renderSlide3Grid();
-        runPedagogicalAudit();
-        auditGlobalCollisions();
+        refreshAllScheduleViews();
         showNotification(`Cleared schedule for Class ${cls}.`, "info");
       }
     }
@@ -3120,7 +3134,7 @@
             <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${i + 1}</td>
             <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700;">${t.name} (${t.shortName})</td>
             <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${t.isClassTeacher ? `Class ${t.classNum}-${t.section}` : 'N/A'}</td>
-            <td style="padding: 8px; border: 1px solid #cbd5e1;">${t.isCommon ? 'Physical Edu / Art / Music / Yoga / Library' : 'Core Primary (Hindi / Eng / Math / EVS)'}</td>
+            <td style="padding: 8px; border: 1px solid #cbd5e1;">${t.isCommon ? 'Physical Edu / Art / Music / Yoga / Library' : 'Core Primary (HIN, ENG, MATH, TWAU)'}</td>
             <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${t.isCommon ? 'All Primary Sections (1 to 5)' : `Class ${t.classNum || '1-5'}`}</td>
             <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 120px;"></td>
           </tr>
@@ -3137,7 +3151,7 @@
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Name</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 110px;">Class Teacher</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Preferred Subjects</th>
-                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Preferred Classes</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 140px;">Preferred Classes</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Sign</th>
               </tr>
             </thead>
@@ -3502,7 +3516,7 @@
             }
           });
 
-          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount} P</td>`;
+          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount}</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
@@ -3746,16 +3760,14 @@
 
       const modal = document.getElementById("print-preview-modal");
       if (modal) {
-        modal.classList.remove("hidden");
-        modal.classList.add("flex");
+        modal.style.display = "flex";
       }
     }
 
     function closePrintPreviewModal() {
       const modal = document.getElementById("print-preview-modal");
       if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
+        modal.style.display = "none";
       }
     }
 

@@ -36,7 +36,7 @@
 
     @media print {
       body { background: white !important; padding: 0 !important; color: black !important; }
-      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal { display: none !important; }
+      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal { display: none !important; }
       .print-page { 
         page-break-after: always !important; 
         break-after: page !important; 
@@ -3151,7 +3151,7 @@
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Name</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 110px;">Class Teacher</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Preferred Subjects</th>
-                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; width: 140px;">Preferred Classes</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Preferred Classes</th>
                 <th style="padding: 6px 8px; border: 1px solid #cbd5e1;">Teacher Sign</th>
               </tr>
             </thead>
@@ -3507,12 +3507,12 @@
             });
 
             if (isSecBusy) {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9.5px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
             } else if (assigned.length > 0) {
               dailyCount += assigned.length;
               rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
 

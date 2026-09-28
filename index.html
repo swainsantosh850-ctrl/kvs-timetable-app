@@ -1714,38 +1714,59 @@
           rowEl.className = "grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center p-3 rounded-xl bg-slate-50 border border-slate-200";
           
           const classKey = `Class ${a.class || 1}`;
-          const availableSubjects = Object.keys(state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {});
+          const limitsForClass = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+          const availableSubjects = Object.keys(limitsForClass);
+
+          // Calculate total allotted for this class & subject excluding current row
+          const totalAllottedOthers = state.allotments
+            .filter(item => item.id !== a.id && item.class === a.class && item.section === a.section && item.subject === a.subject)
+            .reduce((sum, item) => sum + parseInt(item.periods || 0), 0);
+
+          const maxAllowedTotal = limitsForClass[a.subject] !== undefined ? limitsForClass[a.subject] : 10;
+          const maxRemainingForRow = Math.max(0, maxAllowedTotal - totalAllottedOthers);
 
           rowEl.innerHTML = `
             <div class="sm:col-span-3">
               <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Class</label>
               <select onchange="updateAllotmentField('${a.id}', 'class', this.value)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white">
-                <option value="1" ${a.class === "1" ? "selected" : ""}>1</option>
-                <option value="2" ${a.class === "2" ? "selected" : ""}>2</option>
-                <option value="3" ${a.class === "3" ? "selected" : ""}>3</option>
-                <option value="4" ${a.class === "4" ? "selected" : ""}>4</option>
-                <option value="5" ${a.class === "5" ? "selected" : ""}>5</option>
+                <option value="1" ${a.class === "1" ? "selected" : ""}>Class 1</option>
+                <option value="2" ${a.class === "2" ? "selected" : ""}>Class 2</option>
+                <option value="3" ${a.class === "3" ? "selected" : ""}>Class 3</option>
+                <option value="4" ${a.class === "4" ? "selected" : ""}>Class 4</option>
+                <option value="5" ${a.class === "5" ? "selected" : ""}>Class 5</option>
               </select>
             </div>
 
             <div class="sm:col-span-2">
               <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Section</label>
               <select onchange="updateAllotmentField('${a.id}', 'section', this.value)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white">
-                <option value="A" ${a.section === "A" ? "selected" : ""}>A</option>
-                <option value="B" ${a.section === "B" ? "selected" : ""}>B</option>
+                <option value="A" ${a.section === "A" ? "selected" : ""}>Sec A</option>
+                <option value="B" ${a.section === "B" ? "selected" : ""}>Sec B</option>
               </select>
             </div>
 
             <div class="sm:col-span-4">
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Subject</label>
+              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Subject (Class Limit)</label>
               <select onchange="updateAllotmentField('${a.id}', 'subject', this.value)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-extrabold border border-slate-200 bg-white">
-                ${availableSubjects.map(s => `<option value="${s}" ${a.subject === s ? "selected" : ""}>${s}</option>`).join("")}
+                ${availableSubjects.map(s => {
+                  const sLimit = limitsForClass[s] !== undefined ? limitsForClass[s] : 10;
+                  const alreadyUsed = state.allotments
+                    .filter(item => item.id !== a.id && item.class === a.class && item.section === a.section && item.subject === s)
+                    .reduce((sum, item) => sum + parseInt(item.periods || 0), 0);
+                  const rem = Math.max(0, sLimit - alreadyUsed);
+                  return `<option value="${s}" ${a.subject === s ? "selected" : ""}>${s} (Max: ${sLimit}, Avail: ${rem})</option>`;
+                }).join("")}
               </select>
             </div>
 
             <div class="sm:col-span-2">
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Periods</label>
-              <input type="number" min="1" max="15" value="${a.periods}" onchange="updateAllotmentField('${a.id}', 'periods', parseInt(this.value) || 1)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-200 bg-white text-center">
+              <div class="flex justify-between items-center mb-0.5">
+                <label class="text-[10px] font-bold text-slate-500">Periods</label>
+                <span class="text-[9px] font-black text-indigo-600">Cap: ${maxRemainingForRow}</span>
+              </div>
+              <input type="number" min="1" max="${maxRemainingForRow}" value="${Math.min(a.periods, maxRemainingForRow || 1)}" 
+                onchange="validateAndSetAllotmentPeriods('${a.id}', parseInt(this.value) || 1, ${maxRemainingForRow})" 
+                class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border ${a.periods > maxRemainingForRow ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-slate-200 bg-white'} text-center">
             </div>
 
             <div class="sm:col-span-1 flex justify-end">
@@ -1773,10 +1794,42 @@
       renderSlide2WorkloadStatus();
     }
 
+    function validateAndSetAllotmentPeriods(allotId, requestedValue, maxAllowed) {
+      const a = state.allotments.find(item => item.id === allotId);
+      if (!a) return;
+
+      if (maxAllowed <= 0) {
+        showNotification(`Limit reached for ${a.subject} in Class ${a.class}-${a.section}!`, "warning");
+        a.periods = 0;
+      } else if (requestedValue > maxAllowed) {
+        a.periods = maxAllowed;
+        showNotification(`Cannot exceed subject limit (${maxAllowed} max remaining for ${a.subject}). Adjusted automatically.`, "warning");
+      } else {
+        a.periods = Math.max(1, requestedValue);
+      }
+
+      renderSlide2Allotments();
+      renderSlide2WorkloadStatus();
+    }
+
     function updateAllotmentField(allotId, field, value) {
       const a = state.allotments.find(item => item.id === allotId);
       if (!a) return;
       a[field] = value;
+
+      const classKey = `Class ${a.class || 1}`;
+      const limitsForClass = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+      const maxAllowedTotal = limitsForClass[a.subject] !== undefined ? limitsForClass[a.subject] : 10;
+      
+      const totalOthers = state.allotments
+        .filter(item => item.id !== a.id && item.class === a.class && item.section === a.section && item.subject === a.subject)
+        .reduce((sum, item) => sum + parseInt(item.periods || 0), 0);
+
+      const maxRemaining = Math.max(0, maxAllowedTotal - totalOthers);
+      if (a.periods > maxRemaining) {
+        a.periods = Math.max(1, maxRemaining);
+      }
+
       renderSlide2Allotments();
       renderSlide2WorkloadStatus();
     }
@@ -2535,7 +2588,7 @@
       if (!t) return;
 
       document.getElementById("slide6-teacher-display-name").textContent = `${t.name} (${t.shortName})`;
-      document.getElementById("slide6-teacher-role-badge").textContent = t.isClassTeacher ? `Class Teacher: ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
+      document.getElementById("slide6-teacher-role-badge").textContent = t.isClassTeacher ? `Class Teacher: Class ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
 
       const tbody = document.getElementById("slide6-teacher-grid-body");
       if (!tbody) return;
@@ -3445,11 +3498,11 @@
               dailyCount += assigned.length;
               rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #94a3b8; font-size: 9.5px;">[Free]</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
 
-          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount}</td>`;
+          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 

@@ -424,7 +424,7 @@
           <i class="ph-bold ph-identification-badge text-xl text-indigo-600"></i>
           <div>
             <h2 class="text-base font-extrabold text-slate-900">Day-Wise Teacher Timetable</h2>
-            <p class="text-xs text-slate-500 font-medium">Daily Master Staff Deployment & Substitution Assistant • Click any cell to assign / edit</p>
+            <p class="text-xs text-slate-500 font-medium">Daily Master Staff Deployment & Substitution Assistant • Click any cell or [+] to edit</p>
           </div>
         </div>
 
@@ -457,7 +457,7 @@
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
           <div class="flex items-center gap-2">
             <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase" id="slide5-current-day-label">Mon</span>
-            <h3 class="text-sm font-extrabold text-slate-900">Master Staff Assignment Sheet (Click any cell to edit / assign)</h3>
+            <h3 class="text-sm font-extrabold text-slate-900">Master Staff Assignment Sheet (Click any cell or [+] to edit)</h3>
           </div>
           <button onclick="printDayWiseTeacherTimetable(state.selectedDaySlide5)" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
             <i class="ph-bold ph-printer text-xs"></i>
@@ -492,7 +492,7 @@
           <i class="ph-bold ph-user-list text-xl text-indigo-600"></i>
           <div>
             <h2 class="text-base font-extrabold text-slate-900">Teacher Weekly Timetable</h2>
-            <p class="text-xs text-slate-500 font-medium">Individual 6-Day Personal Timetable • Click any cell to assign or edit periods</p>
+            <p class="text-xs text-slate-500 font-medium">Individual 6-Day Personal Timetable • Click any cell or [+] to assign or edit periods</p>
           </div>
         </div>
 
@@ -2162,6 +2162,22 @@
         });
       }
 
+      // Check if this teacher already teaches something on this period
+      let existingClass = null;
+      let existingSubject = "";
+      CLASSES.forEach(c => {
+        const slot = state.schedules[c]?.[day]?.[period];
+        if (slot && slot.teacherId === teacherId) {
+          existingClass = c;
+          existingSubject = slot.subject;
+        }
+      });
+
+      if (existingClass) {
+        document.getElementById("teacher-slot-class-select").value = existingClass;
+        document.getElementById("teacher-slot-subject-input").value = existingSubject;
+      }
+
       const modal = document.getElementById("teacher-slot-modal");
       if (modal) {
         modal.style.display = "flex";
@@ -2547,7 +2563,7 @@
           if (isSecBusy) {
             rowHtml += `
               <td class="p-1">
-                <div class="w-full p-1.5 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
+                <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
                   <div class="font-extrabold text-[11px]">Secondary</div>
                   <div class="text-[10px] text-rose-500 font-semibold">High School</div>
                 </div>
@@ -2559,17 +2575,18 @@
 
             rowHtml += `
               <td class="p-1">
-                <button onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
+                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
                   <div class="font-extrabold text-[11px]">${teachingSlots.map(s => s.class).join(", ")}</div>
                   <div class="text-[10px] text-slate-500 font-semibold">${teachingSlots.map(s => s.subject).join(", ")}</div>
                 </button>
               </td>
             `;
           } else {
+            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
-                <button onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2 rounded-xl text-slate-300 hover:text-indigo-600 hover:bg-indigo-50/30 border border-transparent hover:border-indigo-200 transition font-bold text-[11px]">
-                  -
+                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 transition flex items-center justify-center font-black">
+                  <i class="ph-bold ph-plus text-xs"></i>
                 </button>
               </td>
             `;
@@ -2636,7 +2653,7 @@
           if (isSecBusy) {
             rowHtml += `
               <td class="p-1">
-                <div class="w-full p-1.5 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
+                <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
                   <div class="font-extrabold text-[11px]">Secondary</div>
                   <div class="text-[10px] text-rose-500 font-semibold">High School</div>
                 </div>
@@ -2649,17 +2666,18 @@
 
             rowHtml += `
               <td class="p-1">
-                <button onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
+                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
                   <div class="font-extrabold text-[11px]">${assignedSlots.map(s => s.class).join(", ")}</div>
                   <div class="text-[10px] text-slate-500 font-semibold">${assignedSlots.map(s => s.subject).join(", ")}</div>
                 </button>
               </td>
             `;
           } else {
+            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
-                <button onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2 rounded-xl text-slate-300 hover:text-indigo-600 hover:bg-indigo-50/30 border border-transparent hover:border-indigo-200 transition font-bold text-[11px]">
-                  -
+                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 transition flex items-center justify-center font-black">
+                  <i class="ph-bold ph-plus text-xs"></i>
                 </button>
               </td>
             `;
@@ -3510,13 +3528,13 @@
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9.5px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
             } else if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
 
-          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount}</td>`;
+          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dailyCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
@@ -3666,7 +3684,7 @@
             }
           });
 
-          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
+          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 

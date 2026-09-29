@@ -3835,7 +3835,7 @@ function runPedagogicalAudit() {
           if (isCore) {
             if (streak === 0) streakStart = p;
             streak++;
-            if (streak === 4) {
+            if (streak >= 3) {
               continuousCoreDetails.push(`Class ${cls} on ${d}: 4 continuous core periods in a row from Period ${streakStart} to ${p}.`);
             }
           } else {

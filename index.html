@@ -1281,7 +1281,7 @@
       } else {
         teachersList = [
           { id: "t_init_1", name: "PRT 1 (English)", shortName: "PRT1", isClassTeacher: true, classNum: "1", section: "A", isCoClassTeacher: false, coClassNum: "1", coSection: "B", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
-          { id: "t_init_2", name: "PRT 2 (Maths)", shortName: "PRT2", isClassTeacher: true, classNum: "1", section: "B", isCoClassTeacher: false, coClassNum: "1", coSection: "A", isCommon: false, commonClasses: [], secondaryBusySlots: {} }
+          { id: "t_init_2", name: "PRT 2 (Maths)", shortName: "PRT2", isClassTeacher: true, classNum: "1", section: "B", isCoClassTeacher: false, coClassNum: "", coSection: "", isCommon: false, commonClasses: [], secondaryBusySlots: {} }
         ];
         allotmentsList = [
           { id: "a_init_1", teacherId: "t_init_1", class: "1", section: "A", subject: "ENG", periods: 8 },
@@ -2816,80 +2816,6 @@
         btn.textContent = d;
         container.appendChild(btn);
       });
-    }
-
-    function createDayWiseClassTableCard(day) {
-      const card = document.createElement("div");
-      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
-      
-      let tbodyRows = "";
-      CLASSES.forEach(cls => {
-        let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">Class ${cls}</td>`;
-
-        PERIODS.forEach(p => {
-          if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase tracking-wider">Break</td>`;
-          }
-
-          const slot = state.schedules[cls]?.[day]?.[p];
-          if (slot) {
-            const teacher = state.teachers.find(t => t.id === slot.teacherId);
-            const teacherName = teacher ? teacher.shortName || teacher.name : "N/A";
-            const hasConflict = isTeacherConflicted(slot.teacherId, day, p);
-
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
-                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-        });
-
-        rowHtml += `</tr>`;
-        tbodyRows += rowHtml;
-      });
-
-      card.innerHTML = `
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
-            <h3 class="text-sm font-extrabold text-slate-900">Master Section Schedule for ${day}</h3>
-          </div>
-          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
-            <i class="ph-bold ph-printer text-xs"></i>
-            <span>Print ${day} Schedule</span>
-          </button>
-        </div>
-        <table class="w-full border-collapse text-center text-xs">
-          <thead>
-            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
-              <th class="py-2.5 px-3 text-left w-24">Class</th>
-              <th class="py-2.5 px-2">P1</th>
-              <th class="py-2.5 px-2">P2</th>
-              <th class="py-2.5 px-2">P3</th>
-              <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
-              <th class="py-2.5 px-2">P5</th>
-              <th class="py-2.5 px-2">P6</th>
-              <th class="py-2.5 px-2">P7</th>
-              <th class="py-2.5 px-2">P8</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">${tbodyRows}</tbody>
-        </table>
-      `;
-      return card;
     }
 
     function renderSlide4DayWiseClasses() {

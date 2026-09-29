@@ -2775,6 +2775,78 @@
       showNotification("Cleared period for this teacher.", "info");
     }
 
+    // --- PORTAL ROLE AUTHENTICATION ---
+    const ADMIN_PASSWORD = "kvs@admin2026";
+
+    function openAuthModal() {
+      const modal = document.getElementById("auth-modal");
+      if (modal) {
+        modal.style.display = "flex";
+        const roleSelect = document.getElementById("login-role-select");
+        if (roleSelect) roleSelect.value = "admin";
+        togglePasswordField();
+      }
+    }
+
+    function togglePasswordField() {
+      const role = document.getElementById("login-role-select").value;
+      const passContainer = document.getElementById("password-field-container");
+      const errorMsg = document.getElementById("auth-error-msg");
+
+      if (errorMsg) errorMsg.classList.add("hidden");
+      if (role === "admin") {
+        passContainer.classList.remove("hidden");
+      } else {
+        passContainer.classList.add("hidden");
+      }
+    }
+
+    function handleLoginSubmit() {
+      const role = document.getElementById("login-role-select").value;
+      const passInput = document.getElementById("login-password-input").value;
+      const errorMsg = document.getElementById("auth-error-msg");
+
+      if (role === "admin") {
+        if (passInput === ADMIN_PASSWORD) {
+          state.isViewOnly = false;
+          sessionStorage.setItem("kvs_user_role", "admin");
+          const modal = document.getElementById("auth-modal");
+          if (modal) modal.style.display = "none";
+          applyViewOnlyLocks();
+          showNotification("Welcome Admin! Editing and publishing enabled.", "success");
+        } else {
+          if (errorMsg) errorMsg.classList.remove("hidden");
+        }
+      } else {
+        state.isViewOnly = true;
+        sessionStorage.setItem("kvs_user_role", "teacher");
+        const modal = document.getElementById("auth-modal");
+        if (modal) modal.style.display = "none";
+        applyViewOnlyLocks();
+        showNotification("Viewing in Staff mode (View-Only).", "info");
+      }
+    }
+
+    function checkUserSession() {
+      const savedRole = sessionStorage.getItem("kvs_user_role");
+      const modal = document.getElementById("auth-modal");
+
+      if (savedRole === "admin") {
+        state.isViewOnly = false;
+        if (modal) modal.style.display = "none";
+      } else if (savedRole === "teacher") {
+        state.isViewOnly = true;
+        if (modal) modal.style.display = "none";
+      } else {
+        if (modal) {
+          modal.style.display = "flex";
+          const roleSelect = document.getElementById("login-role-select");
+          if (roleSelect) roleSelect.value = "admin";
+          togglePasswordField();
+        }
+      }
+    }
+
     // --- FIREBASE REALTIME CLOUD SYNC ---
     const firebaseConfig = {
       apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",

@@ -647,10 +647,10 @@
 
   <!-- Teacher-Based Slot Edit Modal (Used by Slide 5 & Slide 6) -->
   <div id="teacher-slot-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 space-y-4">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-lg shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
-          <h3 class="text-sm font-extrabold text-slate-900" id="teacher-slot-modal-title">Edit Teacher Slot</h3>
+          <h3 class="text-sm font-extrabold text-slate-900" id="teacher-slot-modal-title">Assign Period Slot</h3>
           <p class="text-xs text-slate-500 font-medium" id="teacher-slot-modal-subtitle">Teacher Schedule</p>
         </div>
         <button onclick="closeTeacherSlotModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
@@ -658,40 +658,60 @@
         </button>
       </div>
 
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Available Allotments & Unassigned Subjects for this Teacher:</label>
-          <select id="teacher-slot-allotment-select" onchange="syncTeacherSlotInputsFromAllotment(this.value)" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </select>
-        </div>
-
-        <div class="relative flex py-1 items-center">
-          <div class="flex-grow border-t border-slate-200"></div>
-          <span class="flex-shrink mx-2 text-[10px] font-bold text-slate-400 uppercase">OR Custom Target</span>
-          <div class="flex-grow border-t border-slate-200"></div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
+      <!-- 1st Box: Unassigned Subjects with Class Dropdown -->
+      <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+        <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <i class="ph-bold ph-squares-four text-indigo-600 text-sm"></i> 1. Unassigned Class Subjects (No Teacher Allotted)
+        </span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Class</label>
-            <select id="teacher-slot-class-select" class="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50">
-              <option value="1-A">1-A</option>
-              <option value="1-B">1-B</option>
-              <option value="2-A">2-A</option>
-              <option value="2-B">2-B</option>
-              <option value="3-A">3-A</option>
-              <option value="3-B">3-B</option>
-              <option value="4-A">4-A</option>
-              <option value="4-B">4-B</option>
-              <option value="5-A">5-A</option>
-              <option value="5-B">5-B</option>
+            <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Select Class</label>
+            <select id="teacher-slot-unassigned-class" onchange="renderUnassignedSubjectsDropdown()" class="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="1-A">Class 1-A</option>
+              <option value="1-B">Class 1-B</option>
+              <option value="2-A">Class 2-A</option>
+              <option value="2-B">Class 2-B</option>
+              <option value="3-A">Class 3-A</option>
+              <option value="3-B">Class 3-B</option>
+              <option value="4-A">Class 4-A</option>
+              <option value="4-B">Class 4-B</option>
+              <option value="5-A">Class 5-A</option>
+              <option value="5-B">Class 5-B</option>
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Subject</label>
-            <input type="text" id="teacher-slot-subject-input" placeholder="e.g. MATH, ENG" class="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase border border-slate-200 bg-slate-50">
+            <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Unassigned Subject</label>
+            <select id="teacher-slot-unassigned-subject" onchange="selectUnassignedSubject(this.value)" class="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </select>
           </div>
         </div>
+      </div>
+
+      <!-- 2nd Box: Subjects Assigned to This Teacher with Color Badges -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+            <i class="ph-bold ph-user-check text-indigo-600 text-sm"></i> 2. Subjects Assigned to this Teacher
+          </span>
+          <div class="flex items-center gap-2 text-[10px] font-bold">
+            <span class="flex items-center gap-1 text-emerald-700"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Done</span>
+            <span class="flex items-center gap-1 text-amber-700"><span class="w-2 h-2 rounded-full bg-amber-500"></span>Partial</span>
+            <span class="flex items-center gap-1 text-indigo-700"><span class="w-2 h-2 rounded-full bg-indigo-500"></span>Not Started</span>
+          </div>
+        </div>
+
+        <div id="teacher-slot-assigned-chips" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-slate-50 rounded-2xl border border-slate-200">
+        </div>
+      </div>
+
+      <!-- Current Selection Target Summary -->
+      <div class="p-3 bg-indigo-50/60 rounded-xl border border-indigo-200 flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Selected Slot Assignment:</span>
+          <span class="text-xs font-extrabold text-slate-900" id="teacher-slot-target-display">None Selected</span>
+        </div>
+        <input type="hidden" id="teacher-slot-class-select">
+        <input type="hidden" id="teacher-slot-subject-input">
       </div>
 
       <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
@@ -2290,162 +2310,171 @@
       document.getElementById("teacher-slot-modal-title").textContent = `Assign Slot • ${t.name} (${t.shortName})`;
       document.getElementById("teacher-slot-modal-subtitle").textContent = `${day} • Period ${period}`;
 
-      const select = document.getElementById("teacher-slot-allotment-select");
-      select.innerHTML = "";
+      // Reset selection
+      document.getElementById("teacher-slot-class-select").value = "";
+      document.getElementById("teacher-slot-subject-input").value = "";
+      document.getElementById("teacher-slot-target-display").textContent = "Please pick from below or unassigned";
 
-      // 1. Get allotments assigned specifically to THIS teacher
-      const teacherAllots = state.allotments.filter(a => a.teacherId === teacherId);
+      // 1. Render Assigned Subjects Chips for this teacher with 3-color status
+      renderTeacherAssignedChips(teacherId, day, period);
 
-      // Section A: Pre-Allotted Subjects to this Teacher with Live Numbers
-      const allottedGroup = document.createElement("optgroup");
-      allottedGroup.label = "--- Subjects Assigned to this Teacher ---";
+      // 2. Populate the Unassigned Subjects box (Box 1)
+      renderUnassignedSubjectsDropdown();
 
-      if (teacherAllots.length === 0) {
-        const emptyOpt = document.createElement("option");
-        emptyOpt.disabled = true;
-        emptyOpt.textContent = "No subjects allotted to this teacher in Slide 2";
-        allottedGroup.appendChild(emptyOpt);
-      } else {
-        teacherAllots.forEach((a, idx) => {
-          const targetKey = `${a.class}-${a.section}`;
-          const targetTeacherLimit = parseInt(a.periods || 0);
-
-          // Count how many this specific teacher placed for this class and subject
-          let placedByThisTeacher = 0;
-          DAYS.forEach(d => {
-            PERIODS.forEach(p => {
-              const slot = state.schedules[targetKey]?.[d]?.[p];
-              if (slot && slot.teacherId === teacherId && slot.subject === a.subject) {
-                placedByThisTeacher++;
-              }
-            });
-          });
-
-          // Count total placed across all teachers for this class and subject
-          let totalPlacedInClass = 0;
-          DAYS.forEach(d => {
-            PERIODS.forEach(p => {
-              const slot = state.schedules[targetKey]?.[d]?.[p];
-              if (slot && slot.subject === a.subject) {
-                totalPlacedInClass++;
-              }
-            });
-          });
-
-          const classKey = `Class ${a.class}`;
-          const limits = state.subjectLimits[classKey] || {};
-          const maxClassLimit = limits[a.subject] !== undefined ? limits[a.subject] : 10;
-
-          const isTeacherFull = placedByThisTeacher >= targetTeacherLimit;
-          const isClassFull = totalPlacedInClass >= maxClassLimit;
-          const isBlocked = isTeacherFull || isClassFull;
-          const teacherLeft = Math.max(0, targetTeacherLimit - placedByThisTeacher);
-
-          const opt = document.createElement("option");
-          opt.value = JSON.stringify({ 
-            classKey: targetKey, 
-            subject: a.subject, 
-            teacherQuota: targetTeacherLimit, 
-            placed: placedByThisTeacher 
-          });
-
-          let statusText = `(Teacher: ${placedByThisTeacher}/${targetTeacherLimit} placed, ${teacherLeft} left | Class: ${totalPlacedInClass}/${maxClassLimit})`;
-          if (isTeacherFull) statusText += " - [Teacher Quota Full]";
-          else if (isClassFull) statusText += " - [Class Subject Limit Full]";
-
-          opt.textContent = `${isBlocked ? '🔒 ' : '✓ '}Allotted: Class ${targetKey} • ${a.subject} ${statusText}`;
-          if (isBlocked) opt.disabled = true;
-
-          allottedGroup.appendChild(opt);
-          if (idx === 0 && !isBlocked) syncTeacherSlotInputsFromAllotment(opt.value);
-        });
-      }
-      select.appendChild(allottedGroup);
-
-      // Section B: Truly Unassigned Subjects (Exclude any subject allotted to ANY teacher)
-      const unassignedGroup = document.createElement("optgroup");
-      unassignedGroup.label = "--- Unassigned Subjects (Not Allotted to Anyone) ---";
-
-      let unassignedCount = 0;
-      CLASSES.forEach(cKey => {
-        const [cNum, cSec] = cKey.split("-");
-        const classKey = `Class ${cNum}`;
-        const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
-
-        Object.keys(limits).forEach(subj => {
-          // Check if this subject is allotted to ANY teacher in this section
-          const isAllottedToAnyone = state.allotments.some(a => a.class === cNum && a.section === cSec && a.subject === subj);
-
-          // ONLY include if not allotted to any teacher
-          if (!isAllottedToAnyone) {
-            let totalPlaced = 0;
-            DAYS.forEach(d => {
-              PERIODS.forEach(p => {
-                if (state.schedules[cKey]?.[d]?.[p]?.subject === subj) totalPlaced++;
-              });
-            });
-
-            const maxLimit = limits[subj];
-            const isFull = totalPlaced >= maxLimit;
-            const remaining = Math.max(0, maxLimit - totalPlaced);
-
-            const opt = document.createElement("option");
-            opt.value = JSON.stringify({ 
-              classKey: cKey, 
-              subject: subj, 
-              teacherQuota: 99, 
-              placed: 0 
-            });
-
-            opt.textContent = `${isFull ? '🔒 ' : '+ '}Unassigned: Class ${cKey} • ${subj} (${totalPlaced}/${maxLimit} placed, ${remaining} left${isFull ? ' - Full' : ''})`;
-            if (isFull) opt.disabled = true;
-
-            unassignedGroup.appendChild(opt);
-            unassignedCount++;
-          }
-        });
-      });
-
-      if (unassignedCount > 0) {
-        select.appendChild(unassignedGroup);
-      }
-
-      // Pre-fill target class and subject from current cell if occupied
-      let existingClass = null;
-      let existingSubject = "";
+      // If current cell already has an assignment, pre-select it
       CLASSES.forEach(c => {
         const slot = state.schedules[c]?.[day]?.[period];
         if (slot && slot.teacherId === teacherId) {
-          existingClass = c;
-          existingSubject = slot.subject;
+          setTeacherSlotSelection(c, slot.subject);
         }
       });
 
-      if (existingClass) {
-        document.getElementById("teacher-slot-class-select").value = existingClass;
-        document.getElementById("teacher-slot-subject-input").value = existingSubject;
+      const modal = document.getElementById("teacher-slot-modal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function renderTeacherAssignedChips(teacherId, day, period) {
+      const container = document.getElementById("teacher-slot-assigned-chips");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const teacherAllots = state.allotments.filter(a => a.teacherId === teacherId);
+
+      if (teacherAllots.length === 0) {
+        container.innerHTML = `<span class="text-xs text-slate-400 p-2">No subjects allotted to this teacher in Slide 2.</span>`;
+        return;
       }
 
-      const modal = document.getElementById("teacher-slot-modal");
-      if (modal) {
-        modal.style.display = "flex";
+      teacherAllots.forEach(a => {
+        const targetClass = `${a.class}-${a.section}`;
+        const targetQuota = parseInt(a.periods || 0);
+
+        // Count periods placed by this teacher in this class
+        let placed = 0;
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            const slot = state.schedules[targetClass]?.[d]?.[p];
+            if (slot && slot.teacherId === teacherId && slot.subject === a.subject) {
+              placed++;
+            }
+          });
+        });
+
+        const isCurrentlyHere = state.schedules[targetClass]?.[day]?.[period]?.teacherId === teacherId &&
+                                state.schedules[targetClass]?.[day]?.[period]?.subject === a.subject;
+
+        const remaining = Math.max(0, targetQuota - placed);
+        const isCompleted = placed >= targetQuota;
+        const isNotInitiated = placed === 0;
+
+        // Choose color category:
+        // Completed: Solid Green
+        // Partially Completed: Amber / Yellow
+        // Not Initiated: Indigo / Blue
+        let colorClasses = "";
+        let iconHtml = "";
+
+        if (isCompleted) {
+          colorClasses = "bg-emerald-100 border-emerald-300 text-emerald-900";
+          iconHtml = `<i class="ph-bold ph-check-circle text-emerald-600"></i>`;
+        } else if (isNotInitiated) {
+          colorClasses = "bg-indigo-50 border-indigo-200 text-indigo-900 hover:border-indigo-400";
+          iconHtml = `<span class="w-2 h-2 rounded-full bg-indigo-500"></span>`;
+        } else {
+          colorClasses = "bg-amber-50 border-amber-300 text-amber-900 hover:border-amber-400";
+          iconHtml = `<span class="w-2 h-2 rounded-full bg-amber-500"></span>`;
+        }
+
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.disabled = isCompleted && !isCurrentlyHere;
+        chip.onclick = () => setTeacherSlotSelection(targetClass, a.subject);
+        chip.className = `px-3 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 shadow-2xs ${colorClasses} ${isCompleted && !isCurrentlyHere ? 'opacity-60 cursor-not-allowed' : ''}`;
+        
+        chip.innerHTML = `
+          ${iconHtml}
+          <span>Class ${targetClass} • ${a.subject}</span>
+          <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md ${isCompleted ? 'bg-emerald-200 text-emerald-900' : isNotInitiated ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-900'}">
+            ${placed}/${targetQuota} ${isCompleted ? '(Done)' : `(${remaining} left)`}
+          </span>
+        `;
+
+        container.appendChild(chip);
+      });
+    }
+
+    function renderUnassignedSubjectsDropdown() {
+      const classSelect = document.getElementById("teacher-slot-unassigned-class");
+      const subjSelect = document.getElementById("teacher-slot-unassigned-subject");
+      if (!classSelect || !subjSelect) return;
+
+      const selectedClass = classSelect.value;
+      const [cNum, cSec] = selectedClass.split("-");
+      const classKey = `Class ${cNum}`;
+      const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+
+      subjSelect.innerHTML = "";
+
+      let foundUnassigned = 0;
+      Object.keys(limits).forEach(subj => {
+        // Exclude ANY subject allotted to ANY teacher in this class section
+        const isAllottedToAnyone = state.allotments.some(a => a.class === cNum && a.section === cSec && a.subject === subj);
+
+        if (!isAllottedToAnyone) {
+          // Count how many are currently placed in timetable
+          let placed = 0;
+          DAYS.forEach(d => {
+            PERIODS.forEach(p => {
+              if (state.schedules[selectedClass]?.[d]?.[p]?.subject === subj) placed++;
+            });
+          });
+
+          const maxL = limits[subj];
+          const isFull = placed >= maxL;
+          const left = Math.max(0, maxL - placed);
+
+          const opt = document.createElement("option");
+          opt.value = subj;
+          opt.disabled = isFull;
+          opt.textContent = `${isFull ? '🔒 ' : '+ '}${subj} (${placed}/${maxL} placed, ${left} left${isFull ? ' - Full' : ''})`;
+          subjSelect.appendChild(opt);
+          foundUnassigned++;
+        }
+      });
+
+      if (foundUnassigned === 0) {
+        const emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = "All subjects have assigned teachers in this class";
+        subjSelect.appendChild(emptyOpt);
+      } else {
+        // Auto-select the first available unassigned subject
+        const firstActive = Array.from(subjSelect.options).find(o => !o.disabled && o.value);
+        if (firstActive) {
+          subjSelect.value = firstActive.value;
+          selectUnassignedSubject(firstActive.value);
+        }
       }
     }
 
-    function syncTeacherSlotInputsFromAllotment(jsonVal) {
-      if (!jsonVal) return;
-      try {
-        const { classKey, subject } = JSON.parse(jsonVal);
-        document.getElementById("teacher-slot-class-select").value = classKey;
-        document.getElementById("teacher-slot-subject-input").value = subject;
-      } catch (e) {}
+    function selectUnassignedSubject(subj) {
+      if (!subj) return;
+      const classVal = document.getElementById("teacher-slot-unassigned-class").value;
+      setTeacherSlotSelection(classVal, subj);
+    }
+
+    function setTeacherSlotSelection(classKey, subject) {
+      document.getElementById("teacher-slot-class-select").value = classKey;
+      document.getElementById("teacher-slot-subject-input").value = subject;
+      document.getElementById("teacher-slot-target-display").innerHTML = `
+        <span class="px-2 py-0.5 rounded-lg bg-indigo-600 text-white font-black text-xs">Class ${classKey}</span>
+        <span class="ml-1 text-slate-800 font-extrabold text-xs">${subject}</span>
+      `;
     }
 
     function closeTeacherSlotModal() {
       const modal = document.getElementById("teacher-slot-modal");
-      if (modal) {
-        modal.style.display = "none";
-      }
+      if (modal) modal.style.display = "none";
     }
 
     function saveTeacherSlotModal() {
@@ -2454,7 +2483,7 @@
       const subject = document.getElementById("teacher-slot-subject-input").value.trim().toUpperCase();
 
       if (!classKey || !subject) {
-        showNotification("Please specify both Class and Subject.", "warning");
+        showNotification("Please select a subject from Box 1 or Box 2 first.", "warning");
         return;
       }
 
@@ -2466,7 +2495,7 @@
         let placedByTeacher = 0;
         DAYS.forEach(d => {
           PERIODS.forEach(p => {
-            if (d === day && p === period) return; // exclude current slot
+            if (d === day && p === period) return; // skip current
             const slot = state.schedules[classKey]?.[d]?.[p];
             if (slot && slot.teacherId === teacherId && slot.subject === subject) {
               placedByTeacher++;
@@ -2476,19 +2505,19 @@
 
         const teacherQuota = parseInt(teacherAllot.periods || 0);
         if (placedByTeacher >= teacherQuota) {
-          showNotification(`Cannot assign: Teacher only has an allotment of ${teacherQuota} period(s) for ${subject} in Class ${classKey} (Already used: ${placedByTeacher})!`, "warning");
+          showNotification(`Cannot assign: Teacher's quota of ${teacherQuota} period(s) for ${subject} in Class ${classKey} is already full!`, "warning");
           return;
         }
       }
 
-      // 2. Strict Overall Class Limit Check
+      // 2. Strict Class Limit Check across all teachers
       const limits = state.subjectLimits[`Class ${cNum}`] || state.subjectLimits["Class 1"] || {};
       const maxAllowed = limits[subject] !== undefined ? limits[subject] : 10;
 
       let totalInClass = 0;
       DAYS.forEach(d => {
         PERIODS.forEach(p => {
-          if (d === day && p === period) return; // exclude current slot
+          if (d === day && p === period) return; // skip current
           if (state.schedules[classKey]?.[d]?.[p]?.subject === subject) {
             totalInClass++;
           }
@@ -2500,14 +2529,14 @@
         return;
       }
 
-      // Clear teacher if assigned elsewhere during this period
+      // Clear teacher if assigned elsewhere at this time
       CLASSES.forEach(c => {
         if (state.schedules[c]?.[day]?.[period]?.teacherId === teacherId) {
           state.schedules[c][day][period] = null;
         }
       });
 
-      // Save new slot
+      // Save slot
       state.schedules[classKey][day][period] = {
         subject: subject,
         teacherId: teacherId,
@@ -2529,658 +2558,6 @@
       closeTeacherSlotModal();
       refreshAllScheduleViews();
       showNotification("Cleared period for this teacher.", "info");
-    }
-
-    function runPedagogicalAudit() {
-      const container = document.getElementById("slide3-pedagogical-audit-items");
-      const badge = document.getElementById("audit-score-badge");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const targetClasses = state.selectedClassSlide3 === "ALL" ? CLASSES : [state.selectedClassSlide3];
-      let totalPassed = 0;
-      let totalChecked = 0;
-
-      state.rules.filter(r => r.active).forEach(rule => {
-        targetClasses.forEach(cls => {
-          totalChecked++;
-          let passed = true;
-          let note = `${cls}: Compliant`;
-
-          if (rule.type === "MIN_DAILY_PRESENCE") {
-            const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-            weekdays.forEach(d => {
-              let coreCount = 0;
-              PERIODS.forEach(p => {
-                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
-                if (subj && rule.subjects.includes(subj)) coreCount++;
-              });
-              if (coreCount < rule.threshold) {
-                passed = false;
-                note = `${cls}: Missing core on ${d}`;
-              }
-            });
-          } else if (rule.type === "MAX_DAILY_ACTIVITY") {
-            DAYS.forEach(d => {
-              const counts = {};
-              PERIODS.forEach(p => {
-                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
-                if (subj && rule.subjects.includes(subj)) {
-                  counts[subj] = (counts[subj] || 0) + 1;
-                  if (counts[subj] > rule.threshold) {
-                    passed = false;
-                    note = `${cls}: Duplicate ${subj} on ${d}`;
-                  }
-                }
-              });
-            });
-          } else if (rule.type === "MAX_CONTINUOUS_PERIODS") {
-            DAYS.forEach(d => {
-              let streak = 0;
-              PERIODS.forEach(p => {
-                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
-                if (subj && rule.subjects.includes(subj)) {
-                  streak++;
-                  if (streak > rule.threshold) {
-                    passed = false;
-                    note = `${cls}: ${streak} continuous core on ${d}`;
-                  }
-                } else {
-                  streak = 0;
-                }
-              });
-            });
-          }
-
-          if (passed) totalPassed++;
-
-          if (state.selectedClassSlide3 !== "ALL" || !passed) {
-            const item = document.createElement("div");
-            item.className = `p-2.5 rounded-xl border flex items-center justify-between ${passed ? 'bg-white border-emerald-200 text-slate-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`;
-            item.innerHTML = `
-              <div>
-                <div class="font-extrabold text-[11px]">${rule.title}</div>
-                <div class="text-[10px] text-slate-500">${note}</div>
-              </div>
-              <i class="ph-bold ${passed ? 'ph-check-circle text-emerald-600' : 'ph-warning text-rose-600'} text-base"></i>
-            `;
-            container.appendChild(item);
-          }
-        });
-      });
-
-      if (state.selectedClassSlide3 === "ALL" && container.children.length === 0) {
-        const item = document.createElement("div");
-        item.className = "p-2.5 rounded-xl border border-emerald-200 bg-white text-slate-800 flex items-center justify-between md:col-span-4";
-        item.innerHTML = `
-          <div>
-            <div class="font-extrabold text-xs text-emerald-800">All 10 Classes Passed All Active Constraints</div>
-            <div class="text-[10px] text-slate-500">Core cognitive presence (Mon-Fri), activity spacing, and continuous core caps are 100% satisfied across all sections.</div>
-          </div>
-          <i class="ph-bold ph-check-circle text-emerald-600 text-xl"></i>
-        `;
-        container.appendChild(item);
-      }
-
-      if (totalChecked > 0) {
-        const pct = Math.round((totalPassed / totalChecked) * 100);
-        badge.textContent = `${pct}% Compliant`;
-        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${pct === 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
-      }
-    }
-
-    function renderSlide4DayPills() {
-      const container = document.getElementById("slide4-day-pills");
-      if (!container) return;
-      container.innerHTML = "";
-
-      DAYS.forEach(d => {
-        const isSelected = d === state.selectedDaySlide4;
-        const btn = document.createElement("button");
-        btn.onclick = () => {
-          state.selectedDaySlide4 = d;
-          renderSlide4DayPills();
-          renderSlide4DayWiseClasses();
-        };
-        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
-        btn.textContent = d;
-        container.appendChild(btn);
-      });
-    }
-
-    function createDayWiseClassTableCard(day) {
-      const dayNames = { "Mon": "Monday", "Tue": "Tuesday", "Wed": "Wednesday", "Thu": "Thursday", "Fri": "Friday", "Sat": "Saturday" };
-      const fullDay = dayNames[day] || day;
-
-      const card = document.createElement("div");
-      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-3";
-
-      let tbodyRows = "";
-      CLASSES.forEach(cls => {
-        let rowHtml = `<td class="py-2.5 px-3 text-left font-extrabold text-slate-800">Class ${cls}</td>`;
-
-        PERIODS.forEach(p => {
-          if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
-          }
-
-          const slot = state.schedules[cls]?.[day]?.[p];
-          if (slot) {
-            const t = state.teachers.find(item => item.id === slot.teacherId);
-            const tName = t ? t.shortName || t.name : "N/A";
-            const conflict = isTeacherConflicted(slot.teacherId, day, p);
-
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center">
-                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold truncate">${tName}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-        });
-
-        tbodyRows += `<tr class="hover:bg-slate-50/50 transition">${rowHtml}</tr>`;
-      });
-
-      card.innerHTML = `
-        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
-            <h3 class="text-sm font-extrabold text-slate-900">${fullDay} Master Class Schedule (Click any slot to edit)</h3>
-          </div>
-          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
-            <i class="ph-bold ph-printer text-xs"></i>
-            <span>Print ${day}</span>
-          </button>
-        </div>
-
-        <table class="w-full border-collapse text-center text-xs">
-          <thead>
-            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
-              <th class="py-2.5 px-3 text-left w-24">Class</th>
-              <th class="py-2.5 px-2">P1</th>
-              <th class="py-2.5 px-2">P2</th>
-              <th class="py-2.5 px-2">P3</th>
-              <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
-              <th class="py-2.5 px-2">P5</th>
-              <th class="py-2.5 px-2">P6</th>
-              <th class="py-2.5 px-2">P7</th>
-              <th class="py-2.5 px-2">P8</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            ${tbodyRows}
-          </tbody>
-        </table>
-      `;
-
-      return card;
-    }
-
-    function renderSlide4DayWiseClasses() {
-      const container = document.getElementById("slide4-tables-container");
-      if (!container) return;
-      container.innerHTML = "";
-      container.appendChild(createDayWiseClassTableCard(state.selectedDaySlide4));
-    }
-
-    function renderSlide5DayPills() {
-      const container = document.getElementById("slide5-day-pills");
-      if (!container) return;
-      container.innerHTML = "";
-
-      DAYS.forEach(d => {
-        const isSelected = d === state.selectedDaySlide5;
-        const btn = document.createElement("button");
-        btn.onclick = () => {
-          state.selectedDaySlide5 = d;
-          renderSlide5DayPills();
-          renderSlide5DayWiseTeachers();
-          renderSubstitutionAssistant();
-          const dayLbl = document.getElementById("slide5-current-day-label");
-          if (dayLbl) dayLbl.textContent = d;
-        };
-        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
-        btn.textContent = d;
-        container.appendChild(btn);
-      });
-    }
-
-    function renderSlide5SubPeriodPills() {
-      const container = document.getElementById("slide5-sub-period-pills");
-      if (!container) return;
-      container.innerHTML = "";
-
-      PERIODS.forEach(p => {
-        const isSelected = p === state.subPeriodSlide5;
-        const btn = document.createElement("button");
-        btn.onclick = () => {
-          state.subPeriodSlide5 = p;
-          renderSlide5SubPeriodPills();
-          renderSubstitutionAssistant();
-        };
-        btn.className = `px-2 py-0.5 rounded-md text-[11px] font-extrabold transition ${isSelected ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-emerald-900 border border-emerald-200'}`;
-        btn.textContent = `P${p}`;
-        container.appendChild(btn);
-      });
-    }
-
-    function renderSubstitutionAssistant() {
-      const container = document.getElementById("slide5-free-teachers-chips");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const day = state.selectedDaySlide5;
-      const period = state.subPeriodSlide5;
-
-      const freeTeachers = [];
-      state.teachers.forEach(t => {
-        const isSecondaryBusy = (t.secondaryBusySlots && t.secondaryBusySlots[day] && t.secondaryBusySlots[day].includes(period));
-        let isBusy = isSecondaryBusy;
-
-        if (!isBusy) {
-          CLASSES.forEach(c => {
-            if (state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
-              isBusy = true;
-            }
-          });
-        }
-        if (!isBusy) freeTeachers.push(t);
-      });
-
-      if (freeTeachers.length === 0) {
-        container.innerHTML = `<span class="text-xs text-rose-700 font-bold p-1">No free staff available during Period ${period} on ${day}.</span>`;
-        return;
-      }
-
-      freeTeachers.forEach(t => {
-        const chip = document.createElement("div");
-        chip.className = "px-2.5 py-1 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-1.5 shadow-xs";
-        chip.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>${t.name} (${t.shortName})</span>
-        `;
-        container.appendChild(chip);
-      });
-    }
-
-    function renderSlide5DayWiseTeachers() {
-      const tbody = document.getElementById("slide5-teachers-tbody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      const day = state.selectedDaySlide5;
-
-      state.teachers.forEach(t => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50/50 transition";
-
-        let rowHtml = `
-          <td class="py-2.5 px-3 text-left font-extrabold text-slate-800">
-            <div>${t.name}</div>
-            <div class="text-[10px] text-slate-400 font-semibold">${t.isClassTeacher ? `CT (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT'}</div>
-          </td>
-        `;
-
-        let dailyCount = 0;
-
-        PERIODS.forEach(p => {
-          if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
-          }
-
-          const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
-          let teachingSlots = [];
-          CLASSES.forEach(c => {
-            const slot = state.schedules[c]?.[day]?.[p];
-            if (slot && slot.teacherId === t.id) {
-              teachingSlots.push({ class: c, subject: slot.subject });
-            }
-          });
-
-          if (isSecBusy) {
-            rowHtml += `
-              <td class="p-1">
-                <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
-                  <div class="font-extrabold text-[11px]">Secondary</div>
-                  <div class="text-[10px] text-rose-500 font-semibold">High School</div>
-                </div>
-              </td>
-            `;
-          } else if (teachingSlots.length > 0) {
-            dailyCount += teachingSlots.length;
-            const hasConflict = teachingSlots.length > 1;
-
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
-                  <div class="font-extrabold text-[11px]">${teachingSlots.map(s => s.class).join(", ")}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold">${teachingSlots.map(s => s.subject).join(", ")}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-        });
-
-        rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dailyCount} P</td>`;
-        tr.innerHTML = rowHtml;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderSlide6TeacherSelect() {
-      const select = document.getElementById("slide6-teacher-select");
-      if (!select) return;
-      select.innerHTML = "";
-
-      state.teachers.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.id;
-        opt.textContent = `${t.name} (${t.shortName})`;
-        if (t.id === state.selectedTeacherSlide6) opt.selected = true;
-        select.appendChild(opt);
-      });
-    }
-
-    function renderSlide6TeacherGrid() {
-      const select = document.getElementById("slide6-teacher-select");
-      if (select) state.selectedTeacherSlide6 = select.value;
-
-      const t = state.teachers.find(item => item.id === state.selectedTeacherSlide6);
-      if (!t) return;
-
-      document.getElementById("slide6-teacher-display-name").textContent = `${t.name} (${t.shortName})`;
-      document.getElementById("slide6-teacher-role-badge").textContent = t.isClassTeacher ? `Class Teacher: ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
-
-      const tbody = document.getElementById("slide6-teacher-grid-body");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      let totalWeeklyLoad = 0;
-
-      DAYS.forEach(d => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50/50 transition";
-
-        let rowHtml = `<td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
-        let dayCount = 0;
-
-        PERIODS.forEach(p => {
-          if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
-          }
-
-          const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
-          let assignedSlots = [];
-          CLASSES.forEach(c => {
-            const slot = state.schedules[c]?.[d]?.[p];
-            if (slot && slot.teacherId === t.id) {
-              assignedSlots.push({ class: c, subject: slot.subject });
-            }
-          });
-
-          if (isSecBusy) {
-            rowHtml += `
-              <td class="p-1">
-                <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
-                  <div class="font-extrabold text-[11px]">Secondary</div>
-                  <div class="text-[10px] text-rose-500 font-semibold">High School</div>
-                </div>
-              </td>
-            `;
-          } else if (assignedSlots.length > 0) {
-            dayCount += assignedSlots.length;
-            totalWeeklyLoad += assignedSlots.length;
-            const conflict = assignedSlots.length > 1;
-
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
-                  <div class="font-extrabold text-[11px]">${assignedSlots.map(s => s.class).join(", ")}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold">${assignedSlots.map(s => s.subject).join(", ")}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-        });
-
-        rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dayCount} P</td>`;
-        tr.innerHTML = rowHtml;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById("slide6-teacher-total-load").textContent = `${totalWeeklyLoad} Periods`;
-    }
-
-    function openManageLimitsModal() {
-      const modal = document.getElementById("manage-limits-modal");
-      if (modal) modal.style.display = "flex";
-      renderLimitsGrid();
-      toggleMultiClassSubjectTargetCheckboxes();
-    }
-
-    function closeManageLimitsModal() {
-      const modal = document.getElementById("manage-limits-modal");
-      if (modal) modal.style.display = "none";
-      renderSlide2Allotments();
-      renderSlide2WorkloadStatus();
-    }
-
-    function renderLimitsGrid() {
-      const container = document.getElementById("modal-limits-grid");
-      const activeClass = document.getElementById("modal-limits-class-select").value;
-      if (!container) return;
-      container.innerHTML = "";
-
-      const limits = state.subjectLimits[activeClass] || {};
-      Object.keys(limits).forEach(subj => {
-        const item = document.createElement("div");
-        item.className = "p-2.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-2 shadow-2xs";
-        item.innerHTML = `
-          <span class="text-xs font-extrabold text-slate-800">${subj}</span>
-          <div class="flex items-center gap-2">
-            <input type="number" min="1" max="15" value="${limits[subj]}" onchange="updateSingleSubjectLimit('${activeClass}', '${subj}', parseInt(this.value) || 1)" class="w-16 px-2 py-1 rounded-lg text-xs font-bold border border-slate-200 text-center">
-            <button onclick="deleteSubjectFromClass('${activeClass}', '${subj}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition">
-              <i class="ph-bold ph-trash text-xs"></i>
-            </button>
-          </div>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function updateSingleSubjectLimit(classKey, subj, val) {
-      if (!state.subjectLimits[classKey]) state.subjectLimits[classKey] = {};
-      state.subjectLimits[classKey][subj] = val;
-    }
-
-    function deleteSubjectFromClass(classKey, subj) {
-      if (state.subjectLimits[classKey] && state.subjectLimits[classKey][subj]) {
-        delete state.subjectLimits[classKey][subj];
-        renderLimitsGrid();
-        showNotification(`Removed ${subj} from ${classKey}`, "info");
-      }
-    }
-
-    function copyLimitsToAllClasses() {
-      const activeClass = document.getElementById("modal-limits-class-select").value;
-      const sourceLimits = state.subjectLimits[activeClass];
-      ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5"].forEach(c => {
-        state.subjectLimits[c] = JSON.parse(JSON.stringify(sourceLimits));
-      });
-      showNotification(`Replicated ${activeClass} limits to all Classes (1 to 5)!`, "success");
-    }
-
-    function applyLimitsToSelectedClasses() {
-      const activeClass = document.getElementById("modal-limits-class-select").value;
-      const sourceLimits = state.subjectLimits[activeClass];
-      let appliedCount = 0;
-
-      for (let i = 1; i <= 5; i++) {
-        const chk = document.getElementById(`copy-target-${i}`);
-        if (chk && chk.checked) {
-          const targetClass = `Class ${i}`;
-          if (targetClass !== activeClass) {
-            state.subjectLimits[targetClass] = JSON.parse(JSON.stringify(sourceLimits));
-            appliedCount++;
-          }
-        }
-      }
-
-      if (appliedCount > 0) {
-        showNotification(`Copied ${activeClass} limits to ${appliedCount} selected classes!`, "success");
-      } else {
-        showNotification("Please select at least one different target class.", "warning");
-      }
-    }
-
-    function toggleMultiClassSubjectTargetCheckboxes() {
-      const mode = document.getElementById("new-subj-apply-mode").value;
-      const container = document.getElementById("new-subj-multi-class-container");
-      if (container) {
-        container.classList.toggle("hidden", mode !== "multiple");
-      }
-    }
-
-    function addNewSubjectWithMultiClassOption() {
-      const nameInput = document.getElementById("new-subj-name-input");
-      const limitInput = document.getElementById("new-subj-limit-input");
-      const mode = document.getElementById("new-subj-apply-mode").value;
-      const currentClass = document.getElementById("modal-limits-class-select").value;
-
-      const subjName = nameInput.value.trim().toUpperCase();
-      const limitVal = parseInt(limitInput.value) || 4;
-
-      if (!subjName) {
-        showNotification("Please enter a subject name.", "warning");
-        return;
-      }
-
-      let targets = [];
-      if (mode === "current") {
-        targets = [currentClass];
-      } else if (mode === "all") {
-        targets = ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5"];
-      } else {
-        for (let i = 1; i <= 5; i++) {
-          const chk = document.getElementById(`add-subj-target-${i}`);
-          if (chk && chk.checked) targets.push(`Class ${i}`);
-        }
-      }
-
-      if (targets.length === 0) {
-        showNotification("Please select at least one class to apply this subject.", "warning");
-        return;
-      }
-
-      targets.forEach(c => {
-        if (!state.subjectLimits[c]) state.subjectLimits[c] = {};
-        state.subjectLimits[c][subjName] = limitVal;
-      });
-
-      nameInput.value = "";
-      renderLimitsGrid();
-      showNotification(`Added ${subjName} (Max: ${limitVal}) to ${targets.join(", ")}`, "success");
-    }
-
-    function openRulesModal() {
-      const modal = document.getElementById("rules-modal");
-      if (modal) modal.style.display = "flex";
-      renderRulesList();
-    }
-
-    function closeRulesModal() {
-      const modal = document.getElementById("rules-modal");
-      if (modal) modal.style.display = "none";
-      runPedagogicalAudit();
-    }
-
-    function renderRulesList() {
-      const container = document.getElementById("rules-list-container");
-      if (!container) return;
-      container.innerHTML = "";
-
-      state.rules.forEach((r) => {
-        const item = document.createElement("div");
-        item.className = "p-3 rounded-2xl border border-slate-200 bg-white flex items-center justify-between gap-3 shadow-2xs";
-        item.innerHTML = `
-          <div class="flex items-center gap-3">
-            <input type="checkbox" ${r.active ? 'checked' : ''} onchange="toggleRuleActive('${r.id}', this.checked)" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
-            <div>
-              <div class="text-xs font-extrabold text-slate-800">${r.title}</div>
-              <div class="text-[10px] text-slate-400 font-semibold">${r.subjects.length > 0 ? `Target: ${r.subjects.join(", ")}` : 'School-Wide Constraint'}</div>
-            </div>
-          </div>
-          <button onclick="deleteCustomRule('${r.id}')" class="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition">
-            <i class="ph-bold ph-trash text-xs"></i>
-          </button>
-        `;
-        container.appendChild(item);
-      });
-    }
-
-    function toggleRuleActive(ruleId, isActive) {
-      const r = state.rules.find(item => item.id === ruleId);
-      if (r) {
-        r.active = isActive;
-      }
-    }
-
-    function deleteCustomRule(ruleId) {
-      state.rules = state.rules.filter(r => r.id !== ruleId);
-      renderRulesList();
-      showNotification("Rule deleted.", "info");
-    }
-
-    function addNewCustomRule() {
-      const title = document.getElementById("new-rule-title").value.trim();
-      const subjs = document.getElementById("new-rule-subjects").value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-
-      if (!title) {
-        showNotification("Please enter a rule title.", "warning");
-        return;
-      }
-
-      state.rules.push({
-        id: "r_" + Date.now(),
-        title: title,
-        type: "MAX_DAILY_ACTIVITY",
-        subjects: subjs,
-        threshold: 1,
-        active: true
-      });
-
-      document.getElementById("new-rule-title").value = "";
-      document.getElementById("new-rule-subjects").value = "";
-      renderRulesList();
-      showNotification("Custom pedagogical rule added.", "success");
     }
 
     function resetRulesToKVSDefaults() {
@@ -3969,7 +3346,7 @@
             }
           });
 
-          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
+          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 

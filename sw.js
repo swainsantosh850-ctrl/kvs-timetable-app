@@ -1,4 +1,4 @@
-const CACHE_NAME = "kvs-timetable-cache-v1";
+const CACHE_NAME = "kvs-timetable-cache-v7";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",
@@ -17,7 +17,10 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
+          if (key !== CACHE_NAME) {
+            console.log("Purging legacy cache:", key);
+            return caches.delete(key);
+          }
         })
       )
     )
@@ -26,11 +29,25 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Pass Firebase and live cloud requests directly to network
-  if (event.request.url.includes("firebasedatabase.app") || event.request.url.includes("firebase")) {
+  // Pass Firebase and live cloud requests directly to network without caching
+  if (
+    event.request.url.includes("firebasedatabase.app") ||
+    event.request.url.includes("firebase") ||
+    event.request.method !== "GET"
+  ) {
     return;
   }
+
+  // Network-first strategy with cache fallback
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

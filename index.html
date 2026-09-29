@@ -36,7 +36,8 @@
 
     @media print {
       body { background: white !important; padding: 0 !important; color: black !important; }
-      .no-print, header, nav, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal { display: none !important; }
+      .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal { display: none !important; }
+      #printable-report-area { display: block !important; }
       .print-page { 
         page-break-after: always !important; 
         break-after: page !important; 
@@ -844,6 +845,60 @@
           Save & Close Settings
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Print Preview Modal (Fix for Review & Print) -->
+  <div id="print-preview-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-3 sm:p-6 no-print">
+    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-5xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-sm">
+            <i class="ph-bold ph-printer"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-slate-900" id="print-modal-title">Timetable Print Document</h3>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span id="print-modal-sheet-count" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 border border-indigo-200">1 Sheet</span>
+              <span class="text-xs text-slate-500 font-medium">Official KVS Primary Format • Ready to Print / Save PDF</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="executeBrowserPrint()" class="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition flex items-center gap-1.5">
+            <i class="ph-bold ph-printer text-sm"></i>
+            <span>Print / Save PDF</span>
+          </button>
+          <button onclick="openPrintInNewWindow()" class="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-100 text-slate-700 transition" title="Open in dedicated tab">
+            <i class="ph-bold ph-arrow-square-out text-sm"></i>
+          </button>
+          <button onclick="closePrintPreviewModal()" class="w-9 h-9 rounded-xl hover:bg-slate-200/70 text-slate-500 hover:text-slate-800 flex items-center justify-center transition">
+            <i class="ph-bold ph-x text-base"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Multi-Sheet Navigation Links (Visible when multiple sheets exist) -->
+      <div id="print-modal-sheet-nav" class="hidden px-6 py-2 bg-indigo-50/70 border-b border-indigo-100 items-center gap-2 overflow-x-auto shrink-0">
+        <span class="text-[11px] font-black uppercase tracking-wider text-indigo-900 shrink-0">Jump To Sheet:</span>
+        <div id="print-modal-sheet-links" class="flex items-center gap-1.5 min-w-max"></div>
+      </div>
+
+      <!-- Document Preview Scroll View -->
+      <div class="p-6 overflow-y-auto flex-1 bg-slate-100/60 space-y-6" id="print-modal-content">
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50 text-xs shrink-0">
+        <span class="text-slate-500 font-semibold">Tip: Select "Landscape" in your browser print settings for best fit.</span>
+        <button onclick="closePrintPreviewModal()" class="px-5 py-2 rounded-xl font-bold border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
+          Close Preview
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -1899,7 +1954,6 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-1.5">
-            <!-- Completed Subjects (Green) -->
             ${completedList.map(item => `
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
                 <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
@@ -1907,7 +1961,6 @@
               </span>
             `).join("")}
 
-            <!-- Pending Subjects (Yellow/Amber) -->
             ${pendingList.map(item => `
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
                 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
@@ -1915,7 +1968,6 @@
               </span>
             `).join("")}
 
-            <!-- Unassigned to Teacher in Slide 2 (Orange Dashed) -->
             ${unassignedList.map(item => `
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
                 <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
@@ -3093,102 +3145,205 @@
       showNotification("Custom pedagogical rule added.", "success");
     }
 
-    function runPedagogicalAudit() {
-      const container = document.getElementById("slide3-pedagogical-audit-items");
-      const badge = document.getElementById("audit-score-badge");
-      if (!container) return;
-      container.innerHTML = "";
+    function resetRulesToKVSDefaults() {
+      state.rules = [
+        { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
+        { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
+        { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 3, active: true },
+        { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
+        { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
+      ];
+      renderRulesList();
+      showNotification("Reset to standard KVS rules!", "info");
+    }
 
-      const targetClasses = state.selectedClassSlide3 === "ALL" ? CLASSES : [state.selectedClassSlide3];
-      let totalPassed = 0;
-      let totalChecked = 0;
+    function auditGlobalCollisions() {
+      const banner = document.getElementById("global-conflict-banner");
+      const details = document.getElementById("global-conflict-details");
+      if (!banner) return;
 
-      state.rules.filter(r => r.active).forEach(rule => {
-        targetClasses.forEach(cls => {
-          totalChecked++;
-          let passed = true;
-          let note = `${cls}: Compliant`;
-
-          if (rule.type === "MIN_DAILY_PRESENCE") {
-            const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-            weekdays.forEach(d => {
-              let coreCount = 0;
-              PERIODS.forEach(p => {
-                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
-                if (subj && rule.subjects.includes(subj)) coreCount++;
-              });
-              if (coreCount < rule.threshold) {
-                passed = false;
-                note = `${cls}: Missing core on ${d}`;
+      const conflicts = [];
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.teachers.forEach(t => {
+            const classesTeaching = [];
+            CLASSES.forEach(c => {
+              if (state.schedules[c]?.[d]?.[p]?.teacherId === t.id) {
+                classesTeaching.push(c);
               }
             });
-          } else if (rule.type === "MAX_DAILY_ACTIVITY") {
-            DAYS.forEach(d => {
-              const counts = {};
-              PERIODS.forEach(p => {
-                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
-                if (subj && rule.subjects.includes(subj)) {
-                  counts[subj] = (counts[subj] || 0) + 1;
-                  if (counts[subj] > rule.threshold) {
-                    passed = false;
-                    note = `${cls}: Duplicate ${subj} on ${d}`;
-                  }
-                }
-              });
-            });
-          } else if (rule.type === "MAX_CONTINUOUS_PERIODS") {
-            DAYS.forEach(d => {
-              let streak = 0;
-              PERIODS.forEach(p => {
-                const subj = state.schedules[cls]?.[d]?.[p]?.subject;
-                if (subj && rule.subjects.includes(subj)) {
-                  streak++;
-                  if (streak > rule.threshold) {
-                    passed = false;
-                    note = `${cls}: ${streak} continuous core on ${d}`;
-                  }
-                } else {
-                  streak = 0;
-                }
-              });
-            });
-          }
-
-          if (passed) totalPassed++;
-
-          if (state.selectedClassSlide3 !== "ALL" || !passed) {
-            const item = document.createElement("div");
-            item.className = `p-2.5 rounded-xl border flex items-center justify-between ${passed ? 'bg-white border-emerald-200 text-slate-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`;
-            item.innerHTML = `
-              <div>
-                <div class="font-extrabold text-[11px]">${rule.title}</div>
-                <div class="text-[10px] text-slate-500">${note}</div>
-              </div>
-              <i class="ph-bold ${passed ? 'ph-check-circle text-emerald-600' : 'ph-warning text-rose-600'} text-base"></i>
-            `;
-            container.appendChild(item);
-          }
+            if (classesTeaching.length > 1) {
+              conflicts.push(`${t.name} on ${d} P${p} (${classesTeaching.join(" & ")})`);
+            }
+          });
         });
       });
 
-      if (state.selectedClassSlide3 === "ALL" && container.children.length === 0) {
-        const item = document.createElement("div");
-        item.className = "p-2.5 rounded-xl border border-emerald-200 bg-white text-slate-800 flex items-center justify-between md:col-span-4";
-        item.innerHTML = `
-          <div>
-            <div class="font-extrabold text-xs text-emerald-800">All 10 Classes Passed All Active Constraints</div>
-            <div class="text-[10px] text-slate-500">Core cognitive presence (Mon-Fri), activity spacing, and continuous core caps are 100% satisfied across all sections.</div>
-          </div>
-          <i class="ph-bold ph-check-circle text-emerald-600 text-xl"></i>
-        `;
-        container.appendChild(item);
+      if (conflicts.length > 0) {
+        banner.classList.remove("hidden");
+        details.textContent = conflicts.slice(0, 3).join("; ") + (conflicts.length > 3 ? ` and ${conflicts.length - 3} more.` : ".");
+      } else {
+        banner.classList.add("hidden");
+      }
+    }
+
+    function autoGenerateSingleClass(targetClass) {
+      if (state.isViewOnly) return;
+      const [cNum, cSec] = targetClass.split("-");
+      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+
+      if (classAllots.length === 0) {
+        showNotification(`No teacher allotments found for ${targetClass} in Slide 2.`, "warning");
+        return;
       }
 
-      if (totalChecked > 0) {
-        const pct = Math.round((totalPassed / totalChecked) * 100);
-        badge.textContent = `${pct}% Compliant`;
-        badge.className = `px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${pct === 100 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+      let taskPool = [];
+      classAllots.forEach(a => {
+        for (let i = 0; i < a.periods; i++) {
+          taskPool.push({ subject: a.subject, teacherId: a.teacherId });
+        }
+      });
+
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.schedules[targetClass][d][p] = null;
+        });
+      });
+
+      let taskIdx = 0;
+      for (let p of PERIODS) {
+        for (let d of DAYS) {
+          if (taskIdx >= taskPool.length) break;
+
+          let chosenIdx = -1;
+          for (let i = 0; i < taskPool.length; i++) {
+            const candidate = taskPool[i];
+            if (candidate.assigned) continue;
+
+            let teacherBusy = false;
+            const candTeacher = state.teachers.find(t => t.id === candidate.teacherId);
+            
+            if (candTeacher?.secondaryBusySlots?.[d]?.includes(p)) {
+              teacherBusy = true;
+            }
+
+            if (!teacherBusy) {
+              CLASSES.forEach(other => {
+                if (other !== targetClass && state.schedules[other]?.[d]?.[p]?.teacherId === candidate.teacherId) {
+                  teacherBusy = true;
+                }
+              });
+            }
+
+            if (!teacherBusy) {
+              chosenIdx = i;
+              break;
+            }
+          }
+
+          if (chosenIdx !== -1) {
+            const t = taskPool[chosenIdx];
+            t.assigned = true;
+            state.schedules[targetClass][d][p] = {
+              subject: t.subject,
+              teacherId: t.teacherId,
+              isBlock: false
+            };
+            taskIdx++;
+          }
+        }
       }
+
+      refreshAllScheduleViews();
+      showNotification(`Schedule generated for Class ${targetClass}!`, "success");
+    }
+
+    function autoGenerateFullTimetable() {
+      showNotification("Generating clash-free timetable for all 10 sections...", "info");
+      CLASSES.forEach(c => autoGenerateSingleClass(c));
+      goToSlide(3);
+      showNotification("All 10 Class Timetables generated successfully!", "success");
+    }
+
+    function clearSingleClassSchedule(cls, notify = true) {
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.schedules[cls][d][p] = null;
+        });
+      });
+      if (notify) {
+        refreshAllScheduleViews();
+        showNotification(`Cleared schedule for Class ${cls}.`, "info");
+      }
+    }
+
+    function exportAllToExcel() {
+      try {
+        const wb = XLSX.utils.book_new();
+
+        CLASSES.forEach(cls => {
+          const rows = [];
+          rows.push(["Day", "P1", "P2", "P3", "P4", "Recess", "P5", "P6", "P7", "P8"]);
+          DAYS.forEach(d => {
+            const r = [d];
+            PERIODS.forEach(p => {
+              if (p === 5) r.push("Break");
+              const slot = state.schedules[cls]?.[d]?.[p];
+              if (slot) {
+                const t = state.teachers.find(item => item.id === slot.teacherId);
+                r.push(`${slot.subject} (${t ? t.shortName : ''})`);
+              } else {
+                r.push("-");
+              }
+            });
+            rows.push(r);
+          });
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, `Class_${cls}`);
+        });
+
+        const allotRows = [["Teacher Name", "Short Name", "Role", "Class", "Section", "Subject", "Periods/Wk"]];
+        state.teachers.forEach(t => {
+          const tAllots = state.allotments.filter(a => a.teacherId === t.id);
+          tAllots.forEach(a => {
+            allotRows.push([t.name, t.shortName, t.isClassTeacher ? "CT" : t.isCommon ? "Specialist" : "PRT", a.class, a.section, a.subject, a.periods]);
+          });
+        });
+        const wsAllot = XLSX.utils.aoa_to_sheet(allotRows);
+        XLSX.utils.book_append_sheet(wb, wsAllot, "Allotments");
+
+        const cleanSchoolName = state.schoolInfo.name.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 25);
+        XLSX.writeFile(wb, `${cleanSchoolName}_Timetable_${state.schoolInfo.session}.xlsx`);
+        showNotification(`Exported full timetable for ${state.schoolInfo.name} to Excel!`, "success");
+      } catch (err) {
+        showNotification("Failed to export Excel file.", "warning");
+      }
+    }
+
+    let activePrintHtml = "";
+
+    function renderOfficialHeader(title, subtitle = "") {
+      const schoolName = state.schoolInfo?.name || "KENDRIYA VIDYALAYA";
+      const session = state.schoolInfo?.session || "2026-27";
+      return `
+        <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px;">
+          <div style="font-size: 16px; font-weight: 900; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">${schoolName}</div>
+          <div style="font-size: 11px; font-weight: 700; color: #475569; margin-top: 2px;">PRIMARY SECTION • ACADEMIC SESSION ${session}</div>
+          <div style="margin-top: 8px; display: inline-block; padding: 3px 12px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${title}</div>
+          ${subtitle ? `<div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderOfficialFooter(showClassTeacher = true) {
+      return `
+        <div style="margin-top: 24px; padding-top: 16px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #1e293b;">
+          ${showClassTeacher ? '<div>________________________<br>Class Teacher Signature</div>' : '<div>________________________<br>Prepared By (PRT)</div>'}
+          <div style="text-align: center;">________________________<br>Timetable In-Charge</div>
+          <div style="text-align: center;">________________________<br>HM / Vice-Principal</div>
+          <div style="text-align: right;">________________________<br>Principal Signature</div>
+        </div>
+      `;
     }
 
     function printTeachersReport() {
@@ -3769,7 +3924,7 @@
             } else if (assigned.length > 0) {
               dayCount += assigned.length;
               totalWeekly += assigned.length;
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
@@ -3881,12 +4036,18 @@
     }
 
     function executeBrowserPrint() {
-      window.focus();
-      try {
-        window.print();
-      } catch (err) {
-        openPrintInNewWindow();
+      const printableArea = document.getElementById("printable-report-area");
+      if (printableArea && activePrintHtml) {
+        printableArea.innerHTML = activePrintHtml;
       }
+      window.focus();
+      setTimeout(() => {
+        try {
+          window.print();
+        } catch (err) {
+          openPrintInNewWindow();
+        }
+      }, 150);
     }
 
     function openPrintInNewWindow() {
@@ -3900,7 +4061,7 @@
         <!DOCTYPE html>
         <html>
         <head>
-          <title>${document.getElementById("print-modal-title").textContent}</title>
+          <title>${document.getElementById("print-modal-title") ? document.getElementById("print-modal-title").textContent : "Timetable Print Document"}</title>
           <style>
             body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 12px; color: #0f172a; margin: 0; background: white; }
             table { width: 100%; border-collapse: collapse; margin-top: 8px; }
@@ -3925,7 +4086,7 @@
         <body>
           <div class="no-print" style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 8px;">
             <div>
-              <strong style="color: #1e1b4b; font-size: 13px;">${document.getElementById("print-modal-title").textContent}</strong>
+              <strong style="color: #1e1b4b; font-size: 13px;">${document.getElementById("print-modal-title") ? document.getElementById("print-modal-title").textContent : "Timetable Print Document"}</strong>
               <div style="font-size: 11px; color: #64748b;">Ready to print or save as 1 combined PDF document with separate pages.</div>
             </div>
             <div style="display: flex; gap: 8px;">

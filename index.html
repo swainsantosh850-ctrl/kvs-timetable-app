@@ -2017,7 +2017,7 @@
       const classKey = `Class ${cNum}`;
       const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
 
-      // 1. Calculate how many periods each subject already has scheduled
+      // 1. Calculate how many periods each subject currently occupies in this class
       const scheduledCounts = {};
       DAYS.forEach(d => {
         PERIODS.forEach(p => {
@@ -2028,48 +2028,82 @@
         });
       });
 
-      // 2. Pre-Allotted Subjects from Slide 2
-      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+      // 2. Consolidate allotments for this class by subject
+      const subjectMap = {};
+      state.allotments
+        .filter(a => a.class === cNum && a.section === cSec)
+        .forEach(a => {
+          if (!subjectMap[a.subject]) {
+            subjectMap[a.subject] = {
+              subject: a.subject,
+              target: 0,
+              teacherId: a.teacherId
+            };
+          }
+          subjectMap[a.subject].target += parseInt(a.periods || 0);
+        });
 
-      classAllots.forEach(a => {
-        const scheduled = scheduledCounts[a.subject] || 0;
-        const target = a.periods;
-        const isComplete = scheduled >= target;
-
-        const badge = document.createElement("button");
-        badge.onclick = () => {
-          document.getElementById("slot-modal-subject-input").value = a.subject;
-          document.getElementById("slot-modal-teacher-id").value = a.teacherId;
-          renderModalTeacherAvailability();
-        };
-        badge.className = `px-2.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 ${isComplete ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400'}`;
-        badge.innerHTML = `
-          <span>${a.subject}</span>
-          <span class="text-[10px] font-black ${isComplete ? 'text-emerald-600' : 'text-indigo-600'}">${scheduled}/${target}</span>
-        `;
-        container.appendChild(badge);
+      // Also include any subjects from classLimits not yet allotted
+      Object.keys(classLimits).forEach(subj => {
+        if (!subjectMap[subj]) {
+          subjectMap[subj] = {
+            subject: subj,
+            target: parseInt(classLimits[subj] || 0),
+            teacherId: ""
+          };
+        } else {
+          // Cap target at the defined limit if higher
+          const limitCap = classLimits[subj];
+          if (limitCap !== undefined) {
+            subjectMap[subj].target = Math.min(subjectMap[subj].target, limitCap);
+          }
+        }
       });
 
-      // 3. Unallotted subjects from Class Limits that can also be selected on the fly
-      Object.keys(classLimits).forEach(subj => {
-        const isPreAllotted = classAllots.some(a => a.subject === subj);
-        if (!isPreAllotted) {
-          const scheduled = scheduledCounts[subj] || 0;
-          const limit = classLimits[subj];
-          const isComplete = scheduled >= limit;
+      // 3. Render Badges
+      const currentSlot = state.schedules[cls]?.[currentSlotContext.day]?.[currentSlotContext.period];
+      const currentSlotSubject = currentSlot ? currentSlot.subject : null;
 
-          const unassignedBadge = document.createElement("button");
-          unassignedBadge.onclick = () => {
-            document.getElementById("slot-modal-subject-input").value = subj;
+      Object.values(subjectMap).forEach(item => {
+        let currentAssigned = scheduledCounts[item.subject] || 0;
+        
+        // If this slot already contains this subject, don't count itself against the quota
+        if (currentSlotSubject === item.subject) {
+          currentAssigned = Math.max(0, currentAssigned - 1);
+        }
+
+        const isComplete = currentAssigned >= item.target;
+
+        const badge = document.createElement("button");
+        badge.type = "button";
+
+        if (isComplete) {
+          // Completed: Solid Green, marked with a checkmark, disabled from being clicked
+          badge.disabled = true;
+          badge.className = "px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 border border-emerald-300 text-emerald-800 opacity-60 cursor-not-allowed flex items-center gap-1.5";
+          badge.innerHTML = `
+            <i class="ph-bold ph-check text-xs text-emerald-600"></i>
+            <span>${item.subject}</span>
+            <span class="text-[10px] font-black text-emerald-700 bg-white/70 px-1.5 py-0.5 rounded-md">${currentAssigned + (currentSlotSubject === item.subject ? 1 : 0)}/${item.target} (Full)</span>
+          `;
+        } else {
+          // Pending: Clickable with active remaining counter
+          const remaining = item.target - currentAssigned;
+          badge.onclick = () => {
+            document.getElementById("slot-modal-subject-input").value = item.subject;
+            if (item.teacherId) {
+              document.getElementById("slot-modal-teacher-id").value = item.teacherId;
+            }
             renderModalTeacherAvailability();
           };
-          unassignedBadge.className = `px-2.5 py-1.5 rounded-xl text-xs font-bold border border-dashed transition flex items-center gap-1.5 ${isComplete ? 'bg-slate-100 border-slate-300 text-slate-500' : 'bg-amber-50/70 border-amber-300 text-amber-900 hover:border-amber-400'}`;
-          unassignedBadge.innerHTML = `
-            <span>+ ${subj}</span>
-            <span class="text-[10px] font-black text-amber-700">${scheduled}/${limit}</span>
+          badge.className = "px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-800 hover:border-indigo-500 hover:bg-indigo-50/50 transition flex items-center gap-1.5 shadow-2xs";
+          badge.innerHTML = `
+            <span>${item.subject}</span>
+            <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">${currentAssigned}/${item.target} (${remaining} left)</span>
           `;
-          container.appendChild(unassignedBadge);
         }
+
+        container.appendChild(badge);
       });
     }
 
@@ -2135,6 +2169,37 @@
         return;
       }
 
+      // --- STRICT QUOTA & LIMIT CHECK ---
+      const [cNum, cSec] = cls.split("-");
+      const classKey = `Class ${cNum}`;
+      const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+      
+      // Determine max allowed for this subject
+      let allowedLimit = classLimits[subject];
+      if (allowedLimit === undefined) {
+        const allot = state.allotments.find(a => a.class === cNum && a.section === cSec && a.subject === subject);
+        allowedLimit = allot ? parseInt(allot.periods) : 10;
+      }
+
+      // Count existing instances of this subject in this class
+      let currentCount = 0;
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          // Do not count the slot currently being edited
+          if (d === day && p === period) return;
+          if (duration === 2 && d === day && p === period + 1) return;
+          if (state.schedules[cls]?.[d]?.[p]?.subject === subject) {
+            currentCount++;
+          }
+        });
+      });
+
+      if (currentCount + duration > allowedLimit) {
+        showNotification(`Cannot assign: Limit for ${subject} in Class ${cls} is ${allowedLimit} periods (Already used: ${currentCount}).`, "warning");
+        return; // Block saving
+      }
+      // ------------------------------------
+
       const assignedT = state.teachers.find(t => t.id === teacherId);
       if (assignedT?.secondaryBusySlots?.[day]?.includes(period)) {
         showNotification("Cannot assign: Teacher is booked in Secondary School during this period!", "warning");
@@ -2161,7 +2226,7 @@
 
       closeSlotModal();
       refreshAllScheduleViews();
-      showNotification("Period slot saved successfully!", "success");
+      showNotification(`Period slot saved: ${subject} in Class ${cls}!`, "success");
     }
 
     function clearCurrentSlot() {
@@ -2280,6 +2345,26 @@
 
       if (!classKey || !subject) {
         showNotification("Please specify both Class and Subject.", "warning");
+        return;
+      }
+
+      // Strict Limit Check for this class & subject
+      const [cNum] = classKey.split("-");
+      const limits = state.subjectLimits[`Class ${cNum}`] || state.subjectLimits["Class 1"] || {};
+      const maxAllowed = limits[subject] !== undefined ? limits[subject] : 10;
+
+      let currentCount = 0;
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          if (d === day && p === period) return;
+          if (state.schedules[classKey]?.[d]?.[p]?.subject === subject) {
+            currentCount++;
+          }
+        });
+      });
+
+      if (currentCount >= maxAllowed) {
+        showNotification(`Cannot assign: Class ${classKey} already reached its limit of ${maxAllowed} periods for ${subject}!`, "warning");
         return;
       }
 
@@ -2655,9 +2740,10 @@
               </td>
             `;
           } else {
+            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 transition flex items-center justify-center font-black">
+                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
                   <i class="ph-bold ph-plus text-xs"></i>
                 </button>
               </td>
@@ -2745,9 +2831,10 @@
               </td>
             `;
           } else {
+            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/40 text-slate-400 hover:text-indigo-600 transition flex items-center justify-center font-black">
+                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
                   <i class="ph-bold ph-plus text-xs"></i>
                 </button>
               </td>
@@ -3596,12 +3683,12 @@
             });
 
             if (isSecBusy) {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9.5px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
             } else if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
 

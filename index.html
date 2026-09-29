@@ -3731,7 +3731,7 @@ function runPedagogicalAudit() {
       let passedChecks = 0;
       let totalChecks = 4;
 
-      // Rule 1: Every weekday must have all required core subjects (Classes 3-5: MATH, ENG, HIN, TWAU; Classes 1-2: at least 1 of MATH, ENG, HIN)
+      // Rule 1: Every weekday must have required core subjects
       let missingCoreDetails = [];
       DAYS.forEach(d => {
         if (d === "Sat") return; // Saturday exempt
@@ -3779,12 +3779,17 @@ function runPedagogicalAudit() {
         passedChecks++;
       }
 
-      // Rule 3: No continuous 4 core subjects in the same day
+      // Rule 3: No continuous 4 core subjects in the same day (across P1-P4 and P5-P8 separately around the break)
       let continuousCoreDetails = [];
       DAYS.forEach(d => {
         let streak = 0;
         let streakStart = 1;
         PERIODS.forEach(p => {
+          // Break/Recess breaks the continuous streak of core periods
+          if (p === 5) {
+            streak = 0;
+            return;
+          }
           const slot = classSched[d]?.[p];
           const isCore = slot && ["MATH", "ENG", "HIN", "TWAU"].includes(slot.subject);
           if (isCore) {
@@ -3805,11 +3810,13 @@ function runPedagogicalAudit() {
         passedChecks++;
       }
 
-      // Rule 4: At least 2 free periods for every teacher every day (Out of all 8 instructional periods)
+      // Rule 4: At least 2 free periods out of the 8 instructional periods (P1 to P8)
       let teacherFreeDetails = [];
       state.teachers.forEach(t => {
         DAYS.forEach(d => {
           let teachingCount = 0;
+          let totalActiveSlots = 8; // Exactly 8 instructional periods (P1-P4, P5-P8)
+
           PERIODS.forEach(p => {
             const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
             let isPrimaryBusy = false;
@@ -3825,16 +3832,18 @@ function runPedagogicalAudit() {
             }
           });
 
-          // Free periods = 8 total instructional periods minus busy periods
-          const freeCount = 8 - teachingCount;
-          if (freeCount < 2) {
-            teacherFreeDetails.push(`Teacher ${t.name} (${t.shortName}) on ${d}: Only ${freeCount} free period(s) available out of 8 periods (Minimum required is 2).`);
+          // Only evaluate if the teacher has any commitments on this day
+          if (teachingCount > 0) {
+            const freeCount = totalActiveSlots - teachingCount;
+            if (freeCount < 2) {
+              teacherFreeDetails.push(`Teacher ${t.name} (${t.shortName}) on ${d}: Teaching ${teachingCount} periods, leaving only ${freeCount} free period(s) out of 8 instructional slots (Minimum required is 2).`);
+            }
           }
         });
       });
 
       if (teacherFreeDetails.length > 0) {
-        teacherFreeDetails.forEach(v => violations.push(`⚠️️ Rule 4 Violation: ${v}`));
+        teacherFreeDetails.forEach(v => violations.push(`⚠️ Rule 4 Violation: ${v}`));
       } else {
         passedChecks++;
       }

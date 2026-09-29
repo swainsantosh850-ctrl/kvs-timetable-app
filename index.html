@@ -3731,21 +3731,20 @@ function runPedagogicalAudit() {
       let passedChecks = 0;
       let totalChecks = 4;
 
-      // 1. Detailed Rule 1: Missing Core Subjects on Weekdays
+      // Rule 1: Every weekday must have all required core subjects (Classes 3-5: MATH, ENG, HIN, TWAU; Classes 1-2: at least 1 of MATH, ENG, HIN)
       let missingCoreDetails = [];
       DAYS.forEach(d => {
-        if (d === "Sat") return;
-        const daySlots = PERIODS.filter(p => p !== 5).map(p => ({ period: p, subject: classSched[d]?.[p]?.subject })).filter(s => s.subject);
-        const subjectsPresent = daySlots.map(s => s.subject);
-
+        if (d === "Sat") return; // Saturday exempt
+        const daySlots = PERIODS.filter(p => p !== 5).map(p => classSched[d]?.[p]?.subject).filter(Boolean);
+        
         if (classNum >= 3) {
           const required = ["MATH", "ENG", "HIN", "TWAU"];
-          const missing = required.filter(sub => !subjectsPresent.includes(sub));
+          const missing = required.filter(sub => !daySlots.includes(sub));
           if (missing.length > 0) {
             missingCoreDetails.push(`Class ${cls} on ${d}: Missing core subject(s) [${missing.join(", ")}].`);
           }
         } else {
-          const hasCore12 = subjectsPresent.some(s => ["MATH", "ENG", "HIN"].includes(s));
+          const hasCore12 = daySlots.some(s => ["MATH", "ENG", "HIN"].includes(s));
           if (!hasCore12) {
             missingCoreDetails.push(`Class ${cls} on ${d}: No core period (MATH, ENG, or HIN) scheduled.`);
           }
@@ -3758,7 +3757,7 @@ function runPedagogicalAudit() {
         passedChecks++;
       }
 
-      // 2. Detailed Rule 2: Duplicate Activity / Specialist Subjects on Same Day
+      // Rule 2: No 2 periods of DL, LIB, K.YOGA, K.GAMES, P.ART, V.ART on the same day for the same class
       const activitySubjs = ["DL", "LIB", "K.YOGA", "K.GAMES", "P.ART", "V.ART"];
       let duplicateActivityDetails = [];
       DAYS.forEach(d => {
@@ -3781,7 +3780,7 @@ function runPedagogicalAudit() {
         passedChecks++;
       }
 
-      // 3. Detailed Rule 3: Continuous 4 Core Subjects
+      // Rule 3: No continuous 4 core subjects in the same day
       let continuousCoreDetails = [];
       DAYS.forEach(d => {
         let streak = 0;
@@ -3808,26 +3807,29 @@ function runPedagogicalAudit() {
         passedChecks++;
       }
 
-      // 4. Detailed Rule 4: Teacher Free Period Minimum (< 2 Free Periods)
+      // Rule 4: At least 2 free periods for every teacher every day
       let teacherFreeDetails = [];
       state.teachers.forEach(t => {
         DAYS.forEach(d => {
-          let teachingCount = 0;
+          let freeCount = 0;
           PERIODS.forEach(p => {
-            if (p === 5) return;
-            if (t.secondaryBusySlots?.[d]?.includes(p)) {
-              teachingCount++;
-            } else {
-              CLASSES.forEach(c => {
-                if (state.schedules[c]?.[d]?.[p]?.teacherId === t.id) {
-                  teachingCount++;
-                }
-              });
+            if (p === 5) return; // Skip recess
+            
+            const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
+            let isPrimaryBusy = false;
+            CLASSES.forEach(c => {
+              if (state.schedules[c]?.[d]?.[p]?.teacherId === t.id) {
+                isPrimaryBusy = true;
+              }
+            });
+
+            if (!isSecBusy && !isPrimaryBusy) {
+              freeCount++;
             }
           });
-          const freePeriods = 7 - teachingCount;
-          if (freePeriods < 2) {
-            teacherFreeDetails.push(`Teacher ${t.name} (${t.shortName}) on ${d}: Only ${freePeriods} free period(s) available (Minimum required is 2).`);
+
+          if (freeCount < 2) {
+            teacherFreeDetails.push(`Teacher ${t.name} (${t.shortName}) on ${d}: Only ${freeCount} free period(s) available (Minimum required is 2).`);
           }
         });
       });
@@ -3838,7 +3840,7 @@ function runPedagogicalAudit() {
         passedChecks++;
       }
 
-      // Render Specific Audit Results
+      // Render Audit Results
       const score = Math.round((passedChecks / totalChecks) * 100);
       if (violations.length === 0) {
         badge.textContent = "100% Compliant";

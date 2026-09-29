@@ -3731,82 +3731,85 @@ function runPedagogicalAudit() {
       let passedChecks = 0;
       let totalChecks = 4;
 
-      // Rule 1: Every day there should be all core subject like MATH, ENG, HIN, TWAU at least one in every day except Saturday for classes 3 to 5. For classes 1 to 2, at least 1 core period like MATH, ENG, HIN.
-      let missingCorePresence = false;
+      // 1. Detailed Rule 1: Missing Core Subjects on Weekdays
+      let missingCoreDetails = [];
       DAYS.forEach(d => {
-        if (d === "Sat") return; // Saturday exempt
-        const daySlots = PERIODS.filter(p => p !== 5).map(p => classSched[d]?.[p]?.subject).filter(Boolean);
-        
+        if (d === "Sat") return;
+        const daySlots = PERIODS.filter(p => p !== 5).map(p => ({ period: p, subject: classSched[d]?.[p]?.subject })).filter(s => s.subject);
+        const subjectsPresent = daySlots.map(s => s.subject);
+
         if (classNum >= 3) {
-          const hasMath = daySlots.includes("MATH");
-          const hasEng = daySlots.includes("ENG");
-          const hasHin = daySlots.includes("HIN");
-          const hasTwau = daySlots.includes("TWAU");
-          if (!hasMath || !hasEng || !hasHin || !hasTwau) {
-            missingCorePresence = true;
+          const required = ["MATH", "ENG", "HIN", "TWAU"];
+          const missing = required.filter(sub => !subjectsPresent.includes(sub));
+          if (missing.length > 0) {
+            missingCoreDetails.push(`Class ${cls} on ${d}: Missing core subject(s) [${missing.join(", ")}].`);
           }
         } else {
-          const hasCore12 = daySlots.some(s => ["MATH", "ENG", "HIN"].includes(s));
+          const hasCore12 = subjectsPresent.some(s => ["MATH", "ENG", "HIN"].includes(s));
           if (!hasCore12) {
-            missingCorePresence = true;
+            missingCoreDetails.push(`Class ${cls} on ${d}: No core period (MATH, ENG, or HIN) scheduled.`);
           }
         }
       });
 
-      if (missingCorePresence) {
-        violations.push(`⚠️ Rule 1 Violation: Daily core subject requirement missing on weekdays (Classes ${classNum >= 3 ? '3-5 require MATH, ENG, HIN, TWAU' : '1-2 require at least 1 core'}).`);
+      if (missingCoreDetails.length > 0) {
+        missingCoreDetails.forEach(v => violations.push(`⚠️ Rule 1 Violation: ${v}`));
       } else {
         passedChecks++;
       }
 
-      // Rule 2: No 2 periods from DL, LIB, K.YOGA, K.GAMES, P.ART, V.ART on same day same class
-      let duplicateActivityFound = false;
+      // 2. Detailed Rule 2: Duplicate Activity / Specialist Subjects on Same Day
       const activitySubjs = ["DL", "LIB", "K.YOGA", "K.GAMES", "P.ART", "V.ART"];
+      let duplicateActivityDetails = [];
       DAYS.forEach(d => {
-        const counts = {};
+        const seenActivities = {};
         PERIODS.forEach(p => {
           if (p === 5) return;
           const slot = classSched[d]?.[p];
           if (slot && activitySubjs.includes(slot.subject)) {
-            counts[slot.subject] = (counts[slot.subject] || 0) + 1;
-            if (counts[slot.subject] > 1) {
-              duplicateActivityFound = true;
+            if (seenActivities[slot.subject]) {
+              duplicateActivityDetails.push(`Class ${cls} on ${d} (Period ${p}): Duplicate activity subject '${slot.subject}' already occurred earlier on this day.`);
             }
+            seenActivities[slot.subject] = p;
           }
         });
       });
 
-      if (duplicateActivityFound) {
-        violations.push(`⚠️ Rule 2 Violation: Duplicate activity periods (DL, LIB, Yoga, Games, Art) scheduled on the same day for this class.`);
+      if (duplicateActivityDetails.length > 0) {
+        duplicateActivityDetails.forEach(v => violations.push(`⚠️ Rule 2 Violation: ${v}`));
       } else {
         passedChecks++;
       }
 
-      // Rule 3: No continuous 4 core subjects in same day
-      let maxContinuousCore = 0;
+      // 3. Detailed Rule 3: Continuous 4 Core Subjects
+      let continuousCoreDetails = [];
       DAYS.forEach(d => {
         let streak = 0;
+        let streakStart = 1;
         PERIODS.forEach(p => {
           if (p === 5) return;
           const slot = classSched[d]?.[p];
           const isCore = slot && ["MATH", "ENG", "HIN", "TWAU"].includes(slot.subject);
           if (isCore) {
+            if (streak === 0) streakStart = p;
             streak++;
-            if (streak > maxContinuousCore) maxContinuousCore = streak;
+            if (streak === 4) {
+              continuousCoreDetails.push(`Class ${cls} on ${d}: 4 continuous core periods in a row from Period ${streakStart} to ${p}.`);
+            }
           } else {
             streak = 0;
           }
         });
       });
 
-      if (maxContinuousCore >= 4) {
-        violations.push(`⚠️ Rule 3 Violation: Found ${maxContinuousCore} continuous core periods in a row (Max allowed is 3).`);
+      if (continuousCoreDetails.length > 0) {
+        continuousCoreDetails.forEach(v => violations.push(`⚠️ Rule 3 Violation: ${v}`));
       } else {
         passedChecks++;
       }
 
-      // Rule 4: At least 2 free periods for every teacher every day
-      let teacherFreeViolation = false;
+      // 4. Detailed Rule 4: Teacher Free Period Minimum (< 2 Free Periods)
+      let teacherFreeDetails = [];
       state.teachers.forEach(t => {
         DAYS.forEach(d => {
           let teachingCount = 0;
@@ -3822,20 +3825,20 @@ function runPedagogicalAudit() {
               });
             }
           });
-          const freePeriods = 7 - teachingCount; // Out of 7 teaching periods
+          const freePeriods = 7 - teachingCount;
           if (freePeriods < 2) {
-            teacherFreeViolation = true;
+            teacherFreeDetails.push(`Teacher ${t.name} (${t.shortName}) on ${d}: Only ${freePeriods} free period(s) available (Minimum required is 2).`);
           }
         });
       });
 
-      if (teacherFreeViolation) {
-        violations.push(`⚠️ Rule 4 Violation: One or more teachers have fewer than 2 free/leisure periods on a working day.`);
+      if (teacherFreeDetails.length > 0) {
+        teacherFreeDetails.forEach(v => violations.push(`⚠️ Rule 4 Violation: ${v}`));
       } else {
         passedChecks++;
       }
 
-      // Render Audit Results
+      // Render Specific Audit Results
       const score = Math.round((passedChecks / totalChecks) * 100);
       if (violations.length === 0) {
         badge.textContent = "100% Compliant";
@@ -3847,7 +3850,7 @@ function runPedagogicalAudit() {
           <div class="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center gap-2"><span class="text-emerald-600 font-black">✓</span><span class="font-bold text-slate-700">Teacher Free Quota (2P+)</span></div>
         `;
       } else {
-        badge.textContent = `${score}% Compliant (Rules Violated)`;
+        badge.textContent = `${score}% Compliant (Specific Issues Found)`;
         badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200";
         itemsContainer.innerHTML = violations.map(v => `
           <div class="col-span-4 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">

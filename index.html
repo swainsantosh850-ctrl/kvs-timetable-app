@@ -1840,30 +1840,73 @@
         });
       });
 
-      // Calculate pending subjects to assign
       const classKey = `Class ${cNum}`;
       const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
-      const pendingSubjects = [];
 
-      Object.keys(limits).forEach(subj => {
-        const required = limits[subj];
+      // Calculate teacher allotment totals for this class
+      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+      const allottedTotals = {};
+      classAllots.forEach(a => {
+        allottedTotals[a.subject] = (allottedTotals[a.subject] || 0) + parseInt(a.periods || 0);
+      });
+
+      // Build 3 category lists: Completed (Green), Incomplete (Yellow), and Unallotted (Orange dashed)
+      const completedList = [];
+      const pendingList = [];
+      const unassignedList = [];
+
+      const allSubjects = Array.from(new Set([...Object.keys(limits), ...Object.keys(allottedTotals)]));
+
+      allSubjects.forEach(subj => {
+        const required = limits[subj] !== undefined ? limits[subj] : (allottedTotals[subj] || 0);
         const assigned = scheduledCounts[subj] || 0;
-        if (assigned < required) {
-          pendingSubjects.push({ subject: subj, remaining: required - assigned, total: required });
+        const hasAllotment = allottedTotals[subj] > 0;
+
+        if (assigned >= required && required > 0) {
+          completedList.push({ subject: subj, count: assigned, total: required });
+        } else if (hasAllotment) {
+          pendingList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
+        } else {
+          unassignedList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
         }
       });
 
-      let pendingChipsHtml = "";
-      if (pendingSubjects.length === 0) {
-        pendingChipsHtml = `<span class="text-xs text-emerald-700 font-extrabold flex items-center gap-1"><i class="ph-bold ph-check-circle"></i> All subjects 100% assigned for this class!</span>`;
-      } else {
-        pendingChipsHtml = pendingSubjects.map(item => `
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <strong>${item.subject}:</strong> ${item.remaining} left
-          </span>
-        `).join("");
-      }
+      let statusSummaryHtml = `
+        <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <i class="ph-bold ph-chart-pie text-indigo-600 text-sm"></i> Class Subjects Allocation Status:
+            </span>
+            <span class="text-[10px] font-bold text-slate-400">Total Periods: ${filledCount}/48</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-1.5">
+            <!-- Completed Subjects (Green) -->
+            ${completedList.map(item => `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
+                <span>${item.subject}: ${item.count}/${item.total} (Done)</span>
+              </span>
+            `).join("")}
+
+            <!-- Pending Subjects (Yellow/Amber) -->
+            ${pendingList.map(item => `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span>${item.subject}: ${item.assigned}/${item.total} (${item.left} left)</span>
+              </span>
+            `).join("")}
+
+            <!-- Unassigned to Teacher in Slide 2 (Orange Dashed) -->
+            ${unassignedList.map(item => `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
+                <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
+                <span>${item.subject}: Unassigned (${item.left} left)</span>
+              </span>
+            `).join("")}
+          </div>
+        </div>
+      `;
 
       let tbodyRows = "";
       DAYS.forEach(d => {
@@ -1921,13 +1964,7 @@
           </div>
         </div>
 
-        <!-- Pending Subjects Indicator -->
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center gap-2">
-          <span class="text-[11px] font-black uppercase tracking-wider text-slate-600 mr-1 flex items-center gap-1">
-            <i class="ph-bold ph-hourglass-high text-amber-500"></i> Pending Subjects to Assign:
-          </span>
-          ${pendingChipsHtml}
-        </div>
+        ${statusSummaryHtml}
 
         <table class="w-full border-collapse text-center text-xs">
           <thead>
@@ -2043,7 +2080,7 @@
           subjectMap[a.subject].target += parseInt(a.periods || 0);
         });
 
-      // Also include any subjects from classLimits not yet allotted
+      // Include any subjects configured in class limits not yet allotted
       Object.keys(classLimits).forEach(subj => {
         if (!subjectMap[subj]) {
           subjectMap[subj] = {
@@ -2052,7 +2089,6 @@
             teacherId: ""
           };
         } else {
-          // Cap target at the defined limit if higher
           const limitCap = classLimits[subj];
           if (limitCap !== undefined) {
             subjectMap[subj].target = Math.min(subjectMap[subj].target, limitCap);
@@ -2067,18 +2103,17 @@
       Object.values(subjectMap).forEach(item => {
         let currentAssigned = scheduledCounts[item.subject] || 0;
         
-        // If this slot already contains this subject, don't count itself against the quota
+        // If this slot already contains this subject, don't count itself against remaining quota
         if (currentSlotSubject === item.subject) {
           currentAssigned = Math.max(0, currentAssigned - 1);
         }
 
         const isComplete = currentAssigned >= item.target;
-
         const badge = document.createElement("button");
         badge.type = "button";
 
         if (isComplete) {
-          // Completed: Solid Green, marked with a checkmark, disabled from being clicked
+          // Completed: Solid Green, checkmark, unclickable
           badge.disabled = true;
           badge.className = "px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 border border-emerald-300 text-emerald-800 opacity-60 cursor-not-allowed flex items-center gap-1.5";
           badge.innerHTML = `
@@ -2174,18 +2209,15 @@
       const classKey = `Class ${cNum}`;
       const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
       
-      // Determine max allowed for this subject
       let allowedLimit = classLimits[subject];
       if (allowedLimit === undefined) {
         const allot = state.allotments.find(a => a.class === cNum && a.section === cSec && a.subject === subject);
         allowedLimit = allot ? parseInt(allot.periods) : 10;
       }
 
-      // Count existing instances of this subject in this class
       let currentCount = 0;
       DAYS.forEach(d => {
         PERIODS.forEach(p => {
-          // Do not count the slot currently being edited
           if (d === day && p === period) return;
           if (duration === 2 && d === day && p === period + 1) return;
           if (state.schedules[cls]?.[d]?.[p]?.subject === subject) {
@@ -2196,9 +2228,8 @@
 
       if (currentCount + duration > allowedLimit) {
         showNotification(`Cannot assign: Limit for ${subject} in Class ${cls} is ${allowedLimit} periods (Already used: ${currentCount}).`, "warning");
-        return; // Block saving
+        return;
       }
-      // ------------------------------------
 
       const assignedT = state.teachers.find(t => t.id === teacherId);
       if (assignedT?.secondaryBusySlots?.[day]?.includes(period)) {
@@ -2262,45 +2293,124 @@
       const select = document.getElementById("teacher-slot-allotment-select");
       select.innerHTML = "";
 
+      // 1. Get allotments assigned specifically to THIS teacher
       const teacherAllots = state.allotments.filter(a => a.teacherId === teacherId);
 
-      // Pre-Allotted options
-      teacherAllots.forEach((a, idx) => {
-        const opt = document.createElement("option");
-        const targetKey = `${a.class}-${a.section}`;
-        opt.value = JSON.stringify({ classKey: targetKey, subject: a.subject });
-        
-        const currentOccupant = state.schedules[targetKey]?.[day]?.[period];
-        let statusLabel = "";
-        if (currentOccupant) {
-          const occT = state.teachers.find(item => item.id === currentOccupant.teacherId);
-          statusLabel = ` [Class Busy: ${currentOccupant.subject} (${occT ? occT.shortName : 'N/A'})]`;
-        }
+      // Section A: Pre-Allotted Subjects to this Teacher with Live Numbers
+      const allottedGroup = document.createElement("optgroup");
+      allottedGroup.label = "--- Subjects Assigned to this Teacher ---";
 
-        opt.textContent = `Allotted: Class ${targetKey} • ${a.subject} (${a.periods} P/W)${statusLabel}`;
-        select.appendChild(opt);
-        if (idx === 0) syncTeacherSlotInputsFromAllotment(opt.value);
-      });
+      if (teacherAllots.length === 0) {
+        const emptyOpt = document.createElement("option");
+        emptyOpt.disabled = true;
+        emptyOpt.textContent = "No subjects allotted to this teacher in Slide 2";
+        allottedGroup.appendChild(emptyOpt);
+      } else {
+        teacherAllots.forEach((a, idx) => {
+          const targetKey = `${a.class}-${a.section}`;
+          const targetTeacherLimit = parseInt(a.periods || 0);
 
-      // Also append unassigned class subjects that can be assigned directly
+          // Count how many this specific teacher placed for this class and subject
+          let placedByThisTeacher = 0;
+          DAYS.forEach(d => {
+            PERIODS.forEach(p => {
+              const slot = state.schedules[targetKey]?.[d]?.[p];
+              if (slot && slot.teacherId === teacherId && slot.subject === a.subject) {
+                placedByThisTeacher++;
+              }
+            });
+          });
+
+          // Count total placed across all teachers for this class and subject
+          let totalPlacedInClass = 0;
+          DAYS.forEach(d => {
+            PERIODS.forEach(p => {
+              const slot = state.schedules[targetKey]?.[d]?.[p];
+              if (slot && slot.subject === a.subject) {
+                totalPlacedInClass++;
+              }
+            });
+          });
+
+          const classKey = `Class ${a.class}`;
+          const limits = state.subjectLimits[classKey] || {};
+          const maxClassLimit = limits[a.subject] !== undefined ? limits[a.subject] : 10;
+
+          const isTeacherFull = placedByThisTeacher >= targetTeacherLimit;
+          const isClassFull = totalPlacedInClass >= maxClassLimit;
+          const isBlocked = isTeacherFull || isClassFull;
+          const teacherLeft = Math.max(0, targetTeacherLimit - placedByThisTeacher);
+
+          const opt = document.createElement("option");
+          opt.value = JSON.stringify({ 
+            classKey: targetKey, 
+            subject: a.subject, 
+            teacherQuota: targetTeacherLimit, 
+            placed: placedByThisTeacher 
+          });
+
+          let statusText = `(Teacher: ${placedByThisTeacher}/${targetTeacherLimit} placed, ${teacherLeft} left | Class: ${totalPlacedInClass}/${maxClassLimit})`;
+          if (isTeacherFull) statusText += " - [Teacher Quota Full]";
+          else if (isClassFull) statusText += " - [Class Subject Limit Full]";
+
+          opt.textContent = `${isBlocked ? '🔒 ' : '✓ '}Allotted: Class ${targetKey} • ${a.subject} ${statusText}`;
+          if (isBlocked) opt.disabled = true;
+
+          allottedGroup.appendChild(opt);
+          if (idx === 0 && !isBlocked) syncTeacherSlotInputsFromAllotment(opt.value);
+        });
+      }
+      select.appendChild(allottedGroup);
+
+      // Section B: Truly Unassigned Subjects (Exclude any subject allotted to ANY teacher)
+      const unassignedGroup = document.createElement("optgroup");
+      unassignedGroup.label = "--- Unassigned Subjects (Not Allotted to Anyone) ---";
+
+      let unassignedCount = 0;
       CLASSES.forEach(cKey => {
         const [cNum, cSec] = cKey.split("-");
         const classKey = `Class ${cNum}`;
         const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
-        
+
         Object.keys(limits).forEach(subj => {
-          // If not already allotted to this teacher
-          const alreadyAllotted = teacherAllots.some(a => `${a.class}-${a.section}` === cKey && a.subject === subj);
-          if (!alreadyAllotted) {
+          // Check if this subject is allotted to ANY teacher in this section
+          const isAllottedToAnyone = state.allotments.some(a => a.class === cNum && a.section === cSec && a.subject === subj);
+
+          // ONLY include if not allotted to any teacher
+          if (!isAllottedToAnyone) {
+            let totalPlaced = 0;
+            DAYS.forEach(d => {
+              PERIODS.forEach(p => {
+                if (state.schedules[cKey]?.[d]?.[p]?.subject === subj) totalPlaced++;
+              });
+            });
+
+            const maxLimit = limits[subj];
+            const isFull = totalPlaced >= maxLimit;
+            const remaining = Math.max(0, maxLimit - totalPlaced);
+
             const opt = document.createElement("option");
-            opt.value = JSON.stringify({ classKey: cKey, subject: subj });
-            opt.textContent = `Unassigned: Class ${cKey} • ${subj}`;
-            select.appendChild(opt);
+            opt.value = JSON.stringify({ 
+              classKey: cKey, 
+              subject: subj, 
+              teacherQuota: 99, 
+              placed: 0 
+            });
+
+            opt.textContent = `${isFull ? '🔒 ' : '+ '}Unassigned: Class ${cKey} • ${subj} (${totalPlaced}/${maxLimit} placed, ${remaining} left${isFull ? ' - Full' : ''})`;
+            if (isFull) opt.disabled = true;
+
+            unassignedGroup.appendChild(opt);
+            unassignedCount++;
           }
         });
       });
 
-      // Check if this teacher already teaches something on this period
+      if (unassignedCount > 0) {
+        select.appendChild(unassignedGroup);
+      }
+
+      // Pre-fill target class and subject from current cell if occupied
       let existingClass = null;
       let existingSubject = "";
       CLASSES.forEach(c => {
@@ -2348,27 +2458,49 @@
         return;
       }
 
-      // Strict Limit Check for this class & subject
-      const [cNum] = classKey.split("-");
+      const [cNum, cSec] = classKey.split("-");
+
+      // 1. Strict Individual Teacher Quota Enforcement
+      const teacherAllot = state.allotments.find(a => a.teacherId === teacherId && a.class === cNum && a.section === cSec && a.subject === subject);
+      if (teacherAllot) {
+        let placedByTeacher = 0;
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            if (d === day && p === period) return; // exclude current slot
+            const slot = state.schedules[classKey]?.[d]?.[p];
+            if (slot && slot.teacherId === teacherId && slot.subject === subject) {
+              placedByTeacher++;
+            }
+          });
+        });
+
+        const teacherQuota = parseInt(teacherAllot.periods || 0);
+        if (placedByTeacher >= teacherQuota) {
+          showNotification(`Cannot assign: Teacher only has an allotment of ${teacherQuota} period(s) for ${subject} in Class ${classKey} (Already used: ${placedByTeacher})!`, "warning");
+          return;
+        }
+      }
+
+      // 2. Strict Overall Class Limit Check
       const limits = state.subjectLimits[`Class ${cNum}`] || state.subjectLimits["Class 1"] || {};
       const maxAllowed = limits[subject] !== undefined ? limits[subject] : 10;
 
-      let currentCount = 0;
+      let totalInClass = 0;
       DAYS.forEach(d => {
         PERIODS.forEach(p => {
-          if (d === day && p === period) return;
+          if (d === day && p === period) return; // exclude current slot
           if (state.schedules[classKey]?.[d]?.[p]?.subject === subject) {
-            currentCount++;
+            totalInClass++;
           }
         });
       });
 
-      if (currentCount >= maxAllowed) {
-        showNotification(`Cannot assign: Class ${classKey} already reached its limit of ${maxAllowed} periods for ${subject}!`, "warning");
+      if (totalInClass >= maxAllowed) {
+        showNotification(`Cannot assign: Class ${classKey} already has ${totalInClass}/${maxAllowed} periods of ${subject} across all teachers!`, "warning");
         return;
       }
 
-      // Clear teacher if assigned elsewhere at same time
+      // Clear teacher if assigned elsewhere during this period
       CLASSES.forEach(c => {
         if (state.schedules[c]?.[day]?.[period]?.teacherId === teacherId) {
           state.schedules[c][day][period] = null;
@@ -2416,7 +2548,6 @@
           let note = `${cls}: Compliant`;
 
           if (rule.type === "MIN_DAILY_PRESENCE") {
-            // Strictly check core presence for Monday through Friday (Saturday exempted)
             const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
             weekdays.forEach(d => {
               let coreCount = 0;
@@ -2740,7 +2871,6 @@
               </td>
             `;
           } else {
-            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
                 <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
@@ -2831,7 +2961,6 @@
               </td>
             `;
           } else {
-            // Prominent clickable "+" button on empty slots
             rowHtml += `
               <td class="p-1">
                 <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
@@ -3132,12 +3261,10 @@
             let teacherBusy = false;
             const candTeacher = state.teachers.find(t => t.id === candidate.teacherId);
             
-            // Block if teacher has Secondary classes during this day and period
             if (candTeacher?.secondaryBusySlots?.[d]?.includes(p)) {
               teacherBusy = true;
             }
 
-            // Block if teacher is already assigned to another Primary class during this period
             if (!teacherBusy) {
               CLASSES.forEach(other => {
                 if (other !== targetClass && state.schedules[other]?.[d]?.[p]?.teacherId === candidate.teacherId) {
@@ -3686,7 +3813,7 @@
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 9.5px; color: #e11d48; background: #ffe4e6;">Secondary</td>`;
             } else if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px; color: #1e1b4b;">${assigned.join("<br>")}</td>`;
             } else {
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
@@ -3842,7 +3969,7 @@
             }
           });
 
-          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
+          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; color: #3730a3;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 

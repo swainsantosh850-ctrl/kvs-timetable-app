@@ -2197,15 +2197,15 @@ function autoGenerateSingleClass(cls) {
       const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
 
       let teacherBadges = "";
-      if (ct) {
-        teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">CT: ${ct.shortName || ct.name}</span>`;
-      }
-      if (coCt) {
-        teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">Co-CT: ${coCt.shortName || coCt.name}</span>`;
-      }
-      if (!ct && !coCt) {
-        teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">CT: Not Assigned</span>`;
-      }
+    if (ct) {
+      teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
+    }
+    if (coCt) {
+      teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
+    }
+    if (!ct && !coCt) {
+      teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">Class Teacher: Not Assigned</span>`;
+    }
 
       let filledCount = 0;
       const scheduledCounts = {};
@@ -3534,6 +3534,15 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
     }
 
     function printClassTimetable(cls) {
+      const [cNum, cSec] = cls.split("-");
+      const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+      const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
+      
+      let teacherSub = `Class Teacher: ${ct ? ct.name + ' (' + ct.shortName + ')' : 'Not Assigned'}`;
+      if (coCt) {
+        teacherSub += ` | Co-Class Teacher: ${coCt.name} (${coCt.shortName})`;
+      }
+
       let gridRows = "";
       DAYS.forEach(d => {
         let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
@@ -3542,20 +3551,32 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           const slot = state.schedules[cls]?.[d]?.[p];
           if (slot) {
             const t = state.teachers.find(item => item.id === slot.teacherId);
-            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 10px; color: #475569;">${t ? t.shortName : ''}</div></td>`;
+            const coT = state.teachers.find(item => item.id === slot.coTeacherId);
+            let tStr = t ? t.shortName : '';
+            if (coT) tStr += ` + ${coT.shortName}`;
+            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 10px; color: #475569;">${tStr}</div></td>`;
           } else {
             rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8;">-</td>`;
           }
         });
         gridRows += `<tr>${rowHtml}</tr>`;
       });
-      const html = `<div class="print-page">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #f1f5f9; border: 1px solid #cbd5e1;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
+      const html = `<div class="print-page">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #f1f5f9; border: 1px solid #cbd5e1;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
       showPrintPreviewModal(`Class ${cls} Timetable`, html);
     }
 
     function printAllClassesTimetables() {
       let fullHtml = "";
       CLASSES.forEach((cls, idx) => {
+        const [cNum, cSec] = cls.split("-");
+        const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+        const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
+        
+        let teacherSub = `Class Teacher: ${ct ? ct.name + ' (' + ct.shortName + ')' : 'Not Assigned'}`;
+        if (coCt) {
+          teacherSub += ` | Co-Class Teacher: ${coCt.name} (${coCt.shortName})`;
+        }
+
         let gridRows = "";
         DAYS.forEach(d => {
           let rowHtml = `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
@@ -3564,18 +3585,20 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
             const slot = state.schedules[cls]?.[d]?.[p];
             if (slot) {
               const t = state.teachers.find(item => item.id === slot.teacherId);
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 9.5px; color: #475569;">${t ? t.shortName : ''}</div></td>`;
+              const coT = state.teachers.find(item => item.id === slot.coTeacherId);
+              let tStr = t ? t.shortName : '';
+              if (coT) tStr += ` + ${coT.shortName}`;
+              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 9.5px; color: #475569;">${tStr}</div></td>`;
             } else {
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
           gridRows += `<tr>${rowHtml}</tr>`;
         });
-        fullHtml += `<div class="print-page" style="margin-bottom: 24px;">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #e2e8f0; border: 1px solid #94a3b8;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
+        fullHtml += `<div class="print-page" style="margin-bottom: 24px;">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #e2e8f0; border: 1px solid #94a3b8;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
       });
       showPrintPreviewModal("Master Timetable Book • All Classes", fullHtml);
     }
-
     function printDayWiseClassTimetable(day) {
       let gridRows = "";
       CLASSES.forEach(cls => {

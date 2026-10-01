@@ -2097,7 +2097,62 @@
         autoGenerateSingleClass(state.selectedClassSlide3);
       }
     }
+function autoGenerateSingleClass(cls) {
+      if (state.isViewOnly) return;
+      clearSingleClassSchedule(cls, false);
+      
+      const [cNum, cSec] = cls.split("-");
+      const classKey = `Class ${cNum}`;
+      const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+      
+      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+      let pool = [];
+      classAllots.forEach(a => {
+        for (let i = 0; i < parseInt(a.periods || 0); i++) {
+          pool.push({ subject: a.subject, teacherId: a.teacherId });
+        }
+      });
 
+      pool.sort(() => Math.random() - 0.5);
+
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          if (p === 5) return;
+          if (pool.length > 0 && !state.schedules[cls][d][p]) {
+            const item = pool.shift();
+            state.schedules[cls][d][p] = {
+              subject: item.subject,
+              teacherId: item.teacherId,
+              coTeacherId: null,
+              isBlock: false
+            };
+          }
+        });
+      });
+
+      refreshAllScheduleViews();
+      showNotification(`Auto-generated timetable for Class ${cls}!`, "success");
+    }
+
+    function autoGenerateFullTimetable() {
+      if (state.isViewOnly) return;
+      CLASSES.forEach(c => autoGenerateSingleClass(c));
+      showNotification("Auto-generated schedules for all primary classes!", "success");
+    }
+
+    function clearSingleClassSchedule(cls, notify = true) {
+      if (state.isViewOnly) return;
+      if (!state.schedules[cls]) return;
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.schedules[cls][d][p] = null;
+        });
+      });
+      if (notify) {
+        refreshAllScheduleViews();
+        showNotification(`Cleared schedule for Class ${cls}.`, "info");
+      }
+    }
     function handleSlide3Clear() {
       if (state.selectedClassSlide3 === "ALL") {
         CLASSES.forEach(c => clearSingleClassSchedule(c, false));

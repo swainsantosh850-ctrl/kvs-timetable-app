@@ -4345,5 +4345,49 @@ function selectAllClassesView() {
       renderSlide3Grid();
       runPedagogicalAudit();
     }
+
+    function renderSlide3ClassPills() {
+      const container = document.getElementById("slide3-class-pills");
+      if (!container) return;
+      container.innerHTML = "";
+
+      if (state.selectedClassSlide3 !== "ALL" && !CLASSES.includes(state.selectedClassSlide3) && CLASSES.length > 0) {
+        state.selectedClassSlide3 = CLASSES[0];
+      }
+
+      const isAllSelected = state.selectedClassSlide3 === "ALL";
+      
+      // All Classes Button
+      const allBtn = document.createElement("button");
+      allBtn.type = "button";
+      allBtn.onclick = selectAllClassesView;
+      allBtn.className = `px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${isAllSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+      allBtn.innerHTML = `<i class="ph-bold ph-squares-four text-xs"></i><span>All Classes</span>`;
+      container.appendChild(allBtn);
+
+      // Individual Class Section Pills
+      CLASSES.forEach(c => {
+        const isSelected = c === state.selectedClassSlide3;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.onclick = () => {
+          state.selectedClassSlide3 = c;
+          renderSlide3ClassPills();
+          renderSlide3Grid();
+          runPedagogicalAudit();
+        };
+        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
+        btn.textContent = c;
+        container.appendChild(btn);
+      });
+
+      const regenLabel = document.getElementById("slide3-regen-label");
+      const clearLabel = document.getElementById("slide3-clear-label");
+      const auditLabel = document.getElementById("audit-class-label");
+
+      if (regenLabel) regenLabel.textContent = isAllSelected ? "Re-Generate All Classes" : "Re-Generate This Class";
+      if (clearLabel) clearLabel.textContent = isAllSelected ? "Clear All Grids" : "Clear Grid";
+      if (auditLabel) auditLabel.textContent = isAllSelected ? "All Classes (1 to 5)" : `Class ${state.selectedClassSlide3}`;
+    }
 </body>
 </html>

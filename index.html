@@ -2197,15 +2197,15 @@ function autoGenerateSingleClass(cls) {
       const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
 
       let teacherBadges = "";
-    if (ct) {
-      teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
-    }
-    if (coCt) {
-      teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
-    }
-    if (!ct && !coCt) {
-      teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">Class Teacher: Not Assigned</span>`;
-    }
+      if (ct) {
+        teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
+      }
+      if (coCt) {
+        teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
+      }
+      if (!ct && !coCt) {
+        teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">Class Teacher: Not Assigned</span>`;
+      }
 
       let filledCount = 0;
       const scheduledCounts = {};
@@ -2268,7 +2268,7 @@ function autoGenerateSingleClass(cls) {
             ${pendingList.map(item => `
               <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
                 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span>${item.subject}: ${item.assigned}/${item.total} (${item.left} left)</span>
+                <span>${item.subject}:${item.assigned}/${item.total} (${item.left} left)</span>
               </span>
             `).join("")}
 
@@ -2283,23 +2283,31 @@ function autoGenerateSingleClass(cls) {
       `;
 
       let tbodyRows = "";
-      DAYS.forEach(d => {
+      DAYS.forEach((d, index) => {
         let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
 
         PERIODS.forEach(p => {
           if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase tracking-wider">Break</td>`;
+            // Merge cell for Monday (index 0) spanning all 6 rows, skip for Tue-Sat
+            if (index === 0) {
+              rowHtml += `
+                <td class="bg-amber-50/60 text-amber-900 font-black text-xs uppercase tracking-widest align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 12px 2px;">
+                  LUNCH BREAK
+                </td>
+              `;
+            }
+            return;
           }
 
           const slot = state.schedules[cls]?.[d]?.[p];
           if (slot) {
             const teacher = state.teachers.find(t => t.id === slot.teacherId);
-    const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
+            const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
 
-    let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
-    if (coTeacher) {
-      teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
-    }
+            let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
+            if (coTeacher) {
+              teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
+            }
             const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
 
             rowHtml += `
@@ -2353,7 +2361,7 @@ function autoGenerateSingleClass(cls) {
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]" rowspan="6">LUNCH BREAK</th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>
@@ -3533,7 +3541,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       printTeachersReport();
     }
 
-    function printClassTimetable(cls) {
+   function printClassTimetable(cls) {
       const [cNum, cSec] = cls.split("-");
       const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
       const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
@@ -3544,10 +3552,15 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       }
 
       let gridRows = "";
-      DAYS.forEach(d => {
+      DAYS.forEach((d, index) => {
         let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
         PERIODS.forEach(p => {
-          if (p === 5) rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
+          if (p === 5) {
+            if (index === 0) {
+              rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+            }
+            return;
+          }
           const slot = state.schedules[cls]?.[d]?.[p];
           if (slot) {
             const t = state.teachers.find(item => item.id === slot.teacherId);
@@ -3561,7 +3574,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         });
         gridRows += `<tr>${rowHtml}</tr>`;
       });
-      const html = `<div class="print-page">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #f1f5f9; border: 1px solid #cbd5e1;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
+      const html = `<div class="print-page">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #f1f5f9; border: 1px solid #cbd5e1;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;" rowspan="6">LUNCH BREAK</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
       showPrintPreviewModal(`Class ${cls} Timetable`, html);
     }
 
@@ -3578,10 +3591,15 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         }
 
         let gridRows = "";
-        DAYS.forEach(d => {
+        DAYS.forEach((d, index) => {
           let rowHtml = `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
           PERIODS.forEach(p => {
-            if (p === 5) rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
+            if (p === 5) {
+              if (index === 0) {
+                rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+              }
+              return;
+            }
             const slot = state.schedules[cls]?.[d]?.[p];
             if (slot) {
               const t = state.teachers.find(item => item.id === slot.teacherId);
@@ -3595,7 +3613,23 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           });
           gridRows += `<tr>${rowHtml}</tr>`;
         });
-        fullHtml += `<div class="print-page" style="margin-bottom: 24px;">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #e2e8f0; border: 1px solid #94a3b8;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
+        
+        fullHtml += `
+          <div class="print-page" style="margin-bottom: 24px;">
+            ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1px solid #94a3b8;">
+                  <th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                  <th style="background: #fef3c7;" rowspan="6">LUNCH BREAK</th>
+                  <th>P5</th><th>P6</th><th>P7</th><th>P8</th>
+                </tr>
+              </thead>
+              <tbody>${gridRows}</tbody>
+            </table>
+            ${renderOfficialFooter(true)}
+          </div>
+        `;
       });
       showPrintPreviewModal("Master Timetable Book • All Classes", fullHtml);
     }

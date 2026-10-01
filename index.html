@@ -2188,7 +2188,7 @@ function autoGenerateSingleClass(cls) {
       }
     }
 
-    function createClassTimetableCard(cls) {
+   function createClassTimetableCard(cls) {
       const card = document.createElement("div");
       card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
 
@@ -2287,18 +2287,6 @@ function autoGenerateSingleClass(cls) {
         let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
 
         PERIODS.forEach(p => {
-          if (p === 5) {
-            // Merge cell for Monday (index 0) spanning all 6 rows, skip for Tue-Sat
-            if (index === 0) {
-              rowHtml += `
-                <td class="bg-amber-50/60 text-amber-900 font-black text-xs uppercase tracking-widest align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 12px 2px;">
-                  LUNCH BREAK
-                </td>
-              `;
-            }
-            return;
-          }
-
           const slot = state.schedules[cls]?.[d]?.[p];
           if (slot) {
             const teacher = state.teachers.find(t => t.id === slot.teacherId);
@@ -2324,6 +2312,15 @@ function autoGenerateSingleClass(cls) {
                 <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
                   <i class="ph-bold ph-plus text-xs"></i>
                 </button>
+              </td>
+            `;
+          }
+
+          // Insert Lunch Break column after P4 (p === 4) spanning all 6 rows on Monday (index === 0)
+          if (p === 4 && index === 0) {
+            rowHtml += `
+              <td class="bg-amber-50/60 text-amber-900 font-black text-xs uppercase tracking-widest align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 12px 2px;">
+                LUNCH BREAK
               </td>
             `;
           }
@@ -2361,7 +2358,7 @@ function autoGenerateSingleClass(cls) {
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]" rowspan="6">LUNCH BREAK</th>
+              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">LUNCH BREAK</th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>
@@ -2376,7 +2373,6 @@ function autoGenerateSingleClass(cls) {
 
       return card;
     }
-
     function renderSlide3Grid() {
       const container = document.getElementById("slide3-tables-container");
       if (!container) return;
@@ -3555,12 +3551,6 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       DAYS.forEach((d, index) => {
         let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
         PERIODS.forEach(p => {
-          if (p === 5) {
-            if (index === 0) {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
-            }
-            return;
-          }
           const slot = state.schedules[cls]?.[d]?.[p];
           if (slot) {
             const t = state.teachers.find(item => item.id === slot.teacherId);
@@ -3571,13 +3561,32 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           } else {
             rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8;">-</td>`;
           }
+
+          if (p === 4 && index === 0) {
+            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+          }
         });
         gridRows += `<tr>${rowHtml}</tr>`;
       });
-      const html = `<div class="print-page">${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #f1f5f9; border: 1px solid #cbd5e1;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;" rowspan="6">LUNCH BREAK</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(true)}</div>`;
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1;">
+                <th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                <th style="background: #fef3c7;">LUNCH BREAK</th>
+                <th>P5</th><th>P6</th><th>P7</th><th>P8</th>
+              </tr>
+            </thead>
+            <tbody>${gridRows}</tbody>
+          </table>
+          ${renderOfficialFooter(true)}
+        </div>
+      `;
       showPrintPreviewModal(`Class ${cls} Timetable`, html);
     }
-
     function printAllClassesTimetables() {
       let fullHtml = "";
       CLASSES.forEach((cls, idx) => {

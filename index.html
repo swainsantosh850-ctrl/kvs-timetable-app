@@ -2315,17 +2315,14 @@ function autoGenerateSingleClass(cls) {
               </td>
             `;
           }
-
-          // Insert Lunch Break column after P4 (p === 4) spanning all 6 rows on Monday (index === 0)
+// Insert Lunch Break column after P4 (p === 4) spanning all 6 rows on Monday (index === 0)
           if (p === 4 && index === 0) {
             rowHtml += `
-              <td class="bg-amber-50/60 text-amber-900 font-black text-xs uppercase tracking-widest align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 12px 2px;">
+              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
                 LUNCH BREAK
               </td>
             `;
           }
-        });
-
         rowHtml += `</tr>`;
         tbodyRows += rowHtml;
       });
@@ -2358,7 +2355,7 @@ function autoGenerateSingleClass(cls) {
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">LUNCH BREAK</th>
+              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="6"></th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>

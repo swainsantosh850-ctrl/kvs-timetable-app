@@ -2086,12 +2086,8 @@ function auditGlobalCollisions() {
 
       const isAllSelected = state.selectedClassSlide3 === "ALL";
       const allBtn = document.createElement("button");
-      allBtn.onclick = () => {
-        state.selectedClassSlide3 = "ALL";
-        renderSlide3ClassPills();
-        renderSlide3Grid();
-        runPedagogicalAudit();
-      };
+      allBtn.type = "button";
+      allBtn.onclick = selectAllClassesView; // Uses the standalone named function
       allBtn.className = `px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${isAllSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
       allBtn.innerHTML = `<i class="ph-bold ph-squares-four text-xs"></i><span>All Classes</span>`;
       container.appendChild(allBtn);
@@ -2099,6 +2095,7 @@ function auditGlobalCollisions() {
       CLASSES.forEach(c => {
         const isSelected = c === state.selectedClassSlide3;
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.onclick = () => {
           state.selectedClassSlide3 = c;
           renderSlide3ClassPills();

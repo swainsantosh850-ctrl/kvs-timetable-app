@@ -2080,7 +2080,7 @@ function auditGlobalCollisions() {
       if (!container) return;
       container.innerHTML = "";
 
-      if (!CLASSES.includes(state.selectedClassSlide3) && CLASSES.length > 0) {
+      if (state.selectedClassSlide3 !== "ALL" && !CLASSES.includes(state.selectedClassSlide3) && CLASSES.length > 0) {
         state.selectedClassSlide3 = CLASSES[0];
       }
 
@@ -2118,7 +2118,6 @@ function auditGlobalCollisions() {
       if (clearLabel) clearLabel.textContent = isAllSelected ? "Clear All Grids" : "Clear Grid";
       if (auditLabel) auditLabel.textContent = isAllSelected ? "All Classes (1 to 5)" : `Class ${state.selectedClassSlide3}`;
     }
-
     function handleSlide3Regenerate() {
       if (state.selectedClassSlide3 === "ALL") {
         autoGenerateFullTimetable();

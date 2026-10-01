@@ -3807,6 +3807,36 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         setTimeout(() => toast.remove(), 300);
       }, 3500);
     }
+    function auditGlobalCollisions() {
+      let conflicts = [];
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          state.teachers.forEach(t => {
+            let count = 0;
+            CLASSES.forEach(c => {
+              const slot = state.schedules[c]?.[d]?.[p];
+              if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
+                count++;
+              }
+            });
+            if (count > 1) {
+              conflicts.push(`Teacher ${t.name} is booked in multiple classes on ${d} Period ${p}.`);
+            }
+          });
+        });
+      });
+
+      const banner = document.getElementById("global-conflict-banner");
+      const details = document.getElementById("global-conflict-details");
+      if (banner && details) {
+        if (conflicts.length > 0) {
+          banner.classList.remove("hidden");
+          details.textContent = conflicts.join(" ");
+        } else {
+          banner.classList.add("hidden");
+        }
+      }
+    }
 function runPedagogicalAudit() {
       const badge = document.getElementById("audit-score-badge");
       const itemsContainer = document.getElementById("slide3-pedagogical-audit-items");

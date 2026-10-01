@@ -4319,6 +4319,11 @@ function runPedagogicalAudit() {
         </div>
       </div>
     </div>
-
+function selectAllClassesView() {
+      state.selectedClassSlide3 = "ALL";
+      renderSlide3ClassPills();
+      renderSlide3Grid();
+      runPedagogicalAudit();
+    }
 </body>
 </html>

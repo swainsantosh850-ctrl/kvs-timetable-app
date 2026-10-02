@@ -4431,33 +4431,59 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       });
       showPrintPreviewModal("Staff Deployment • All 6 Days", fullHtml);
     }
-    function printTeacherWeeklyTimetable(teacherId) {
+   function printTeacherWeeklyTimetable(teacherId) {
       const t = state.teachers.find(item => item.id === teacherId);
       if (!t) return;
       let gridRows = "";
       let totalWeekly = 0;
+      
       DAYS.forEach(d => {
-        let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+        let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 10px; width: 10%;">&#x200B;${d}</td>`;
         let dayCount = 0;
+        
         PERIODS.forEach(p => {
-          if (p === 5) rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
           let assigned = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[d]?.[p];
             if (slot && slot.teacherId === t.id) assigned.push(`${c}: ${slot.subject}`);
           });
+          
           if (assigned.length > 0) {
             dayCount += assigned.length;
             totalWeekly += assigned.length;
-            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; font-weight: 800; font-size: 11px;">${assigned.join("<br>")}</td>`;
+            rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9.5px; width: 10%; line-height: 1.2;">${assigned.join("<br>")}</td>`;
           } else {
-            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8;">-</td>`;
+            rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8; font-size: 9.5px; width: 10%;">-</td>`;
           }
         });
-        rowHtml += `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center;">${dayCount} P</td>`;
+
+        rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 10px; width: 10%;">${dayCount} P</td>`;
         gridRows += `<tr>${rowHtml}</tr>`;
       });
-      const html = `<div class="print-page">${renderOfficialHeader(`TEACHER WEEKLY TIMETABLE • ${t.name} (${t.shortName})`, `Total Workload: ${totalWeekly} Periods/Week`)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #f1f5f9; border: 1px solid #cbd5e1;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th><th>Total</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(false)}</div>`;
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader(`TEACHER WEEKLY TIMETABLE • ${t.name} <span style="font-weight:800;">[${t.shortName}]</span>`, `Total Workload: ${totalWeekly} Periods/Week`)}
+          <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px; text-align: center;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">Day</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P1</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P2</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P3</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P4</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P5</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P6</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P7</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P8</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">Total</th>
+              </tr>
+            </thead>
+            <tbody>${gridRows}</tbody>
+          </table>
+          ${renderOfficialFooter(false)}
+        </div>
+      `;
       showPrintPreviewModal(`${t.name} Weekly Timetable`, html);
     }
 
@@ -4466,32 +4492,57 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       state.teachers.forEach(t => {
         let gridRows = "";
         let totalWeekly = 0;
+        
         DAYS.forEach(d => {
-          let rowHtml = `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+          let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 10px; width: 10%;">&#x200B;${d}</td>`;
           let dayCount = 0;
+          
           PERIODS.forEach(p => {
-            if (p === 5) rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-size: 9px; text-align: center; background: #fef3c7;">RECESS</td>`;
             let assigned = [];
             CLASSES.forEach(c => {
               const slot = state.schedules[c]?.[d]?.[p];
               if (slot && slot.teacherId === t.id) assigned.push(`${c}: ${slot.subject}`);
             });
+            
             if (assigned.length > 0) {
               dayCount += assigned.length;
               totalWeekly += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 11px;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 800; font-size: 9.5px; width: 10%; line-height: 1.2;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 9.5px; width: 10%;">-</td>`;
             }
           });
-          rowHtml += `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center;">${dayCount} P</td>`;
+
+          rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 10px; width: 10%;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
-        fullHtml += `<div class="print-page" style="margin-bottom: 24px;">${renderOfficialHeader(`TEACHER WEEKLY TIMETABLE • ${t.name} (${t.shortName})`, `Total Workload: ${totalWeekly} Periods/Week`)}<table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;"><thead><tr style="background: #e2e8f0; border: 1px solid #94a3b8;"><th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th><th>Total</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(false)}</div>`;
+
+        fullHtml += `
+          <div class="print-page" style="margin-bottom: 24px;">
+            ${renderOfficialHeader(`TEACHER WEEKLY TIMETABLE • ${t.name} <span style="font-weight:800;">[${t.shortName}]</span>`, `Total Workload: ${totalWeekly} Periods/Week`)}
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px; text-align: center;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1.5px solid #0f172a;">
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">Day</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">P8</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; width: 10%;">Total</th>
+                </tr>
+              </thead>
+              <tbody>${gridRows}</tbody>
+            </table>
+            ${renderOfficialFooter(false)}
+          </div>
+        `;
       });
       showPrintPreviewModal("All Teachers Weekly Timetables Master Book", fullHtml);
     }
-
     function printCurrentSlide(slideNum) {
       if (slideNum === 1) printTeachersReport();
       else if (slideNum === 2) printSlide2Allotments();

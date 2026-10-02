@@ -34,15 +34,26 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
    @media print {
-      body { background: white !important; padding: 0 !important; color: black !important; }
-      .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal { display: none !important; }
+      body { background: white !important; padding: 0 !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
+      table, th, td, div, span, h1, h2, h3, h4, p { font-family: "Times New Roman", Times, serif !important; }
+      .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal, #personal-lockout-modal { display: none !important; }
       #printable-report-area { display: block !important; }
       .print-page { 
         page-break-after: always !important; 
         break-after: page !important; 
         margin: 0 !important; 
         padding: 16px !important; 
+        font-family: "Times New Roman", Times, serif !important;
       }
       .print-page:last-child {
         page-break-after: avoid !important;
@@ -4057,10 +4068,10 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       const schoolName = state.schoolInfo?.name || "KENDRIYA VIDYALAYA";
       const session = state.schoolInfo?.session || "2026-27";
       return `
-        <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px;">
-          <div style="font-size: 16px; font-weight: 900; color: #0f172a; text-transform: uppercase;">${schoolName}</div>
-          <div style="font-size: 11px; font-weight: 700; color: #475569; margin-top: 2px;">PRIMARY SECTION • ACADEMIC SESSION ${session}</div>
-          <div style="margin-top: 8px; display: inline-block; padding: 3px 12px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-size: 12px; font-weight: 800; text-transform: uppercase;">${title}</div>
+        <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px; font-family: 'Times New Roman', Times, serif;">
+          <div style="font-size: 18px; font-weight: 900; color: #0f172a; text-transform: uppercase;">${schoolName}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #475569; margin-top: 2px;">PRIMARY SECTION • ACADEMIC SESSION ${session}</div>
+          <div style="margin-top: 8px; display: inline-block; padding: 3px 12px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-size: 13px; font-weight: 800; text-transform: uppercase;">${title}</div>
           ${subtitle ? `<div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
         </div>
       `;

@@ -2226,7 +2226,85 @@ function autoGenerateSingleClass(cls) {
         clearSingleClassSchedule(state.selectedClassSlide3);
       }
     }
+// --- SLIDE 4, 5, AND 6 ACTION HANDLERS ---
+    function handleSlide4Regenerate() {
+      if (state.isViewOnly) return;
+      const day = state.selectedDaySlide4;
+      CLASSES.forEach(cls => {
+        const [cNum, cSec] = cls.split("-");
+        const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+        let pool = [];
+        classAllots.forEach(a => {
+          for (let i = 0; i < parseInt(a.periods || 0); i++) {
+            pool.push({ subject: a.subject, teacherId: a.teacherId });
+          }
+        });
+        pool.sort(() => Math.random() - 0.5);
 
+        PERIODS.forEach(p => {
+          if (pool.length > 0) {
+            const item = pool.shift();
+            if (!state.schedules[cls][day][p]) {
+              state.schedules[cls][day][p] = {
+                subject: item.subject,
+                teacherId: item.teacherId,
+                coTeacherId: null,
+                isBlock: false
+              };
+            }
+          }
+        });
+      });
+      refreshAllScheduleViews();
+      showNotification(`Re-generated schedule for ${day}!`, "success");
+    }
+
+    function handleSlide4Clear() {
+      if (state.isViewOnly) return;
+      const day = state.selectedDaySlide4;
+      CLASSES.forEach(cls => {
+        PERIODS.forEach(p => {
+          if (state.schedules[cls]?.[day]?.[p]) {
+            state.schedules[cls][day][p] = null;
+          }
+        });
+      });
+      refreshAllScheduleViews();
+      showNotification(`Cleared schedule for ${day}.`, "info");
+    }
+
+    function handleSlide5Regenerate() {
+      if (state.isViewOnly) return;
+      handleSlide4Regenerate();
+      showNotification(`Re-generated day staff sheet for ${state.selectedDaySlide5}!`, "success");
+    }
+
+    function handleSlide5Clear() {
+      if (state.isViewOnly) return;
+      handleSlide4Clear();
+    }
+
+    function handleSlide6Regenerate() {
+      if (state.isViewOnly) return;
+      autoGenerateFullTimetable();
+      showNotification("Re-generated master schedules successfully!", "success");
+    }
+
+    function handleSlide6Clear() {
+      if (state.isViewOnly) return;
+      const tId = state.selectedTeacherSlide6;
+      CLASSES.forEach(c => {
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            if (state.schedules[c]?.[d]?.[p]?.teacherId === tId) {
+              state.schedules[c][d][p] = null;
+            }
+          });
+        });
+      });
+      refreshAllScheduleViews();
+      showNotification("Cleared all slots for selected teacher.", "info");
+    }
    function createClassTimetableCard(cls) {
       const card = document.createElement("div");
       card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";

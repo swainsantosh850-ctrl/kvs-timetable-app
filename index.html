@@ -3664,7 +3664,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
 
       let gridRows = "";
       DAYS.forEach((d, index) => {
-        let rowHtml = `<td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+        let rowHtml = `<td style="padding: 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
         PERIODS.forEach(p => {
           const slot = state.schedules[cls]?.[d]?.[p];
           if (slot) {
@@ -3672,13 +3672,13 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
             const coT = state.teachers.find(item => item.id === slot.coTeacherId);
             let tStr = t ? t.shortName : '';
             if (coT) tStr += ` + ${coT.shortName}`;
-            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 10px; color: #475569;">${tStr}</div></td>`;
+            rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 10px; color: #475569;">${tStr}</div></td>`;
           } else {
-            rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8;">-</td>`;
+            rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8;">-</td>`;
           }
 
           if (p === 4 && index === 0) {
-            rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+            rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1.5px solid #0f172a; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
           }
         });
         gridRows += `<tr>${rowHtml}</tr>`;
@@ -3689,10 +3689,17 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
             <thead>
-              <tr style="background: #f1f5f9; border: 1px solid #cbd5e1;">
-                <th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                <th style="background: #fef3c7; width: 22px; max-width: 22px;" rowspan="6"></th>
-                <th>P5</th><th>P6</th><th>P7</th><th>P8</th>
+              <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
+                <th style="border: 1.5px solid #0f172a;">Day</th>
+                <th style="border: 1.5px solid #0f172a;">P1</th>
+                <th style="border: 1.5px solid #0f172a;">P2</th>
+                <th style="border: 1.5px solid #0f172a;">P3</th>
+                <th style="border: 1.5px solid #0f172a;">P4</th>
+                <th style="background: #fef3c7; width: 22px; max-width: 22px; border: 1.5px solid #0f172a;" rowspan="6"></th>
+                <th style="border: 1.5px solid #0f172a;">P5</th>
+                <th style="border: 1.5px solid #0f172a;">P6</th>
+                <th style="border: 1.5px solid #0f172a;">P7</th>
+                <th style="border: 1.5px solid #0f172a;">P8</th>
               </tr>
             </thead>
             <tbody>${gridRows}</tbody>

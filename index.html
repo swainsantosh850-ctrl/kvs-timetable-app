@@ -43,7 +43,7 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-  @media print {
+ @media print {
       body { background: white !important; padding: 0 !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
       table, th, td, div, span, h1, h2, h3, h4, p { font-family: "Times New Roman", Times, serif !important; }
       .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal, #personal-lockout-modal { display: none !important; }
@@ -76,9 +76,24 @@
         margin-bottom: 0 !important;
       }
 
+      /* Multi-class portrait 2-up print card rules */
+      .multi-class-print-card {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        margin-bottom: 14px !important;
+        padding-bottom: 10px !important;
+        border-bottom: 2px solid #475569 !important;
+      }
+      .multi-class-print-card:nth-child(2n) {
+        page-break-after: always !important;
+        break-after: page !important;
+        border-bottom: none !important;
+        margin-bottom: 0 !important;
+      }
+
       table { border-collapse: collapse !important; width: 100% !important; }
       th, td { border: 1.5px solid #0f172a !important; }
-      .print-shadow-none { box-shadow: none !important; border: 1.5px solid #0f172a !important; }
+      .print-shadow-none { box-shadow: none !important; border: 2px solid #0f172a !important; }
       @page { size: portrait; margin: 4mm; }
     }
   </style>
@@ -4241,59 +4256,60 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
     }
     function printAllClassesTimetables() {
       let fullHtml = "";
-      CLASSES.forEach((cls) => {
-        const [cNum, cSec] = cls.split("-");
-        const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
-        const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
-        
-        let teacherSub = `Class Teacher: ${ct ? ct.name + ' (' + ct.shortName + ')' : 'Not Assigned'}`;
-        if (coCt) {
-          teacherSub += ` | Co-Class Teacher: ${coCt.name} (${coCt.shortName})`;
-        }
-
+      CLASSES.forEach(c => {
         let gridRows = "";
-        DAYS.forEach((d, index) => {
-          let rowHtml = `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+        DAYS.forEach(d => {
+          let rowHtml = `<td style="padding: 7px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 10px; width: 11%;">&#x200B;${d}</td>`;
           
           PERIODS.forEach(p => {
-            const slot = state.schedules[cls]?.[d]?.[p];
+            const slot = state.schedules[c]?.[d]?.[p];
             if (slot) {
-              const t = state.teachers.find(item => item.id === slot.teacherId);
-              const coT = state.teachers.find(item => item.id === slot.coTeacherId);
-              let tStr = t ? t.shortName : '';
-              if (coT) tStr += ` + ${coT.shortName}`;
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 9.5px; color: #475569;">${tStr}</div></td>`;
+              const tObj = state.teachers.find(t => t.id === slot.teacherId);
+              const tName = tObj ? tObj.shortName : "";
+              rowHtml += `<td style="padding: 7px 3px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9.5px; width: 11%; line-height: 1.2;">
+                <div style="font-weight: 900; color: #0f172a;">${slot.subject}</div>
+                <div style="font-size: 8.5px; color: #475569; font-weight: 600;">[${tName}]</div>
+              </td>`;
             } else {
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
-            }
-
-            // Insert vertical lunch break after P4 (p === 4) on Monday (index === 0) with strict narrow width
-            if (p === 4 && index === 0) {
-              rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1px solid #94a3b8; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+              rowHtml += `<td style="padding: 7px 3px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 9.5px; width: 11%;">-</td>`;
             }
           });
-
           gridRows += `<tr>${rowHtml}</tr>`;
         });
-        
+
         fullHtml += `
-          <div class="print-page" style="margin-bottom: 24px;">
-            ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}
-            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+          <div class="multi-class-print-card" style="break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px dashed #475569;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; border-bottom: 1px solid #0f172a; padding-bottom: 3px;">
+              <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; color: #0f172a;">CLASS: ${c}</span>
+              <span style="font-size: 10px; font-weight: 700; color: #334155;">Primary Wing Master Timetable</span>
+            </div>
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px; text-align: center;">
               <thead>
-                <tr style="background: #e2e8f0; border: 1px solid #94a3b8;">
-                  <th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                  <th style="background: #fef3c7; width: 22px; max-width: 22px;" rowspan="6"></th>
-                  <th>P5</th><th>P6</th><th>P7</th><th>P8</th>
+                <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">Day</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 3px; width: 11%;">P8</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>
             </table>
-            ${renderOfficialFooter(true)}
           </div>
         `;
       });
-      showPrintPreviewModal("Master Timetable Book • All Classes", fullHtml);
+
+      const containerHtml = `
+        <div class="print-page">
+          ${renderOfficialHeader(`ALL CLASSES TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (2 Classes per Page)`)}
+          ${fullHtml}
+        </div>
+      `;
+      showPrintPreviewModal("All Classes Timetables Master Book (2-Up Portrait)", containerHtml);
     }
     function printDayWiseClassTimetable(day) {
       let gridRows = "";

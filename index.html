@@ -53,7 +53,7 @@
         page-break-after: always !important; 
         break-after: page !important; 
         margin: 0 !important; 
-        padding: 12px !important; 
+        padding: 8px !important; 
         font-family: "Times New Roman", Times, serif !important;
       }
       .print-page:last-child {
@@ -61,15 +61,15 @@
         break-after: avoid !important;
       }
 
-      /* Multi-teacher portrait 3-up print card rules */
+      /* Multi-teacher portrait 4-up print card rules */
       .multi-teacher-print-card {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
-        margin-bottom: 10px !important;
-        padding-bottom: 6px !important;
-        border-bottom: 1.5px dashed #94a3b8 !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 4px !important;
+        border-bottom: 1px dashed #94a3b8 !important;
       }
-      .multi-teacher-print-card:nth-child(3n) {
+      .multi-teacher-print-card:nth-child(4n) {
         page-break-after: always !important;
         break-after: page !important;
         border-bottom: none !important;
@@ -79,8 +79,8 @@
       /* Force all table grid lines to be solid, bold, and dark when printing */
       table { border-collapse: collapse !important; width: 100% !important; }
       th, td { border: 1.5px solid #0f172a !important; }
-      .print-shadow-none { box-shadow: none !important; border: 1.5px solid #0f172a !important; }
-      @page { size: portrait; margin: 6mm; }
+      .print-shadow-none { box-shadow: none !important; border: 2px solid #0f172a !important; }
+      @page { size: portrait; margin: 5mm; }
     }
   </style>
 </head>
@@ -4569,7 +4569,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         let totalWeekly = 0;
         
         DAYS.forEach(d => {
-          let rowHtml = `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 9px; width: 10%;">&#x200B;${d}</td>`;
+          let rowHtml = `<td style="padding: 2px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 8px; width: 10%;">&#x200B;${d}</td>`;
           let dayCount = 0;
           
           PERIODS.forEach(p => {
@@ -4582,35 +4582,35 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
             if (assigned.length > 0) {
               dayCount += assigned.length;
               totalWeekly += assigned.length;
-              rowHtml += `<td style="padding: 2px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 8.5px; width: 10%; line-height: 1.1;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 1px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 8px; width: 10%; line-height: 1.0;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 2px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 8.5px; width: 10%;">-</td>`;
+              rowHtml += `<td style="padding: 1px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 8px; width: 10%;">-</td>`;
             }
           });
 
-          rowHtml += `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 9px; width: 10%;">${dayCount} P</td>`;
+          rowHtml += `<td style="padding: 2px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 8px; width: 10%;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
         fullHtml += `
           <div class="multi-teacher-print-card">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; border-bottom: 1px solid #0f172a; padding-bottom: 2px;">
-              <span style="font-size: 10.5px; font-weight: 900; text-transform: uppercase;">${t.name} [${t.shortName}]</span>
-              <span style="font-size: 9px; font-weight: 700; color: #334155;">Workload: ${totalWeekly} Periods/Wk</span>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; border-bottom: 1px solid #0f172a; padding-bottom: 1px;">
+              <span style="font-size: 9.5px; font-weight: 900; text-transform: uppercase;">${t.name} [${t.shortName}]</span>
+              <span style="font-size: 8.5px; font-weight: 700; color: #334155;">Workload: ${totalWeekly} Periods/Wk</span>
             </div>
-            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 8.5px; text-align: center;">
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 8px; text-align: center;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">Day</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P1</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P2</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P3</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P4</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P5</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P6</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P7</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">P8</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 3px; width: 10%;">Total</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">Day</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">P8</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 10%;">Total</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>
@@ -4621,11 +4621,11 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
 
       const containerHtml = `
         <div class="print-page">
-          ${renderOfficialHeader(`ALL TEACHERS WEEKLY TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (3 Teachers per Page)`)}
+          ${renderOfficialHeader(`ALL TEACHERS WEEKLY TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (4 Teachers per Page)`)}
           ${fullHtml}
         </div>
       `;
-      showPrintPreviewModal("All Teachers Weekly Timetables Master Book (3-Up Portrait)", containerHtml);
+      showPrintPreviewModal("All Teachers Weekly Timetables Master Book (4-Up Portrait)", containerHtml);
     }
     function printCurrentSlide(slideNum) {
       if (slideNum === 1) printTeachersReport();

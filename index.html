@@ -131,6 +131,9 @@
             <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Active School:</span>
             <select id="global-school-selector" onchange="switchSchool(this.value)" class="text-xs font-extrabold text-indigo-700 bg-indigo-50/70 border border-indigo-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             </select>
+            <button onclick="openEditSchoolModal()" class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
+              <i class="ph-bold ph-pencil-simple text-xs"></i> Edit School Details
+            </button>
             <button onclick="openSchoolManagerModal()" class="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300">
               Manage Schools
             </button>

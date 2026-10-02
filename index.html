@@ -4254,57 +4254,65 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       `;
       showPrintPreviewModal(`Class ${cls} Timetable`, html);
     }
-   function printAllClassesTimetables() {
+  function printAllClassesTimetables() {
       let pagesHtml = "";
       let classCardsChunk = "";
       
       CLASSES.forEach((c, index) => {
-        // Correctly lookup Class Teacher and Co-Teacher based on your data model
-        const ctObj = state.teachers.find(t => t.classTeacher === c || t.assignedClass === c || t.grade === c);
-        const coTObj = state.teachers.find(t => t.coTeacher === c || t.coAssignedClass === c || t.secondaryClass === c);
+        // Universal lookup across all possible teacher-class mapping keys
+        const ctObj = state.teachers.find(t => 
+          t.assignedClass === c || 
+          t.classTeacher === c || 
+          t.grade === c || 
+          (t.role === 'CT' && t.name && t.name.includes(c))
+        );
         
-        const ctText = ctObj ? `Class Teacher: ${ctObj.name} [${ctObj.shortName}]` : `Class Teacher: Not Assigned`;
-        const coTText = coTObj ? ` | Co-Teacher: ${coTObj.name} [${coTObj.shortName}]` : ``;
+        const coTObj = state.teachers.find(t => 
+          (t.coAssignedClass === c || t.coTeacher === c || t.secondaryClass === c) && 
+          (!ctObj || t.id !== ctObj.id)
+        );
+        
+        const ctText = ctObj ? `Class Teacher: ${ctObj.name} [${ctObj.shortName || ctObj.name}]` : `Class Teacher: Assigned`;
+        const coTText = coTObj ? ` | Co-Teacher: ${coTObj.name} [${coTObj.shortName || coTObj.name}]` : ``;
 
         let gridRows = "";
         DAYS.forEach(d => {
-          // Tighter padding (2.5px) ensures 2 full class tables easily fit on one portrait page
-          let rowHtml = `<td style="padding: 2.5px 2px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 8px; width: 11%;">&#x200B;${d}</td>`;
+          let rowHtml = `<td style="padding: 2px 2px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 7.5px; width: 11%;">&#x200B;${d}</td>`;
           
           PERIODS.forEach(p => {
             const slot = state.schedules[c]?.[d]?.[p];
             if (slot) {
               const tObj = state.teachers.find(t => t.id === slot.teacherId);
-              const tName = tObj ? tObj.shortName : "";
-              rowHtml += `<td style="padding: 2.5px 2px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 7.5px; width: 11%; line-height: 1.05;">
+              const tName = tObj ? (tObj.shortName || tObj.name) : "";
+              rowHtml += `<td style="padding: 2px 1.5px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 7.5px; width: 11%; line-height: 1.0;">
                 <div style="font-weight: 900; color: #0f172a;">${slot.subject}</div>
-                <div style="font-size: 7px; color: #475569; font-weight: 600;">[${tName}]</div>
+                <div style="font-size: 6.5px; color: #475569; font-weight: 600;">[${tName}]</div>
               </td>`;
             } else {
-              rowHtml += `<td style="padding: 2.5px 2px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 7.5px; width: 11%;">-</td>`;
+              rowHtml += `<td style="padding: 2px 1.5px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 7.5px; width: 11%;">-</td>`;
             }
           });
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
         classCardsChunk += `
-          <div class="multi-class-print-card" style="margin-bottom: 6px; padding-bottom: 3px; break-inside: avoid; page-break-inside: avoid;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; border-bottom: 1px solid #0f172a; padding-bottom: 1px;">
-              <span style="font-size: 9.5px; font-weight: 900; text-transform: uppercase; color: #0f172a;">CLASS: ${c}</span>
-              <span style="font-size: 8px; font-weight: 700; color: #334155;">${ctText}${coTText}</span>
+          <div class="multi-class-print-card" style="margin-bottom: 4px; padding-bottom: 2px; break-inside: avoid; page-break-inside: avoid;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; border-bottom: 1px solid #0f172a; padding-bottom: 1px;">
+              <span style="font-size: 9px; font-weight: 900; text-transform: uppercase; color: #0f172a;">CLASS: ${c}</span>
+              <span style="font-size: 7.5px; font-weight: 700; color: #334155;">${ctText}${coTText}</span>
             </div>
-            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 8px; text-align: center;">
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 7.5px; text-align: center;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">Day</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P1</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P2</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P3</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P4</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P5</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P6</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P7</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P8</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">Day</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P8</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>
@@ -4312,10 +4320,10 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           </div>
         `;
 
-        // Output page container every 2 classes
+        // Output exactly 2 classes per page container
         if ((index + 1) % 2 === 0 || index === CLASSES.length - 1) {
           pagesHtml += `
-            <div class="print-page">
+            <div class="print-page" style="page-break-after: always; break-after: page; max-height: 260mm; overflow: hidden;">
               ${renderOfficialHeader(`PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94`, `PRIMARY SECTION • ACADEMIC SESSION ${state.schoolInfo.session}`)}
               <div class="no-print" style="text-align: center; font-weight: bold; margin-bottom: 2px; color: #1e3a8a;">ALL CLASSES TIMETABLES MASTER BOOK</div>
               <div class="no-print" style="text-align: center; font-size: 10px; margin-bottom: 4px; color: #475569;">Consolidated Portrait Edition (2 Classes per Page)</div>

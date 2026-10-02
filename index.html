@@ -399,7 +399,7 @@
       <div id="slide3-tables-container" class="space-y-6"></div>
     </div>
 
-    <!-- Slide 4 -->
+   <!-- Slide 4 -->
     <div id="slide-panel-4" class="hidden space-y-6">
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
@@ -411,7 +411,14 @@
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
-          <div class="flex items-center gap-1.5" id="slide4-day-pills"></div>
+          <button id="slide4-regen-btn" onclick="handleSlide4Regenerate()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-sparkle"></i>
+            <span>Re-Generate This Day</span>
+          </button>
+          <button id="slide4-clear-btn" onclick="handleSlide4Clear()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-trash"></i>
+            <span>Clear Day Grid</span>
+          </button>
           <button onclick="printAllDaysClassTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
             <i class="ph-bold ph-printer text-sm"></i>
             <span>Review & Print All 6 Days (1 File)</span>
@@ -419,9 +426,16 @@
         </div>
       </div>
 
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap">
+          <label class="text-xs font-extrabold text-slate-600">Select Day:</label>
+          <div class="flex items-center gap-1.5" id="slide4-day-pills"></div>
+        </div>
+        <div id="slide4-day-status-summary" class="text-xs font-bold text-slate-500"></div>
+      </div>
+
       <div id="slide4-tables-container" class="space-y-6"></div>
     </div>
-
     <!-- Slide 5 -->
     <div id="slide-panel-5" class="hidden space-y-6">
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
@@ -2923,7 +2937,9 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       showNotification("Cleared period for this teacher.", "info");
     }
 
-    // --- SLIDE 4 & 5 & 6 RENDERING FUNCTIONS ---
+   // ==========================================
+    // --- SLIDE 4: DAY-WISE CLASS TT ---
+    // ==========================================
     function renderSlide4DayPills() {
       const container = document.getElementById("slide4-day-pills");
       if (!container) return;
@@ -2947,19 +2963,24 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       const card = document.createElement("div");
       card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
       
+      let totalFilledForDay = 0;
+      let totalPossibleForDay = CLASSES.length * 8;
+
       let tbodyRows = "";
-      CLASSES.forEach(cls => {
+      CLASSES.forEach((cls, index) => {
         let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">Class ${cls}</td>`;
 
         PERIODS.forEach(p => {
-          if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase tracking-wider">Break</td>`;
-          }
-
           const slot = state.schedules[cls]?.[day]?.[p];
           if (slot) {
+            totalFilledForDay++;
             const teacher = state.teachers.find(t => t.id === slot.teacherId);
-            const teacherName = teacher ? teacher.shortName || teacher.name : "N/A";
+            const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
+
+            let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
+            if (coTeacher) {
+              teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
+            }
             const hasConflict = isTeacherConflicted(slot.teacherId, day, p);
 
             rowHtml += `
@@ -2976,6 +2997,15 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
                 <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
                   <i class="ph-bold ph-plus text-xs"></i>
                 </button>
+              </td>
+            `;
+          }
+
+          // Insert slim vertical Lunch Break after P4 (p === 4) on the first class row (index === 0)
+          if (p === 4 && index === 0) {
+            rowHtml += `
+              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${CLASSES.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+                LUNCH BREAK
               </td>
             `;
           }
@@ -3004,7 +3034,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="${CLASSES.length}"></th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>
@@ -3024,6 +3054,56 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       container.appendChild(createDayWiseClassTableCard(state.selectedDaySlide4));
     }
 
+    function handleSlide4Regenerate() {
+      if (state.isViewOnly) return;
+      const day = state.selectedDaySlide4;
+      CLASSES.forEach(cls => {
+        const [cNum, cSec] = cls.split("-");
+        const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+        let pool = [];
+        classAllots.forEach(a => {
+          for (let i = 0; i < parseInt(a.periods || 0); i++) {
+            pool.push({ subject: a.subject, teacherId: a.teacherId });
+          }
+        });
+        pool.sort(() => Math.random() - 0.5);
+
+        PERIODS.forEach(p => {
+          if (pool.length > 0) {
+            const item = pool.shift();
+            if (!state.schedules[cls][day][p]) {
+              state.schedules[cls][day][p] = {
+                subject: item.subject,
+                teacherId: item.teacherId,
+                coTeacherId: null,
+                isBlock: false
+              };
+            }
+          }
+        });
+      });
+      refreshAllScheduleViews();
+      showNotification(`Re-generated schedule for ${day}!`, "success");
+    }
+
+    function handleSlide4Clear() {
+      if (state.isViewOnly) return;
+      const day = state.selectedDaySlide4;
+      CLASSES.forEach(cls => {
+        PERIODS.forEach(p => {
+          if (state.schedules[cls]?.[day]?.[p]) {
+            state.schedules[cls][day][p] = null;
+          }
+        });
+      });
+      refreshAllScheduleViews();
+      showNotification(`Cleared schedule for ${day}.`, "info");
+    }
+
+
+    // ==========================================
+    // --- SLIDE 5: DAY-WISE TEACHER TT ---
+    // ==========================================
     function renderSlide5DayPills() {
       const container = document.getElementById("slide5-day-pills");
       if (!container) return;
@@ -3111,7 +3191,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
 
       const day = state.selectedDaySlide5;
 
-      state.teachers.forEach(t => {
+      state.teachers.forEach((t, index) => {
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50/50 transition";
 
@@ -3128,10 +3208,6 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         let dailyCount = 0;
 
         PERIODS.forEach(p => {
-          if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
-          }
-
           const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
           let teachingSlots = [];
           CLASSES.forEach(c => {
@@ -3171,6 +3247,14 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
               </td>
             `;
           }
+
+          if (p === 4 && index === 0) {
+            rowHtml += `
+              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${state.teachers.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+                LUNCH BREAK
+              </td>
+            `;
+          }
         });
 
         rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dailyCount} P</td>`;
@@ -3179,6 +3263,10 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       });
     }
 
+
+    // ==========================================
+    // --- SLIDE 6: TEACHER WEEKLY TT ---
+    // ==========================================
     function renderSlide6TeacherSelect() {
       const select = document.getElementById("slide6-teacher-select");
       if (!select) return;
@@ -3212,7 +3300,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
 
       let totalWeeklyLoad = 0;
 
-      DAYS.forEach(d => {
+      DAYS.forEach((d, index) => {
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50/50 transition";
 
@@ -3220,10 +3308,6 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         let dayCount = 0;
 
         PERIODS.forEach(p => {
-          if (p === 5) {
-            rowHtml += `<td class="py-2 px-1 bg-amber-50/60 text-amber-800 font-extrabold text-[10px] uppercase">Break</td>`;
-          }
-
           const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
           let assignedSlots = [];
           CLASSES.forEach(c => {
@@ -3264,6 +3348,14 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
               </td>
             `;
           }
+
+          if (p === 4 && index === 0) {
+            rowHtml += `
+              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${DAYS.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+                LUNCH BREAK
+              </td>
+            `;
+          }
         });
 
         rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dayCount} P</td>`;
@@ -3273,7 +3365,6 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
 
       document.getElementById("slide6-teacher-total-load").textContent = `${totalWeeklyLoad} Periods`;
     }
-
     // --- RULES & LIMITS MODALS ---
     function openRulesModal() {
       const modal = document.getElementById("rules-modal");

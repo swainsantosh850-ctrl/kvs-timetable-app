@@ -3588,7 +3588,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
     }
     function printAllClassesTimetables() {
       let fullHtml = "";
-      CLASSES.forEach((cls, idx) => {
+      CLASSES.forEach((cls) => {
         const [cNum, cSec] = cls.split("-");
         const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
         const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
@@ -3601,13 +3601,8 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         let gridRows = "";
         DAYS.forEach((d, index) => {
           let rowHtml = `<td style="padding: 7px; border: 1px solid #94a3b8; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+          
           PERIODS.forEach(p => {
-            if (p === 5) {
-              if (index === 0) {
-                rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
-              }
-              return;
-            }
             const slot = state.schedules[cls]?.[d]?.[p];
             if (slot) {
               const t = state.teachers.find(item => item.id === slot.teacherId);
@@ -3618,7 +3613,13 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
             } else {
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
+
+            // Insert vertical lunch break after P4 (p === 4) on Monday (index === 0)
+            if (p === 4 && index === 0) {
+              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+            }
           });
+
           gridRows += `<tr>${rowHtml}</tr>`;
         });
         

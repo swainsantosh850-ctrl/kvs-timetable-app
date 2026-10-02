@@ -4327,10 +4327,10 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       showPrintPreviewModal("Daily Master Schedule • All 6 Days", fullHtml);
     }
 
-    function printDayWiseTeacherTimetable(day) {
+   function printDayWiseTeacherTimetable(day) {
       let gridRows = "";
       state.teachers.forEach(t => {
-        let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left;"><div>${t.name}</div><div style="font-size: 9px; color: #64748b;">${t.shortName}</div></td>`;
+        let rowHtml = `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 10px;">${t.name} <span style="color: #475569; font-weight: 800;">[${t.shortName}]</span></td>`;
         let dailyCount = 0;
         
         PERIODS.forEach(p => {
@@ -4342,32 +4342,32 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           
           if (assigned.length > 0) {
             dailyCount += assigned.length;
-            rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px;">${assigned.join("<br>")}</td>`;
+            rowHtml += `<td style="padding: 3px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9.5px; line-height: 1.2;">${assigned.join("<br>")}</td>`;
           } else {
-            rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8; font-size: 10px;">-</td>`;
+            rowHtml += `<td style="padding: 3px 4px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8; font-size: 9.5px;">-</td>`;
           }
         });
 
-        rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center;">${dailyCount}</td>`;
+        rowHtml += `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 10px;">${dailyCount}</td>`;
         gridRows += `<tr>${rowHtml}</tr>`;
       });
 
       const html = `
         <div class="print-page">
           ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
-          <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 9.5px;">
             <thead>
               <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                <th style="text-align: left; border: 1.5px solid #0f172a;">Teacher</th>
-                <th style="border: 1.5px solid #0f172a;">P1</th>
-                <th style="border: 1.5px solid #0f172a;">P2</th>
-                <th style="border: 1.5px solid #0f172a;">P3</th>
-                <th style="border: 1.5px solid #0f172a;">P4</th>
-                <th style="border: 1.5px solid #0f172a;">P5</th>
-                <th style="border: 1.5px solid #0f172a;">P6</th>
-                <th style="border: 1.5px solid #0f172a;">P7</th>
-                <th style="border: 1.5px solid #0f172a;">P8</th>
-                <th style="border: 1.5px solid #0f172a;">Load</th>
+                <th style="text-align: left; border: 1.5px solid #0f172a; padding: 4px 6px;">Teacher</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P1</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P2</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P3</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P4</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P5</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P6</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P7</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P8</th>
+                <th style="border: 1.5px solid #0f172a; padding: 4px 4px;">Load</th>
               </tr>
             </thead>
             <tbody>${gridRows}</tbody>
@@ -4383,7 +4383,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       DAYS.forEach(day => {
         let gridRows = "";
         state.teachers.forEach(t => {
-          let rowHtml = `<td style="padding: 5px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left;"><div>${t.name}</div><div style="font-size: 9px; color: #64748b;">${t.shortName}</div></td>`;
+          let rowHtml = `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 10px;">${t.name} <span style="color: #475569; font-weight: 800;">[${t.shortName}]</span></td>`;
           let dailyCount = 0;
           
           PERIODS.forEach(p => {
@@ -4395,32 +4395,32 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
             
             if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 800; font-size: 10px;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 3px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 800; font-size: 9.5px; line-height: 1.2;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1;">-</td>`;
+              rowHtml += `<td style="padding: 3px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 9.5px;">-</td>`;
             }
           });
 
-          rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center;">${dailyCount} P</td>`;
+          rowHtml += `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 10px;">${dailyCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
         fullHtml += `
           <div class="print-page" style="margin-bottom: 24px;">
             ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
-            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 9.5px;">
               <thead>
                 <tr style="background: #e2e8f0; border: 1.5px solid #0f172a;">
-                  <th style="text-align: left; border: 1.5px solid #0f172a;">Teacher</th>
-                  <th style="border: 1.5px solid #0f172a;">P1</th>
-                  <th style="border: 1.5px solid #0f172a;">P2</th>
-                  <th style="border: 1.5px solid #0f172a;">P3</th>
-                  <th style="border: 1.5px solid #0f172a;">P4</th>
-                  <th style="border: 1.5px solid #0f172a;">P5</th>
-                  <th style="border: 1.5px solid #0f172a;">P6</th>
-                  <th style="border: 1.5px solid #0f172a;">P7</th>
-                  <th style="border: 1.5px solid #0f172a;">P8</th>
-                  <th style="border: 1.5px solid #0f172a;">Load</th>
+                  <th style="text-align: left; border: 1.5px solid #0f172a; padding: 4px 6px;">Teacher</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px;">P8</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 4px 4px;">Load</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>

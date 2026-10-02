@@ -4561,15 +4561,15 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       showPrintPreviewModal(`${t.name} Weekly Timetable`, html);
     }
 
- function printAllTeachersWeeklyTimetables() {
+function printAllTeachersWeeklyTimetables() {
       let fullHtml = "";
       state.teachers.forEach(t => {
         let gridRows = "";
         let totalWeekly = 0;
         
         DAYS.forEach(d => {
-          // Balanced padding to give comfortable row height filling the page evenly for 4 teachers
-          let rowHtml = `<td style="padding: 4.5px 3px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 8.5px; width: 10%;">&#x200B;${d}</td>`;
+          // Increased padding to 8px to expand table height and fill the page
+          let rowHtml = `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 9px; width: 10%;">&#x200B;${d}</td>`;
           let dayCount = 0;
           
           PERIODS.forEach(p => {
@@ -4582,35 +4582,35 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
             if (assigned.length > 0) {
               dayCount += assigned.length;
               totalWeekly += assigned.length;
-              rowHtml += `<td style="padding: 4.5px 2px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 8.5px; width: 10%; line-height: 1.15;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 8px 2px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9px; width: 10%; line-height: 1.25;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 4.5px 2px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 8.5px; width: 10%;">-</td>`;
+              rowHtml += `<td style="padding: 8px 2px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 9px; width: 10%;">-</td>`;
             }
           });
 
-          rowHtml += `<td style="padding: 4.5px 3px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 8.5px; width: 10%;">${dayCount} P</td>`;
+          rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 9px; width: 10%;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
         fullHtml += `
           <div class="multi-teacher-print-card">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; border-bottom: 1px solid #0f172a; padding-bottom: 1px;">
-              <span style="font-size: 10px; font-weight: 900; text-transform: uppercase;">${t.name} [${t.shortName}]</span>
-              <span style="font-size: 9px; font-weight: 700; color: #1e293b;">Workload: ${totalWeekly} Periods/Wk</span>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; border-bottom: 1px solid #0f172a; padding-bottom: 1px;">
+              <span style="font-size: 10.5px; font-weight: 900; text-transform: uppercase;">${t.name} [${t.shortName}]</span>
+              <span style="font-size: 9.5px; font-weight: 700; color: #1e293b;">Workload: ${totalWeekly} Periods/Wk</span>
             </div>
-            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 8.5px; text-align: center;">
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9px; text-align: center;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">Day</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P1</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P2</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P3</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P4</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P5</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P6</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P7</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">P8</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 4px 2px; width: 10%;">Total</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">Day</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">P8</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 2px; width: 10%;">Total</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>
@@ -4621,11 +4621,11 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
 
       const containerHtml = `
         <div class="print-page">
-          ${renderOfficialHeader(`ALL TEACHERS WEEKLY TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (4 Teachers per Page)`)}
+          ${renderOfficialHeader(`ALL TEACHERS WEEKLY TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (4 Teachers per Page - Expanded Height)`)}
           ${fullHtml}
         </div>
       `;
-      showPrintPreviewModal("All Teachers Weekly Timetables Master Book (4-Up Full Page)", containerHtml);
+      showPrintPreviewModal("All Teachers Weekly Timetables Master Book (Taller Rows)", containerHtml);
     }
     function printCurrentSlide(slideNum) {
       if (slideNum === 1) printTeachersReport();

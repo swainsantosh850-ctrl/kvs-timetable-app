@@ -4330,26 +4330,51 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
     function printDayWiseTeacherTimetable(day) {
       let gridRows = "";
       state.teachers.forEach(t => {
-        let rowHtml = `<td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-weight: 700; text-align: left;"><div>${t.name}</div><div style="font-size: 9px; color: #64748b;">${t.shortName}</div></td>`;
+        let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left;"><div>${t.name}</div><div style="font-size: 9px; color: #64748b;">${t.shortName}</div></td>`;
         let dailyCount = 0;
+        
         PERIODS.forEach(p => {
-          if (p === 5) rowHtml += `<td style="padding: 2px; border: 1px solid #cbd5e1; font-size: 8px; text-align: center; background: #fef3c7;">RECESS</td>`;
           let assigned = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[day]?.[p];
             if (slot && slot.teacherId === t.id) assigned.push(`${c}: ${slot.subject}`);
           });
+          
           if (assigned.length > 0) {
             dailyCount += assigned.length;
-            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: 700; font-size: 10px;">${assigned.join("<br>")}</td>`;
+            rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px;">${assigned.join("<br>")}</td>`;
           } else {
-            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; color: #94a3b8; font-size: 10px;">-</td>`;
+            rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8; font-size: 10px;">-</td>`;
           }
         });
-        rowHtml += `<td style="padding: 6px; border: 1px solid #cbd5e1; font-weight: 800; text-align: center;">${dailyCount}</td>`;
+
+        rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center;">${dailyCount}</td>`;
         gridRows += `<tr>${rowHtml}</tr>`;
       });
-      const html = `<div class="print-page">${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}<table style="width: 100%; border-collapse: collapse; font-size: 10px;"><thead><tr style="background: #f1f5f9; border: 1px solid #cbd5e1;"><th style="text-align: left;">Teacher</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th><th>Load</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(false)}</div>`;
+
+      const html = `
+        <div class="print-page">
+          ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
+                <th style="text-align: left; border: 1.5px solid #0f172a;">Teacher</th>
+                <th style="border: 1.5px solid #0f172a;">P1</th>
+                <th style="border: 1.5px solid #0f172a;">P2</th>
+                <th style="border: 1.5px solid #0f172a;">P3</th>
+                <th style="border: 1.5px solid #0f172a;">P4</th>
+                <th style="border: 1.5px solid #0f172a;">P5</th>
+                <th style="border: 1.5px solid #0f172a;">P6</th>
+                <th style="border: 1.5px solid #0f172a;">P7</th>
+                <th style="border: 1.5px solid #0f172a;">P8</th>
+                <th style="border: 1.5px solid #0f172a;">Load</th>
+              </tr>
+            </thead>
+            <tbody>${gridRows}</tbody>
+          </table>
+          ${renderOfficialFooter(false)}
+        </div>
+      `;
       showPrintPreviewModal(`Staff Deployment (${day})`, html);
     }
 
@@ -4358,30 +4383,54 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       DAYS.forEach(day => {
         let gridRows = "";
         state.teachers.forEach(t => {
-          let rowHtml = `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 700; text-align: left;"><div>${t.name}</div><div style="font-size: 9px; color: #64748b;">${t.shortName}</div></td>`;
+          let rowHtml = `<td style="padding: 5px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left;"><div>${t.name}</div><div style="font-size: 9px; color: #64748b;">${t.shortName}</div></td>`;
           let dailyCount = 0;
+          
           PERIODS.forEach(p => {
-            if (p === 5) rowHtml += `<td style="padding: 2px; border: 1px solid #94a3b8; font-size: 8px; text-align: center; background: #fef3c7;">RECESS</td>`;
             let assigned = [];
             CLASSES.forEach(c => {
               const slot = state.schedules[c]?.[day]?.[p];
               if (slot && slot.teacherId === t.id) assigned.push(`${c}: ${slot.subject}`);
             });
+            
             if (assigned.length > 0) {
               dailyCount += assigned.length;
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; text-align: center; font-weight: 800; font-size: 10px;">${assigned.join("<br>")}</td>`;
+              rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 800; font-size: 10px;">${assigned.join("<br>")}</td>`;
             } else {
-              rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
+              rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1;">-</td>`;
             }
           });
-          rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; font-weight: 800; text-align: center;">${dailyCount} P</td>`;
+
+          rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center;">${dailyCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
-        fullHtml += `<div class="print-page" style="margin-bottom: 24px;">${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}<table style="width: 100%; border-collapse: collapse; font-size: 10px;"><thead><tr style="background: #e2e8f0; border: 1px solid #94a3b8;"><th style="text-align: left;">Teacher</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th style="background: #fef3c7;">Break</th><th>P5</th><th>P6</th><th>P7</th><th>P8</th><th>Load</th></tr></thead><tbody>${gridRows}</tbody></table>${renderOfficialFooter(false)}</div>`;
+
+        fullHtml += `
+          <div class="print-page" style="margin-bottom: 24px;">
+            ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1.5px solid #0f172a;">
+                  <th style="text-align: left; border: 1.5px solid #0f172a;">Teacher</th>
+                  <th style="border: 1.5px solid #0f172a;">P1</th>
+                  <th style="border: 1.5px solid #0f172a;">P2</th>
+                  <th style="border: 1.5px solid #0f172a;">P3</th>
+                  <th style="border: 1.5px solid #0f172a;">P4</th>
+                  <th style="border: 1.5px solid #0f172a;">P5</th>
+                  <th style="border: 1.5px solid #0f172a;">P6</th>
+                  <th style="border: 1.5px solid #0f172a;">P7</th>
+                  <th style="border: 1.5px solid #0f172a;">P8</th>
+                  <th style="border: 1.5px solid #0f172a;">Load</th>
+                </tr>
+              </thead>
+              <tbody>${gridRows}</tbody>
+            </table>
+            ${renderOfficialFooter(false)}
+          </div>
+        `;
       });
       showPrintPreviewModal("Staff Deployment • All 6 Days", fullHtml);
     }
-
     function printTeacherWeeklyTimetable(teacherId) {
       const t = state.teachers.find(item => item.id === teacherId);
       if (!t) return;

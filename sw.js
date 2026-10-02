@@ -1,4 +1,4 @@
-const CACHE_NAME = "kvs-timetable-cache-v55";
+const CACHE_NAME = "kvs-timetable-cache-v56";
 const ASSETS_TO_CACHE = [
   "./",
   "./index.html",

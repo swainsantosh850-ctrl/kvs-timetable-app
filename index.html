@@ -3536,7 +3536,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       printTeachersReport();
     }
 
-   function printClassTimetable(cls) {
+  function printClassTimetable(cls) {
       const [cNum, cSec] = cls.split("-");
       const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
       const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
@@ -3562,7 +3562,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           }
 
           if (p === 4 && index === 0) {
-            rowHtml += `<td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+            rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
           }
         });
         gridRows += `<tr>${rowHtml}</tr>`;
@@ -3575,7 +3575,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
             <thead>
               <tr style="background: #f1f5f9; border: 1px solid #cbd5e1;">
                 <th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                <th style="background: #fef3c7;">LUNCH BREAK</th>
+                <th style="background: #fef3c7; width: 22px; max-width: 22px;" rowspan="6"></th>
                 <th>P5</th><th>P6</th><th>P7</th><th>P8</th>
               </tr>
             </thead>
@@ -3614,9 +3614,9 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
               rowHtml += `<td style="padding: 5px; border: 1px solid #94a3b8; text-align: center; color: #cbd5e1;">-</td>`;
             }
 
-            // Insert vertical lunch break after P4 (p === 4) on Monday (index === 0)
+            // Insert vertical lunch break after P4 (p === 4) on Monday (index === 0) with strict narrow width
             if (p === 4 && index === 0) {
-              rowHtml += `<td style="padding: 4px; border: 1px solid #94a3b8; font-weight: 800; font-size: 10px; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
+              rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1px solid #94a3b8; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
             }
           });
 
@@ -3630,7 +3630,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
               <thead>
                 <tr style="background: #e2e8f0; border: 1px solid #94a3b8;">
                   <th>Day</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                  <th style="background: #fef3c7;" rowspan="6">LUNCH BREAK</th>
+                  <th style="background: #fef3c7; width: 22px; max-width: 22px;" rowspan="6"></th>
                   <th>P5</th><th>P6</th><th>P7</th><th>P8</th>
                 </tr>
               </thead>

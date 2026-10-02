@@ -4254,65 +4254,61 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       `;
       showPrintPreviewModal(`Class ${cls} Timetable`, html);
     }
-  function printAllClassesTimetables() {
+ function printAllClassesTimetables() {
       let pagesHtml = "";
       let classCardsChunk = "";
       
       CLASSES.forEach((c, index) => {
-        // Universal lookup across all possible teacher-class mapping keys
-        const ctObj = state.teachers.find(t => 
-          t.assignedClass === c || 
-          t.classTeacher === c || 
-          t.grade === c || 
-          (t.role === 'CT' && t.name && t.name.includes(c))
-        );
+        const [cNum, cSec] = c.split("-");
         
-        const coTObj = state.teachers.find(t => 
-          (t.coAssignedClass === c || t.coTeacher === c || t.secondaryClass === c) && 
-          (!ctObj || t.id !== ctObj.id)
-        );
+        // Correctly lookup Class Teacher and Co-Teacher using actual data properties (classNum, section, isClassTeacher, isCoClassTeacher)
+        const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+        const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
         
-        const ctText = ctObj ? `Class Teacher: ${ctObj.name} [${ctObj.shortName || ctObj.name}]` : `Class Teacher: Assigned`;
-        const coTText = coTObj ? ` | Co-Teacher: ${coTObj.name} [${coTObj.shortName || coTObj.name}]` : ``;
+        const ctText = ct ? `Class Teacher: ${ct.name} [${ct.shortName || ct.name}]` : `Class Teacher: Not Assigned`;
+        const coTText = coCt ? ` | Co-Teacher: ${coCt.name} [${coCt.shortName || coCt.name}]` : ``;
 
         let gridRows = "";
         DAYS.forEach(d => {
-          let rowHtml = `<td style="padding: 2px 2px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 7.5px; width: 11%;">&#x200B;${d}</td>`;
+          let rowHtml = `<td style="padding: 2.5px 2px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 7.5px; width: 11%;">&#x200B;${d}</td>`;
           
           PERIODS.forEach(p => {
             const slot = state.schedules[c]?.[d]?.[p];
             if (slot) {
               const tObj = state.teachers.find(t => t.id === slot.teacherId);
-              const tName = tObj ? (tObj.shortName || tObj.name) : "";
-              rowHtml += `<td style="padding: 2px 1.5px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 7.5px; width: 11%; line-height: 1.0;">
+              const coTObj = state.teachers.find(t => t.id === slot.coTeacherId);
+              let tName = tObj ? (tObj.shortName || tObj.name) : "";
+              if (coTObj) tName += ` + ${coTObj.shortName || coTObj.name}`;
+
+              rowHtml += `<td style="padding: 2.5px 1.5px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 7.5px; width: 11%; line-height: 1.0;">
                 <div style="font-weight: 900; color: #0f172a;">${slot.subject}</div>
                 <div style="font-size: 6.5px; color: #475569; font-weight: 600;">[${tName}]</div>
               </td>`;
             } else {
-              rowHtml += `<td style="padding: 2px 1.5px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 7.5px; width: 11%;">-</td>`;
+              rowHtml += `<td style="padding: 2.5px 1.5px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 7.5px; width: 11%;">-</td>`;
             }
           });
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
         classCardsChunk += `
-          <div class="multi-class-print-card" style="margin-bottom: 4px; padding-bottom: 2px; break-inside: avoid; page-break-inside: avoid;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; border-bottom: 1px solid #0f172a; padding-bottom: 1px;">
-              <span style="font-size: 9px; font-weight: 900; text-transform: uppercase; color: #0f172a;">CLASS: ${c}</span>
-              <span style="font-size: 7.5px; font-weight: 700; color: #334155;">${ctText}${coTText}</span>
+          <div class="multi-class-print-card" style="margin-bottom: 6px; padding-bottom: 3px; break-inside: avoid; page-break-inside: avoid;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; border-bottom: 1.5px solid #0f172a; padding-bottom: 1px;">
+              <span style="font-size: 9.5px; font-weight: 900; text-transform: uppercase; color: #0f172a;">CLASS: ${c}</span>
+              <span style="font-size: 8px; font-weight: 700; color: #1e293b;">${ctText}${coTText}</span>
             </div>
             <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 7.5px; text-align: center;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">Day</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P1</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P2</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P3</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P4</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P5</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P6</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P7</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 2px; width: 11%;">P8</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">Day</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 2.5px 2px; width: 11%;">P8</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>

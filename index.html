@@ -436,7 +436,7 @@
 
       <div id="slide4-tables-container" class="space-y-6"></div>
     </div>
-    <!-- Slide 5 -->
+   <!-- Slide 5 -->
     <div id="slide-panel-5" class="hidden space-y-6">
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
@@ -448,7 +448,14 @@
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
-          <div class="flex items-center gap-1.5" id="slide5-day-pills"></div>
+          <button id="slide5-regen-btn" onclick="handleSlide5Regenerate()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-sparkle"></i>
+            <span>Re-Generate Day Staff</span>
+          </button>
+          <button id="slide5-clear-btn" onclick="handleSlide5Clear()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-trash"></i>
+            <span>Clear Day Staff</span>
+          </button>
           <button onclick="printAllDaysTeacherTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
             <i class="ph-bold ph-printer text-sm"></i>
             <span>Review & Print All 6 Days Staff (1 File)</span>
@@ -458,6 +465,14 @@
             <span>Switch to Weekly (Slide 6)</span>
           </button>
         </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap">
+          <label class="text-xs font-extrabold text-slate-600">Select Day:</label>
+          <div class="flex items-center gap-1.5" id="slide5-day-pills"></div>
+        </div>
+        <div id="slide5-day-status-summary" class="text-xs font-bold text-slate-500"></div>
       </div>
 
       <div class="bg-gradient-to-r from-emerald-50/70 to-teal-50 border border-emerald-200 rounded-2xl p-4 shadow-xs">
@@ -491,7 +506,7 @@
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6"></th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>
@@ -504,7 +519,7 @@
       </div>
     </div>
 
-    <!-- Slide 6 -->
+   <!-- Slide 6 -->
     <div id="slide-panel-6" class="hidden space-y-6">
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
@@ -518,6 +533,14 @@
         <div class="flex items-center flex-wrap gap-2">
           <select id="slide6-teacher-select" onchange="renderSlide6TeacherGrid()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </select>
+          <button id="slide6-regen-btn" onclick="handleSlide6Regenerate()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-sparkle"></i>
+            <span>Re-Generate Teacher</span>
+          </button>
+          <button id="slide6-clear-btn" onclick="handleSlide6Clear()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1">
+            <i class="ph-bold ph-trash"></i>
+            <span>Clear Teacher</span>
+          </button>
           <button onclick="printTeacherWeeklyTimetable(state.selectedTeacherSlide6)" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-700 transition flex items-center gap-1">
             <i class="ph-bold ph-printer text-xs"></i>
             <span>Print This Teacher</span>
@@ -553,7 +576,7 @@
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-2 bg-amber-50/50 text-amber-700 w-12 text-[10px]">Recess</th>
+              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6"></th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>

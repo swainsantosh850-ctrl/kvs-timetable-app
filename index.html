@@ -4254,7 +4254,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       `;
       showPrintPreviewModal(`Class ${cls} Timetable`, html);
     }
- function printAllClassesTimetables() {
+function printAllClassesTimetables() {
       let pagesHtml = "";
       let classCardsChunk = "";
       
@@ -4291,12 +4291,10 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           gridRows += `<tr>${rowHtml}</tr>`;
         });
 
+        // Prepend the official header directly before each class card block
         classCardsChunk += `
-          <div class="multi-class-print-card" style="margin-bottom: 6px; padding-bottom: 3px; break-inside: avoid; page-break-inside: avoid;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; border-bottom: 1.5px solid #0f172a; padding-bottom: 1px;">
-              <span style="font-size: 9.5px; font-weight: 900; text-transform: uppercase; color: #0f172a;">CLASS: ${c}</span>
-              <span style="font-size: 8px; font-weight: 700; color: #1e293b;">${ctText}${coTText}</span>
-            </div>
+          <div class="multi-class-print-card" style="margin-bottom: 10px; padding-bottom: 6px; break-inside: avoid; page-break-inside: avoid;">
+            ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${c}`, `${ctText}${coTText}`)}
             <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 7.5px; text-align: center;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
@@ -4316,11 +4314,10 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           </div>
         `;
 
-        // Output exactly 2 classes per page container with a single unique header
+        // Output exactly 2 classes per page container
         if ((index + 1) % 2 === 0 || index === CLASSES.length - 1) {
           pagesHtml += `
             <div class="print-page" style="page-break-after: always; break-after: page; max-height: 260mm; overflow: hidden;">
-              ${renderOfficialHeader(`ALL CLASSES TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (2 Classes per Page)`)}
               ${classCardsChunk}
             </div>
           `;

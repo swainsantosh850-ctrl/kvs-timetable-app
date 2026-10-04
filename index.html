@@ -3548,6 +3548,48 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       const { teacherId, day, period } = currentTeacherSlotContext;
       const classKey = document.getElementById("teacher-slot-class-select").value;
       const subject = document.getElementById("teacher-slot-subject-input").value.trim().toUpperCase();
+      const coTeacherSelect = document.getElementById("teacher-slot-coteacher-input");
+      const coTeacherId = coTeacherSelect ? coTeacherSelect.value.trim() : "";
+
+      if (!classKey || !subject) {
+        showNotification("Please select a subject from Box 1 or Box 2 first.", "warning");
+        return;
+      }
+
+      const [classNum, classSec] = classKey.split("-");
+
+      // Clear any previous teacher occupying this exact slot
+      CLASSES.forEach(c => {
+        const existingSlot = state.schedules[c]?.[day]?.[period];
+        if (existingSlot && (existingSlot.teacherId || existingSlot.coTeacherId)) {
+          const [eNum, eSec] = c.split("-");
+          if (existingSlot.teacherId) decrementAllotmentCount(existingSlot.teacherId, eNum, eSec, existingSlot.subject);
+          if (existingSlot.coTeacherId) decrementAllotmentCount(existingSlot.coTeacherId, eNum, eSec, existingSlot.subject);
+          state.schedules[c][day][period] = null;
+        }
+      });
+
+      // Save into master schedule with co-teacher properly linked
+      state.schedules[classKey][day][period] = {
+        subject: subject,
+        teacherId: teacherId,
+        coTeacherId: coTeacherId || null,
+        isBlock: false
+      };
+
+      // Auto-assign or increment in Slide 2 allotments for both primary and co-teacher
+      ensureAllotmentExists(teacherId, classNum, classSec, subject);
+      if (coTeacherId) {
+        ensureAllotmentExists(coTeacherId, classNum, classSec, subject);
+      }
+
+      closeTeacherSlotModal();
+      refreshAllScheduleViews();
+      showNotification(`Assigned ${subject} to Class ${classKey} on ${day} P${period} with co-teacher!`, "success");
+    }
+      const { teacherId, day, period } = currentTeacherSlotContext;
+      const classKey = document.getElementById("teacher-slot-class-select").value;
+      const subject = document.getElementById("teacher-slot-subject-input").value.trim().toUpperCase();
       const coTeacherId = document.getElementById("teacher-slot-coteacher-input") ? document.getElementById("teacher-slot-coteacher-input").value : null;
 
       if (!classKey || !subject) {

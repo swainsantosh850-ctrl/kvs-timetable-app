@@ -3237,6 +3237,15 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
 
       const coTeacherId = document.getElementById("slot-coteacher-input") ? document.getElementById("slot-coteacher-input").value : null;
       
+      // Clear old slot if it existed before replacing
+      const oldSlot = state.schedules[cls]?.[day]?.[period];
+      if (oldSlot && oldSlot.teacherId && oldSlot.subject) {
+        decrementAllotmentCount(oldSlot.teacherId, cNum, cSec, oldSlot.subject);
+        if (oldSlot.coTeacherId) {
+          decrementAllotmentCount(oldSlot.coTeacherId, cNum, cSec, oldSlot.subject);
+        }
+      }
+
       state.schedules[cls][day][period] = {
         subject: subject,
         teacherId: teacherId,
@@ -3253,6 +3262,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         };
       }
 
+      // Auto-assign or increment in Slide 2 allotments
       ensureAllotmentExists(teacherId, cNum, cSec, subject);
       if (coTeacherId) {
         ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
@@ -3480,50 +3490,15 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         return;
       }
 
-      // Renamed to avoid global scope collisions
-      const [classNumber, classSection] = classKey.split("-");
+      const [classNum, classSec] = classKey.split("-");
 
-      const teacherAllot = state.allotments.find(a => a.teacherId === teacherId && a.class === classNumber && a.section === classSection && a.subject === subject);
-      if (teacherAllot) {
-        let placedByTeacher = 0;
-        DAYS.forEach(d => {
-          PERIODS.forEach(p => {
-            if (d === day && p === period) return;
-            const slot = state.schedules[classKey]?.[d]?.[p];
-            if (slot && (slot.teacherId === teacherId || slot.coTeacherId === teacherId) && slot.subject === subject) {
-              placedByTeacher++;
-            }
-          });
-        });
-
-        const teacherQuota = parseInt(teacherAllot.periods || 0);
-        if (placedByTeacher >= teacherQuota) {
-          showNotification(`Cannot assign: Teacher's quota of ${teacherQuota} period(s) for ${subject} in Class ${classKey} is already full!`, "warning");
-          return;
-        }
-      }
-
-      const limits = state.subjectLimits[`Class ${classNumber}`] || state.subjectLimits["Class 1"] || {};
-      const maxAllowed = limits[subject] !== undefined ? limits[subject] : 10;
-
-      let totalInClass = 0;
-      DAYS.forEach(d => {
-        PERIODS.forEach(p => {
-          if (d === day && p === period) return;
-          if (state.schedules[classKey]?.[d]?.[p]?.subject === subject) {
-            totalInClass++;
-          }
-        });
-      });
-
-      if (totalInClass >= maxAllowed) {
-        showNotification(`Cannot assign: Class ${classKey} already has ${totalInClass}/${maxAllowed} periods of ${subject} across all teachers!`, "warning");
-        return;
-      }
-
+      // Clear any previous teacher occupying this exact slot
       CLASSES.forEach(c => {
-        const slot = state.schedules[c]?.[day]?.[period];
-        if (slot && (slot.teacherId === teacherId || slot.coTeacherId === teacherId)) {
+        const existingSlot = state.schedules[c]?.[day]?.[period];
+        if (existingSlot && (existingSlot.teacherId || existingSlot.coTeacherId)) {
+          const [eNum, eSec] = c.split("-");
+          if (existingSlot.teacherId) decrementAllotmentCount(existingSlot.teacherId, eNum, eSec, existingSlot.subject);
+          if (existingSlot.coTeacherId) decrementAllotmentCount(existingSlot.coTeacherId, eNum, eSec, existingSlot.subject);
           state.schedules[c][day][period] = null;
         }
       });
@@ -3535,9 +3510,10 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         isBlock: false
       };
 
-      ensureAllotmentExists(teacherId, classNumber, classSection, subject);
+      // Auto-assign or increment in Slide 2 allotments
+      ensureAllotmentExists(teacherId, classNum, classSec, subject);
       if (coTeacherId) {
-        ensureAllotmentExists(coTeacherId, classNumber, classSection, subject);
+        ensureAllotmentExists(coTeacherId, classNum, classSec, subject);
       }
 
       closeTeacherSlotModal();

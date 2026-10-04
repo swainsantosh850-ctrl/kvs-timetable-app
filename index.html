@@ -612,7 +612,7 @@
       </div>
     </div>
 
-   <!-- Slide 6 -->
+  <!-- Slide 6 -->
     <div id="slide-panel-6" class="hidden space-y-6">
       <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
@@ -624,24 +624,32 @@
         </div>
 
         <div class="flex items-center flex-wrap gap-2">
-          <select id="slide6-teacher-select" onchange="renderSlide6TeacherGrid()" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </select>
+          <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+            <label class="text-[11px] font-black uppercase tracking-wider text-slate-600">Teacher:</label>
+            <select id="slide6-teacher-select" onchange="renderSlide6TeacherGrid()" class="px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </select>
+          </div>
+
           <button id="slide6-regen-btn" onclick="handleSlide6Regenerate()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition flex items-center gap-1">
             <i class="ph-bold ph-sparkle"></i>
             <span>Re-Generate Teacher</span>
           </button>
+          
           <button id="slide6-clear-btn" onclick="handleSlide6Clear()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1">
             <i class="ph-bold ph-trash"></i>
             <span>Clear Teacher</span>
           </button>
+
           <button onclick="printTeacherWeeklyTimetable(state.selectedTeacherSlide6)" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-700 transition flex items-center gap-1">
             <i class="ph-bold ph-printer text-xs"></i>
             <span>Print This Teacher</span>
           </button>
+
           <button onclick="printAllTeachersWeeklyTimetables()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
             <i class="ph-bold ph-printer text-sm"></i>
             <span>Review & Print All Teachers (1 File)</span>
           </button>
+
           <button onclick="goToSlide(5)" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
             <i class="ph-bold ph-arrows-left-right"></i>
             <span>Switch to Day-Wise (Slide 5)</span>
@@ -2722,18 +2730,28 @@ function autoGenerateSingleClass(cls) {
     // ==========================================
     // --- SLIDE 6: TEACHER WEEKLY TT ---
     // ==========================================
-    function renderSlide6TeacherSelect() {
+   function renderSlide6TeacherSelect() {
       const select = document.getElementById("slide6-teacher-select");
       if (!select) return;
+
+      // Keep current selection if valid, otherwise default to first teacher
+      const currentSelection = state.selectedTeacherSlide6 || (state.teachers[0] ? state.teachers[0].id : "");
       select.innerHTML = "";
 
       state.teachers.forEach(t => {
         const opt = document.createElement("option");
-        opt.value = t.id;
-        opt.textContent = `${t.name} (${t.shortName})`;
-        if (t.id === state.selectedTeacherSlide6) opt.selected = true;
+        opt.value = t.id; // CRITICAL: Must be t.id to match teacher lookup
+        opt.textContent = `${t.name} (${t.shortName}) - ${t.isClassTeacher ? `CT (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT'}`;
+        
+        if (t.id === currentSelection) {
+          opt.selected = true;
+        }
         select.appendChild(opt);
       });
+
+      if (!state.selectedTeacherSlide6 && state.teachers[0]) {
+        state.selectedTeacherSlide6 = state.teachers[0].id;
+      }
     }
 
     function renderSlide6TeacherGrid() {

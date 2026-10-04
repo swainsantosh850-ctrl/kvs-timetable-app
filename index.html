@@ -2073,16 +2073,80 @@ function auditGlobalCollisions() {
       });
     }
 
-    function renderSlide2Allotments() {
+   function renderSlide2Allotments() {
       const container = document.getElementById("slide2-teachers-allotment-container");
       if (!container) return;
-      container.innerHTML = "";
+      
+      // AUTO-DISCOVERY PASS: Scan all master schedules (Slides 3-6) and ensure allotments exist
+      CLASSES.forEach(cls => {
+        const [cNum, cSec] = cls.split("-");
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            const slot = state.schedules[cls]?.[d]?.[p];
+            if (slot && slot.teacherId && slot.subject) {
+              const cleanSubj = String(slot.subject).trim().toUpperCase();
+              let exists = state.allotments.some(a => 
+                String(a.teacherId).trim() === String(slot.teacherId).trim() &&
+                String(a.class).trim() === String(cNum).trim() &&
+                String(a.section).trim().toUpperCase() === String(cSec).trim().toUpperCase() &&
+                String(a.subject).trim().toUpperCase() === cleanSubj
+              );
+              if (!exists) {
+                state.allotments.push({
+                  id: "a_sync_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+                  teacherId: slot.teacherId,
+                  class: cNum,
+                  section: cSec,
+                  subject: cleanSubj,
+                  periods: 1
+                });
+              }
+              if (slot.coTeacherId) {
+                let coExists = state.allotments.some(a => 
+                  String(a.teacherId).trim() === String(slot.coTeacherId).trim() &&
+                  String(a.class).trim() === String(cNum).trim() &&
+                  String(a.section).trim().toUpperCase() === String(cSec).trim().toUpperCase() &&
+                  String(a.subject).trim().toUpperCase() === cleanSubj
+                );
+                if (!coExists) {
+                  state.allotments.push({
+                    id: "a_sync_co_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+                    teacherId: slot.coTeacherId,
+                    class: cNum,
+                    section: cSec,
+                    subject: cleanSubj,
+                    periods: 1
+                  });
+                }
+              }
+            }
+          });
+        });
+      });
 
+      container.innerHTML = "";
       const activeSecs = getActiveSections();
 
       state.teachers.forEach(t => {
         const teacherAllots = state.allotments.filter(a => a.teacherId === t.id);
-        const totalPeriods = teacherAllots.reduce((sum, a) => sum + parseInt(a.periods || 0), 0);
+
+        let totalAssignedPeriods = 0;
+        teacherAllots.forEach(a => {
+          let targetClassKey = `${a.class}-${a.section}`;
+          let actualCount = 0;
+          DAYS.forEach(d => {
+            PERIODS.forEach(p => {
+              const slot = state.schedules[targetClassKey]?.[d]?.[p];
+              if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id) && slot.subject.toUpperCase() === a.subject.toUpperCase()) {
+                actualCount++;
+              }
+            });
+          });
+          if (actualCount > 0) {
+            a.periods = actualCount;
+          }
+          totalAssignedPeriods += parseInt(a.periods || 0);
+        });
 
         let ctWarning = "";
         if (t.isClassTeacher && t.classNum && t.section) {
@@ -2110,7 +2174,7 @@ function auditGlobalCollisions() {
               <h3 class="text-sm font-extrabold text-slate-900">${t.name} (${t.shortName})</h3>
             </div>
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${totalPeriods > 39 ? 'bg-rose-100 text-rose-700' : 'bg-indigo-50 text-indigo-700'}">Total: ${totalPeriods}</span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${totalAssignedPeriods > 39 ? 'bg-rose-100 text-rose-700' : 'bg-indigo-50 text-indigo-700'}">Total: ${totalAssignedPeriods}</span>
               <button onclick="addSubjectToTeacher('${t.id}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-indigo-300 text-indigo-600 hover:bg-indigo-50 transition flex items-center gap-1">
                 <i class="ph-bold ph-plus text-xs"></i>
                 <span>Subject</span>
@@ -2169,7 +2233,7 @@ function auditGlobalCollisions() {
                     .filter(item => item.id !== a.id && item.class === a.class && item.section === a.section && item.subject === s)
                     .reduce((sum, item) => sum + parseInt(item.periods || 0), 0);
                   const rem = Math.max(0, sLimit - alreadyUsed);
-                  return `<option value="${s}" ${a.subject === s ? "selected" : ""}>${s} (Max: ${sLimit}, Avail: ${rem})</option>`;
+                  return `<option value="${s}" ${a.subject === s ? "selected" : ""}>${s} (Max: ${sLimit}, Avail:${rem})</option>`;
                 }).join("")}
               </select>
             </div>
@@ -2179,7 +2243,7 @@ function auditGlobalCollisions() {
                 <label class="text-[10px] font-bold text-slate-500">Periods</label>
                 <span class="text-[9px] font-black text-indigo-600">Cap: ${maxRemainingForRow}</span>
               </div>
-              <input type="number" min="1" max="${maxRemainingForRow}" value="${Math.min(a.periods, maxRemainingForRow || 1)}" 
+              <input type="number" min="1" max="${maxRemainingForRow}" value="${a.periods}" 
                 onchange="validateAndSetAllotmentPeriods('${a.id}', parseInt(this.value) || 1, ${maxRemainingForRow})" 
                 class="w-full px-2.5 py-1.5 rounded-lg text-xs font-bold border ${a.periods > maxRemainingForRow ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-slate-200 bg-white'} text-center">
             </div>
@@ -2193,6 +2257,7 @@ function auditGlobalCollisions() {
           rowsContainer.appendChild(rowEl);
         });
       });
+      commitWorkingStateToRepository();
     }
 
     function addSubjectToTeacher(teacherId) {

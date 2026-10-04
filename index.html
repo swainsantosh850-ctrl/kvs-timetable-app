@@ -3199,6 +3199,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         return;
       }
 
+      // Declared ONCE here at the top
       const [cNum, cSec] = cls.split("-");
       const classKey = `Class ${cNum}`;
       const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
@@ -3206,7 +3207,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       let allowedLimit = classLimits[subject];
       if (allowedLimit === undefined) {
         const allot = state.allotments.find(a => a.class === cNum && a.section === cSec && a.subject === subject);
-        allowedLimit = allot ? parseInt(allowed_periods) : 10;
+        allowedLimit = allot ? parseInt(allot.periods) : 10;
       }
 
       let currentCount = 0;
@@ -3253,7 +3254,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         };
       }
 
-      // Auto-allotment sync using existing cNum and cSec
+      // Uses the existing cNum and cSec without redeclaring them
       ensureAllotmentExists(teacherId, cNum, cSec, subject);
       if (coTeacherId) {
         ensureAllotmentExists(coTeacherId, cNum, cSec, subject);

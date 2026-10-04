@@ -5023,7 +5023,7 @@ function runPedagogicalAudit() {
           if (isCore) {
             if (streak === 0) streakStart = p;
             streak++;
-            if (streak >= 3) {
+            if (streak >= 4) { // <-- CORRECTED: Only triggers when streak reaches 4 or more
               continuousCoreDetails.push(`Class ${cls} on ${d}: 4 continuous core periods in a row from Period ${streakStart} to ${p}.`);
             }
           } else {

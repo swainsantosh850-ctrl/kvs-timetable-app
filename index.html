@@ -1582,15 +1582,22 @@ function openEditSchoolModal() {
       }
     }
 
-    function applyViewOnlyLocks() {
+   function applyViewOnlyLocks() {
       const banner = document.getElementById("view-only-banner");
       const publishBtn = document.getElementById("btn-publish-sync");
       const roleLabel = document.getElementById("role-switcher-label");
+      
+      const pill1 = document.getElementById("nav-pill-1");
+      const pill2 = document.getElementById("nav-pill-2");
 
       if (!state.isViewOnly) {
         if (banner) banner.classList.add("hidden");
         if (publishBtn) publishBtn.classList.remove("hidden");
         if (roleLabel) roleLabel.textContent = "Role: Admin";
+
+        // Show Slide 1 & 2 pills for Admin
+        if (pill1) pill1.classList.remove("hidden");
+        if (pill2) pill2.classList.remove("hidden");
 
         ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
           const el = document.getElementById(id);
@@ -1619,6 +1626,15 @@ function openEditSchoolModal() {
       if (publishBtn) publishBtn.classList.add("hidden");
       if (roleLabel) roleLabel.textContent = "Role: Staff (View-Only)";
 
+      // Hide Slide 1 & 2 pills for Teachers / Staff
+      if (pill1) pill1.classList.add("hidden");
+      if (pill2) pill2.classList.add("hidden");
+
+      // Redirect teacher away if currently on Slide 1 or 2
+      if (state.activeSlide === 1 || state.activeSlide === 2) {
+        goToSlide(3);
+      }
+
       ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.disabled = true;
@@ -1640,7 +1656,6 @@ function openEditSchoolModal() {
       document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.add("hidden"));
       document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.add("hidden"));
     }
-
     function refreshAllScheduleViews() {
       if (state.activeSlide === 3) {
         renderSlide3Grid();

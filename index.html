@@ -791,7 +791,7 @@
     </div>
   </div>
 
-  <!-- Teacher-Based Slot Edit Modal (Used by Slide 5 & Slide 6) -->
+ <!-- Teacher-Based Slot Edit Modal (Used by Slide 5 & Slide 6) -->
   <div id="teacher-slot-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-lg shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -850,6 +850,14 @@
         <input type="hidden" id="teacher-slot-subject-input">
       </div>
 
+      <!-- Optional Co-Teacher Selector -->
+      <div class="space-y-1.5 pt-1">
+        <label class="block text-xs font-extrabold text-slate-700">Optional Co-Teacher / Accompanying Teacher (e.g., Tamil Teacher)</label>
+        <select id="teacher-slot-coteacher-input" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white transition">
+          <option value="">-- None (Single Teacher) --</option>
+        </select>
+      </div>
+
       <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
         <button onclick="clearTeacherSlot()" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 transition">
           Clear Slot (Set Free)
@@ -865,7 +873,6 @@
       </div>
     </div>
   </div>
-
   <!-- Manage Limits Modal -->
   <div id="manage-limits-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
@@ -3303,7 +3310,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
     // Teacher-Centric Slot Modal (Slides 5 & 6)
     let currentTeacherSlotContext = { teacherId: null, day: "Mon", period: 1 };
 
-    function openTeacherSlotModal(teacherId, day, period) {
+ function openTeacherSlotModal(teacherId, day, period) {
       if (state.isViewOnly) {
         showNotification("View-Only Mode: Period editing is disabled.", "warning");
         return;
@@ -3326,6 +3333,13 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       document.getElementById("teacher-slot-subject-input").value = "";
       document.getElementById("teacher-slot-target-display").textContent = "Please pick from below or unassigned";
 
+      const coTeacherSelect = document.getElementById("teacher-slot-coteacher-input");
+      if (coTeacherSelect) {
+        coTeacherSelect.innerHTML = `<option value="">-- None (Single Teacher) --</option>` + 
+          state.teachers.map(staff => `<option value="${staff.id}">${staff.name} (${staff.shortName || staff.name})</option>`).join("");
+        coTeacherSelect.value = "";
+      }
+
       const classSelect = document.getElementById("teacher-slot-unassigned-class");
       if (classSelect) {
         classSelect.innerHTML = "";
@@ -3342,8 +3356,11 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
 
       CLASSES.forEach(c => {
         const slot = state.schedules[c]?.[day]?.[period];
-        if (slot && slot.teacherId === teacherId) {
+        if (slot && (slot.teacherId === teacherId || slot.coTeacherId === teacherId)) {
           setTeacherSlotSelection(c, slot.subject);
+          if (coTeacherSelect && slot.coTeacherId) {
+            coTeacherSelect.value = slot.coTeacherId;
+          }
         }
       });
 
@@ -3371,14 +3388,14 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         DAYS.forEach(d => {
           PERIODS.forEach(p => {
             const slot = state.schedules[targetClass]?.[d]?.[p];
-            if (slot && slot.teacherId === teacherId && slot.subject === a.subject) {
+            if (slot && (slot.teacherId === teacherId || slot.coTeacherId === teacherId) && slot.subject === a.subject) {
               placed++;
             }
           });
         });
 
-        const isCurrentlyHere = state.schedules[targetClass]?.[day]?.[period]?.teacherId === teacherId &&
-                                state.schedules[targetClass]?.[day]?.[period]?.subject === a.subject;
+        const slotHere = state.schedules[targetClass]?.[day]?.[period];
+        const isCurrentlyHere = slotHere && (slotHere.teacherId === teacherId || slotHere.coTeacherId === teacherId) && slotHere.subject === a.subject;
 
         const remaining = Math.max(0, targetQuota - placed);
         const isCompleted = placed >= targetQuota;
@@ -3493,6 +3510,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       const { teacherId, day, period } = currentTeacherSlotContext;
       const classKey = document.getElementById("teacher-slot-class-select").value;
       const subject = document.getElementById("teacher-slot-subject-input").value.trim().toUpperCase();
+      const coTeacherId = document.getElementById("teacher-slot-coteacher-input") ? document.getElementById("teacher-slot-coteacher-input").value : null;
 
       if (!classKey || !subject) {
         showNotification("Please select a subject from Box 1 or Box 2 first.", "warning");
@@ -3508,7 +3526,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           PERIODS.forEach(p => {
             if (d === day && p === period) return;
             const slot = state.schedules[classKey]?.[d]?.[p];
-            if (slot && slot.teacherId === teacherId && slot.subject === subject) {
+            if (slot && (slot.teacherId === teacherId || slot.coTeacherId === teacherId) && slot.subject === subject) {
               placedByTeacher++;
             }
           });
@@ -3540,7 +3558,8 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       }
 
       CLASSES.forEach(c => {
-        if (state.schedules[c]?.[day]?.[period]?.teacherId === teacherId) {
+        const slot = state.schedules[c]?.[day]?.[period];
+        if (slot && (slot.teacherId === teacherId || slot.coTeacherId === teacherId)) {
           state.schedules[c][day][period] = null;
         }
       });
@@ -3548,6 +3567,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       state.schedules[classKey][day][period] = {
         subject: subject,
         teacherId: teacherId,
+        coTeacherId: coTeacherId || null,
         isBlock: false
       };
 
@@ -3555,7 +3575,6 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       refreshAllScheduleViews();
       showNotification(`Assigned ${subject} to Class ${classKey} on ${day} P${period}!`, "success");
     }
-
     function clearTeacherSlot() {
       const { teacherId, day, period } = currentTeacherSlotContext;
       CLASSES.forEach(c => {

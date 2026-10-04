@@ -3083,11 +3083,11 @@ function autoGenerateSingleClass(cls) {
       document.getElementById("slot-modal-teacher-id").value = existingSlot ? existingSlot.teacherId : "";
       document.getElementById("slot-modal-duration-select").value = existingSlot && existingSlot.isBlock ? "2" : "1";
 const coTeacherSelect = document.getElementById("slot-coteacher-input");
-    if (coTeacherSelect) {
+      if (coTeacherSelect) {
         coTeacherSelect.innerHTML = `<option value="">-- None (Single Teacher) --</option>` + 
-            state.teachers.map(t => `<option value="${t.id}">${t.name} (${t.shortName || t.name})</option>`).join("");
+          state.teachers.map(t => `<option value="${t.id}">${t.name} (${t.shortName || t.name})</option>`).join("");
         coTeacherSelect.value = existingSlot?.coTeacherId || "";
-    }
+      }
       renderModalSubjectBadges();
       renderModalTeacherAvailability();
 
@@ -3351,7 +3351,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       document.getElementById("teacher-slot-subject-input").value = "";
       document.getElementById("teacher-slot-target-display").textContent = "Please pick from below or unassigned";
 
-      const coTeacherSelect = document.getElementById("teacher-slot-coteacher-input");
+    const coTeacherSelect = document.getElementById("teacher-slot-coteacher-input");
       if (coTeacherSelect) {
         coTeacherSelect.innerHTML = `<option value="">-- None (Single Teacher) --</option>` + 
           state.teachers.map(staff => `<option value="${staff.id}">${staff.name} (${staff.shortName || staff.name})</option>`).join("");

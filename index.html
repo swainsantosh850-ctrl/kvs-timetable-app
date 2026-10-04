@@ -4382,9 +4382,20 @@ function printDayWiseClassTimetable(day) {
           }
 
           if (p === 4 && index === 0) {
+            let lunchInner = '<div style="display: flex; flex-direction: column; height: 100%; width: 100%; justify-content: space-between;">';
+            CLASSES.forEach((_, cIdx) => {
+              const isMiddle = cIdx === Math.floor(CLASSES.length / 2);
+              lunchInner += `
+                <div style="flex: 1; border-bottom: ${cIdx < CLASSES.length - 1 ? '1.5px solid #0f172a' : 'none'}; display: flex; align-items: center; justify-content: center; min-height: 22px;">
+                  ${isMiddle ? '<span style="writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; font-family: \'Times New Roman\', Times, serif;">LUNCH BREAK</span>' : ''}
+                </div>
+              `;
+            });
+            lunchInner += '</div>';
+
             rowHtml += `
-              <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
-                LUNCH BREAK
+              <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 0px; border: 1.5px solid #0f172a; background: #fef3c7; vertical-align: top; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
+                ${lunchInner}
               </td>
             `;
           }
@@ -4451,9 +4462,20 @@ function printDayWiseClassTimetable(day) {
             }
 
             if (p === 4 && index === 0) {
+              let lunchInner = '<div style="display: flex; flex-direction: column; height: 100%; width: 100%; justify-content: space-between;">';
+              CLASSES.forEach((_, cIdx) => {
+                const isMiddle = cIdx === Math.floor(CLASSES.length / 2);
+                lunchInner += `
+                  <div style="flex: 1; border-bottom: ${cIdx < CLASSES.length - 1 ? '1.5px solid #0f172a' : 'none'}; display: flex; align-items: center; justify-content: center; min-height: 22px;">
+                    ${isMiddle ? '<span style="writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; font-family: \'Times New Roman\', Times, serif;">LUNCH BREAK</span>' : ''}
+                  </div>
+                `;
+              });
+              lunchInner += '</div>';
+
               rowHtml += `
-                <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
-                  LUNCH BREAK
+                <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 0px; border: 1.5px solid #0f172a; background: #fef3c7; vertical-align: top; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
+                  ${lunchInner}
                 </td>
               `;
             }

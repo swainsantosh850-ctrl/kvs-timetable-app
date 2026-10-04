@@ -43,7 +43,7 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
- @media print {
+@media print {
       body { background: white !important; padding: 0 !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
       table, th, td, div, span, h1, h2, h3, h4, p { font-family: "Times New Roman", Times, serif !important; }
       .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal, #personal-lockout-modal { display: none !important; }
@@ -59,6 +59,16 @@
       .print-page:last-child {
         page-break-after: avoid !important;
         break-after: avoid !important;
+      }
+
+      /* Dedicated Landscape Page rule for Slide 4 */
+      @page landscape-sheet {
+        size: landscape;
+        margin: 6mm;
+      }
+      .landscape-page {
+        page: landscape-sheet !important;
+        size: landscape !important;
       }
 
       /* Multi-teacher portrait 4-up full page stretch rules */

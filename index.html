@@ -3227,6 +3227,11 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           isBlock: true
         };
       }
+      const [cNum, cSec] = cls.split("-");
+      ensureAllotmentExists(teacherId, cNum, cSec, subject);
+      if (coTeacherId) {
+        ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
+      }
 
       closeSlotModal();
       refreshAllScheduleViews();
@@ -3504,7 +3509,11 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         coTeacherId: coTeacherId || null,
         isBlock: false
       };
-
+const [cNum, cSec] = classKey.split("-");
+      ensureAllotmentExists(teacherId, cNum, cSec, subject);
+      if (coTeacherId) {
+        ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
+      }
       closeTeacherSlotModal();
       refreshAllScheduleViews();
       showNotification(`Assigned ${subject} to Class ${classKey} on ${day} P${period}!`, "success");

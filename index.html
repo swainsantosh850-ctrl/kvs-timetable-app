@@ -4417,7 +4417,7 @@ function printDayWiseClassTimetable(day) {
       let fullHtml = "";
       DAYS.forEach(day => {
         let gridRows = "";
-        CLASSES.forEach((cls) => {
+        CLASSES.forEach((cls, index) => {
           let rowHtml = `<td style="padding: 3px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: left; background: #f8fafc; font-size: 9.5px; color: #0f172a; width: 10%; font-family: 'Times New Roman', Times, serif;">Class ${cls}</td>`;
           
           PERIODS.forEach(p => {
@@ -4444,10 +4444,10 @@ function printDayWiseClassTimetable(day) {
               `;
             }
 
-            if (p === 4) {
+            if (p === 4 && index === 0) {
               rowHtml += `
-                <td style="width: 18px; max-width: 18px; padding: 1px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 7.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; font-family: 'Times New Roman', Times, serif;">
-                  BREAK
+                <td style="width: 18px; max-width: 18px; padding: 1px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 7.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
+                  LUNCH BREAK
                 </td>
               `;
             }
@@ -4457,74 +4457,21 @@ function printDayWiseClassTimetable(day) {
         });
 
         fullHtml += `
-          <div class="print-page landscape-page" style="margin-bottom: 24px; width: 98%; margin: 0 auto; font-family: 'Times New Roman', Times, serif;">
+          <div class="print-page landscape-page" style="margin-bottom: 0; width: 98%; margin: 0 auto; font-family: 'Times New Roman', Times, serif; page-break-after: always; break-after: page;">
             ${renderOfficialHeader(`DAILY MASTER CLASS SCHEDULE • ${day.toUpperCase()}`)}
             <table style="width: 100%; border-collapse: collapse; font-size: 9.5px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 2px;">
               <thead>
-                <tr style="background: #e2e8f0; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
+                <tr style="background: #f1f5f9; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
                   <th style="border: 1.5px solid #0f172a; padding: 4px; text-align: left; font-family: 'Times New Roman', Times, serif;">Class</th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P1</th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P2</th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P3</th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P4</th>
-                  <th style="background: #fef3c7; width: 18px; max-width: 18px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;"></th>
+                  <th style="background: #fef3c7; width: 18px; max-width: 18px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}"></th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P5</th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P6</th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P7</th>
                   <th style="border: 1.5px solid #0f172a; padding: 4px; font-family: 'Times New Roman', Times, serif;">P8</th>
-                </tr>
-              </thead>
-              <tbody>${gridRows}</tbody>
-            </table>
-            ${renderOfficialFooter(false)}
-          </div>
-        `;
-      });
-      showPrintPreviewModal("Daily Master Schedule • All 6 Days", fullHtml);
-    }
-    function printAllDaysClassTimetables() {
-      let fullHtml = "";
-      DAYS.forEach(day => {
-        let gridRows = "";
-        CLASSES.forEach((cls, index) => {
-          let rowHtml = `<td style="padding: 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc;">Class ${cls}</td>`;
-          
-          PERIODS.forEach(p => {
-            const slot = state.schedules[cls]?.[day]?.[p];
-            if (slot) {
-              const t = state.teachers.find(item => item.id === slot.teacherId);
-              const coT = state.teachers.find(item => item.id === slot.coTeacherId);
-              let tStr = t ? t.shortName : '';
-              if (coT) tStr += ` + ${coT.shortName}`;
-              rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 9.5px; color: #475569;">${tStr}</div></td>`;
-            } else {
-              rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1;">-</td>`;
-            }
-
-          if (p === 4 && index === 0) {
-            rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1.5px solid #0f172a; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="${CLASSES.length}">LUNCH BREAK</td>`;
-          }
-          });
-
-          gridRows += `<tr>${rowHtml}</tr>`;
-        });
-
-        fullHtml += `
-          <div class="print-page" style="margin-bottom: 24px;">
-            ${renderOfficialHeader(`DAILY MASTER CLASS SCHEDULE • ${day.toUpperCase()}`)}
-            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
-              <thead>
-                <tr style="background: #e2e8f0; border: 1.5px solid #0f172a;">
-                  <th style="border: 1.5px solid #0f172a;">Class</th>
-                  <th style="border: 1.5px solid #0f172a;">P1</th>
-                  <th style="border: 1.5px solid #0f172a;">P2</th>
-                  <th style="border: 1.5px solid #0f172a;">P3</th>
-                  <th style="border: 1.5px solid #0f172a;">P4</th>
-                  <th style="background: #fef3c7; width: 22px; max-width: 22px; border: 1.5px solid #0f172a;" rowspan="${CLASSES.length}"></th>
-                  <th style="border: 1.5px solid #0f172a;">P5</th>
-                  <th style="border: 1.5px solid #0f172a;">P6</th>
-                  <th style="border: 1.5px solid #0f172a;">P7</th>
-                  <th style="border: 1.5px solid #0f172a;">P8</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>

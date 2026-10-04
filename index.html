@@ -2783,12 +2783,15 @@ function autoGenerateSingleClass(cls) {
         PERIODS.forEach(p => {
           const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
           let assignedSlots = [];
-         CLASSES.forEach(c => {
-            const slot = state.schedules[c]?.[d]?.[p];
-            if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
-              assignedSlots.push({ class: c, subject: slot.subject });
-            }
-          });
+        CLASSES.forEach(c => {
+  const slot = state.schedules[c]?.[d]?.[p];
+  if (slot && (
+    slot.teacherId === t.id || slot.teacherId === t.shortName || slot.teacherId === t.name ||
+    slot.coTeacherId === t.id || slot.coTeacherId === t.shortName || slot.coTeacherId === t.name
+  )) {
+    assignedSlots.push({ class: c, subject: slot.subject });
+  }
+});
 
           if (isSecBusy) {
             rowHtml += `

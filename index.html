@@ -61,7 +61,11 @@
         break-after: avoid !important;
       }
 
-      /* Dedicated Landscape Page rule for Slide 4 */
+      /* Force Landscape for Slide 4 */
+      @page {
+        size: portrait;
+        margin: 4mm;
+      }
       @page landscape-sheet {
         size: landscape;
         margin: 6mm;
@@ -70,6 +74,10 @@
         page: landscape-sheet !important;
         size: landscape !important;
       }
+
+      table { border-collapse: collapse !important; width: 100% !important; }
+      th, td { border: 1.5px solid #0f172a !important; }
+    }
 
       /* Multi-teacher portrait 4-up full page stretch rules */
       .multi-teacher-print-card {

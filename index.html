@@ -4270,8 +4270,8 @@ function printAllClassesTimetables() {
 
         let gridRows = "";
         DAYS.forEach(d => {
-          // Increased padding and font size for taller, balanced rows
-          let rowHtml = `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 9.5px; width: 11%;">&#x200B;${d}</td>`;
+          // Expanded padding and larger font sizes to fill the page height completely
+          let rowHtml = `<td style="padding: 8px 5px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 11px; width: 11%;">&#x200B;${d}</td>`;
           
           PERIODS.forEach(p => {
             const slot = state.schedules[c]?.[d]?.[p];
@@ -4281,12 +4281,12 @@ function printAllClassesTimetables() {
               let tName = tObj ? (tObj.shortName || tObj.name) : "";
               if (coTObj) tName += ` + ${coTObj.shortName || coTObj.name}`;
 
-              rowHtml += `<td style="padding: 6px 3px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9.5px; width: 11%; line-height: 1.2;">
-                <div style="font-weight: 900; color: #0f172a; font-size: 10.5px;">${slot.subject}</div>
-                <div style="font-size: 8.5px; color: #475569; font-weight: 600;">[${tName}]</div>
+              rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 11px; width: 11%; line-height: 1.25;">
+                <div style="font-weight: 900; color: #0f172a; font-size: 12px;">${slot.subject}</div>
+                <div style="font-size: 9.5px; color: #475569; font-weight: 600;">[${tName}]</div>
               </td>`;
             } else {
-              rowHtml += `<td style="padding: 6px 3px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 9.5px; width: 11%;">-</td>`;
+              rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 11px; width: 11%;">-</td>`;
             }
           });
           gridRows += `<tr>${rowHtml}</tr>`;
@@ -4294,20 +4294,20 @@ function printAllClassesTimetables() {
 
         // Add each class card with its own official header
         classCardsChunk += `
-          <div class="multi-class-print-card" style="margin-bottom: 14px; padding-bottom: 8px; break-inside: avoid; page-break-inside: avoid;">
+          <div class="multi-class-print-card" style="margin-bottom: 16px; padding-bottom: 10px; break-inside: avoid; page-break-inside: avoid;">
             ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${c}`, `${ctText}${coTText}`)}
-            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px; text-align: center;">
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; text-align: center;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">Day</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P1</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P2</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P3</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P4</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P5</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P6</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P7</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 5px 3px; width: 11%;">P8</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">Day</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P4</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P8</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>

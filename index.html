@@ -4375,19 +4375,12 @@ function printDayWiseClassTimetable(day) {
             `;
           }
 
-          if (p === 4) {
-            if (index === 4) {
-              rowHtml += `
-                <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8px; letter-spacing: 0.2px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;">
-                  LUNCH BREAK
-                </td>
-              `;
-            } else {
-              rowHtml += `
-                <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; background: #fef3c7; font-family: 'Times New Roman', Times, serif;">
-                </td>
-              `;
-            }
+          if (p === 4 && index === 0) {
+            rowHtml += `
+              <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
+                LUNCH BREAK
+              </td>
+            `;
           }
         });
 
@@ -4397,7 +4390,7 @@ function printDayWiseClassTimetable(day) {
       const html = `
         <div class="print-page landscape-page" style="width: 100%; max-width: none; font-family: 'Times New Roman', Times, serif;">
           ${renderOfficialHeader(`DAILY MASTER CLASS SCHEDULE • ${day.toUpperCase()}`)}
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 6px;">
+          <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 6px;">
             <thead>
               <tr style="background: #f1f5f9; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
                 <th style="border: 1.5px solid #0f172a; padding: 6px; text-align: left; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">Class</th>
@@ -4405,7 +4398,7 @@ function printDayWiseClassTimetable(day) {
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P2</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P3</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P4</th>
-                <th style="background: #fef3c7; width: 14px; max-width: 14px; min-width: 14px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;"></th>
+                <th style="background: #fef3c7; width: 16px; max-width: 16px; min-width: 16px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}"></th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P5</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P6</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P7</th>
@@ -4451,19 +4444,12 @@ function printDayWiseClassTimetable(day) {
               `;
             }
 
-            if (p === 4) {
-              if (index === 4) {
-                rowHtml += `
-                  <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8px; letter-spacing: 0.2px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;">
-                    LUNCH BREAK
-                  </td>
-                `;
-              } else {
-                rowHtml += `
-                  <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; background: #fef3c7; font-family: 'Times New Roman', Times, serif;">
-                  </td>
-                `;
-              }
+            if (p === 4 && index === 0) {
+              rowHtml += `
+                <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
+                  LUNCH BREAK
+                </td>
+              `;
             }
           });
 
@@ -4473,7 +4459,7 @@ function printDayWiseClassTimetable(day) {
         fullHtml += `
           <div class="print-page landscape-page" style="margin-bottom: 0; width: 98%; margin: 0 auto; font-family: 'Times New Roman', Times, serif; page-break-after: always; break-after: page;">
             ${renderOfficialHeader(`DAILY MASTER CLASS SCHEDULE • ${day.toUpperCase()}`)}
-            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 6px;">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 6px;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
                   <th style="border: 1.5px solid #0f172a; padding: 6px; text-align: left; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">Class</th>
@@ -4481,7 +4467,7 @@ function printDayWiseClassTimetable(day) {
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P2</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P3</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P4</th>
-                  <th style="background: #fef3c7; width: 14px; max-width: 14px; min-width: 14px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;"></th>
+                  <th style="background: #fef3c7; width: 16px; max-width: 16px; min-width: 16px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}"></th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P5</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P6</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P7</th>

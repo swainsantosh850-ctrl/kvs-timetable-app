@@ -2754,94 +2754,7 @@ function autoGenerateSingleClass(cls) {
       }
     }
 
-    function renderSlide6TeacherGrid() {
-      const select = document.getElementById("slide6-teacher-select");
-      if (select && select.value) state.selectedTeacherSlide6 = select.value;
-
-      const t = state.teachers.find(item => item.id === state.selectedTeacherSlide6);
-      if (!t) return;
-
-      let roleDetails = t.isClassTeacher ? `CT: ${t.classNum}-${t.section}` : t.isCommon ? "Common Specialist Staff" : "Primary Teacher (PRT)";
-      if (t.isCoClassTeacher) roleDetails += ` • Co-CT: ${t.coClassNum}-${t.coSection}`;
-
-      document.getElementById("slide6-teacher-display-name").textContent = `${t.name} (${t.shortName})`;
-      document.getElementById("slide6-teacher-role-badge").textContent = roleDetails;
-
-      const tbody = document.getElementById("slide6-teacher-grid-body");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      let totalWeeklyLoad = 0;
-
-      DAYS.forEach((d, index) => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50/50 transition";
-
-        let rowHtml = `<td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
-        let dayCount = 0;
-
-        PERIODS.forEach(p => {
-          const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
-          let assignedSlots = [];
-        CLASSES.forEach(c => {
-  const slot = state.schedules[c]?.[d]?.[p];
-  if (slot && (
-    slot.teacherId === t.id || slot.teacherId === t.shortName || slot.teacherId === t.name ||
-    slot.coTeacherId === t.id || slot.coTeacherId === t.shortName || slot.coTeacherId === t.name
-  )) {
-    assignedSlots.push({ class: c, subject: slot.subject });
-  }
-});
-
-          if (isSecBusy) {
-            rowHtml += `
-              <td class="p-1">
-                <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
-                  <div class="font-extrabold text-[11px]">Secondary</div>
-                  <div class="text-[10px] text-rose-500 font-semibold">High School</div>
-                </div>
-              </td>
-            `;
-          } else if (assignedSlots.length > 0) {
-            dayCount += assignedSlots.length;
-            totalWeeklyLoad += assignedSlots.length;
-            const conflict = assignedSlots.length > 1;
-
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
-                  <div class="font-extrabold text-[11px]">${assignedSlots.map(s => s.class).join(", ")}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold">${assignedSlots.map(s => s.subject).join(", ")}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-
-          if (p === 4 && index === 0) {
-            rowHtml += `
-              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${DAYS.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
-                LUNCH BREAK
-              </td>
-            `;
-          }
-        });
-
-        rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dayCount} P</td>`;
-        tr.innerHTML = rowHtml;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById("slide6-teacher-total-load").textContent = `${totalWeeklyLoad} Periods`;
-    }
-
+   function renderSlide6TeacherGrid
     function handleSlide6Regenerate() {
       if (state.isViewOnly) return;
       autoGenerateFullTimetable();
@@ -3952,7 +3865,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       });
     }
 
-    function renderSlide6TeacherGrid() {
+function renderSlide6TeacherGrid() {
       const select = document.getElementById("slide6-teacher-select");
       if (select && select.value) state.selectedTeacherSlide6 = select.value;
 
@@ -3981,9 +3894,11 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
         PERIODS.forEach(p => {
           const isSecBusy = t.secondaryBusySlots?.[d]?.includes(p);
           let assignedSlots = [];
+          
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[d]?.[p];
-            if (slot && slot.teacherId === t.id) {
+            // CORRECTED: Checks both primary teacher ID and co-teacher ID
+            if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
               assignedSlots.push({ class: c, subject: slot.subject });
             }
           });

@@ -2227,7 +2227,30 @@ function auditGlobalCollisions() {
       renderSlide2Allotments();
       renderSlide2WorkloadStatus();
     }
+function ensureAllotmentExists(teacherId, classNum, section, subject) {
+      if (!teacherId || !classNum || !section || !subject) return;
+      
+      let existingAllot = state.allotments.find(a => 
+        a.teacherId === teacherId && 
+        a.class === classNum && 
+        a.section === section && 
+        a.subject === subject
+      );
 
+      if (existingAllot) {
+        existingAllot.periods = parseInt(existingAllot.periods || 0) + 1;
+      } else {
+        state.allotments.push({
+          id: "a_auto_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+          teacherId: teacherId,
+          class: classNum,
+          section: section,
+          subject: subject,
+          periods: 1
+        });
+      }
+      commitWorkingStateToRepository();
+    }
     function updateAllotmentField(allotId, field, value) {
       const a = state.allotments.find(item => item.id === allotId);
       if (!a) return;

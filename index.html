@@ -4375,12 +4375,19 @@ function printDayWiseClassTimetable(day) {
             `;
           }
 
-          if (p === 4 && index === 0) {
-            rowHtml += `
-              <td style="width: 12px; max-width: 12px; min-width: 12px; padding: 1px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8px; letter-spacing: 0.2px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
-                LUNCH BREAK
-              </td>
-            `;
+          if (p === 4) {
+            if (index === 4) {
+              rowHtml += `
+                <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8px; letter-spacing: 0.2px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;">
+                  LUNCH BREAK
+                </td>
+              `;
+            } else {
+              rowHtml += `
+                <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; background: #fef3c7; font-family: 'Times New Roman', Times, serif;">
+                </td>
+              `;
+            }
           }
         });
 
@@ -4398,7 +4405,7 @@ function printDayWiseClassTimetable(day) {
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P2</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P3</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P4</th>
-                <th style="background: #fef3c7; width: 12px; max-width: 12px; min-width: 12px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}"></th>
+                <th style="background: #fef3c7; width: 14px; max-width: 14px; min-width: 14px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;"></th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P5</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P6</th>
                 <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P7</th>
@@ -4444,12 +4451,19 @@ function printDayWiseClassTimetable(day) {
               `;
             }
 
-            if (p === 4 && index === 0) {
-              rowHtml += `
-                <td style="width: 12px; max-width: 12px; min-width: 12px; padding: 1px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8px; letter-spacing: 0.2px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
-                  LUNCH BREAK
-                </td>
-              `;
+            if (p === 4) {
+              if (index === 4) {
+                rowHtml += `
+                  <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8px; letter-spacing: 0.2px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;">
+                    LUNCH BREAK
+                  </td>
+                `;
+              } else {
+                rowHtml += `
+                  <td style="width: 14px; max-width: 14px; min-width: 14px; padding: 1px 0px; border: 1.5px solid #0f172a; background: #fef3c7; font-family: 'Times New Roman', Times, serif;">
+                  </td>
+                `;
+              }
             }
           });
 
@@ -4467,7 +4481,7 @@ function printDayWiseClassTimetable(day) {
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P2</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P3</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P4</th>
-                  <th style="background: #fef3c7; width: 12px; max-width: 12px; min-width: 12px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}"></th>
+                  <th style="background: #fef3c7; width: 14px; max-width: 14px; min-width: 14px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;"></th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P5</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P6</th>
                   <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 11%;">P7</th>

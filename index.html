@@ -3188,7 +3188,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       });
     }
 
-    function saveSlotModal() {
+   function saveSlotModal() {
       const { class: cls, day, period } = currentSlotContext;
       const subject = document.getElementById("slot-modal-subject-input").value.trim();
       const teacherId = document.getElementById("slot-modal-teacher-id").value;
@@ -3206,7 +3206,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       let allowedLimit = classLimits[subject];
       if (allowedLimit === undefined) {
         const allot = state.allotments.find(a => a.class === cNum && a.section === cSec && a.subject === subject);
-        allowedLimit = allot ? parseInt(allot.periods) : 10;
+        allowedLimit = allot ? parseInt(allowed_periods) : 10;
       }
 
       let currentCount = 0;
@@ -3234,7 +3234,9 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       if (isTeacherConflicted(teacherId, day, period)) {
         showNotification("Warning: This teacher is already booked during this period!", "warning");
       }
-const coTeacherId = document.getElementById("slot-coteacher-input") ? document.getElementById("slot-coteacher-input").value : null;
+
+      const coTeacherId = document.getElementById("slot-coteacher-input") ? document.getElementById("slot-coteacher-input").value : null;
+      
       state.schedules[cls][day][period] = {
         subject: subject,
         teacherId: teacherId,
@@ -3250,7 +3252,8 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           isBlock: true
         };
       }
-      const [cNum, cSec] = cls.split("-");
+
+      // Auto-allotment sync using existing cNum and cSec
       ensureAllotmentExists(teacherId, cNum, cSec, subject);
       if (coTeacherId) {
         ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
@@ -3260,7 +3263,6 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       refreshAllScheduleViews();
       showNotification(`Period slot saved: ${subject} in Class ${cls}!`, "success");
     }
-
     function clearCurrentSlot() {
       const { class: cls, day, period } = currentSlotContext;
       state.schedules[cls][day][period] = null;

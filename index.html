@@ -44,6 +44,10 @@
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
       body { background: white !important; padding: 0 !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
       table, th, td, div, span, h1, h2, h3, h4, p { font-family: "Times New Roman", Times, serif !important; }
       .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal, #personal-lockout-modal { display: none !important; }
@@ -61,11 +65,13 @@
         break-after: avoid !important;
       }
 
-      /* Force Landscape for Slide 4 */
+      /* Global Default Portrait */
       @page {
         size: portrait;
         margin: 4mm;
       }
+
+      /* Dedicated Landscape Page rule for Slide 4 */
       @page landscape-sheet {
         size: landscape;
         margin: 6mm;
@@ -4361,23 +4367,23 @@ function printDayWiseClassTimetable(day) {
 
             rowHtml += `
               <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%; font-family: 'Times New Roman', Times, serif;">
-                <div style="border: 1px solid #0f172a; background: #ffffff; border-radius: 4px; padding: 4px 2px;">
-                  <div style="font-weight: 900; font-size: 11.5px; color: #0f172a; font-family: 'Times New Roman', Times, serif;">${slot.subject}</div>
-                  <div style="font-size: 9.5px; color: #1e293b; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-top: 1px;">${tStr}</div>
+                <div style="border: 1px solid #312e81; background: #eef2ff; border-radius: 6px; padding: 4px 2px;">
+                  <div style="font-weight: 900; font-size: 11.5px; color: #1e3a8a; font-family: 'Times New Roman', Times, serif;">${slot.subject}</div>
+                  <div style="font-size: 9.5px; color: #334155; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-top: 1px;">${tStr}</div>
                 </div>
               </td>
             `;
           } else {
             rowHtml += `
               <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%; font-family: 'Times New Roman', Times, serif;">
-                <div style="border: 1px dashed #94a3b8; background: #ffffff; border-radius: 4px; padding: 6px 2px; color: #94a3b8; font-size: 10px; font-family: 'Times New Roman', Times, serif;">-</div>
+                <div style="border: 1px dashed #cbd5e1; background: #ffffff; border-radius: 6px; padding: 6px 2px; color: #cbd5e1; font-size: 10px; font-family: 'Times New Roman', Times, serif;">-</div>
               </td>
             `;
           }
 
           if (p === 4 && index === 0) {
             rowHtml += `
-              <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
+              <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
                 LUNCH BREAK
               </td>
             `;
@@ -4430,23 +4436,23 @@ function printDayWiseClassTimetable(day) {
 
               rowHtml += `
                 <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%; font-family: 'Times New Roman', Times, serif;">
-                  <div style="border: 1px solid #0f172a; background: #ffffff; border-radius: 4px; padding: 4px 2px;">
-                    <div style="font-weight: 900; font-size: 11.5px; color: #0f172a; font-family: 'Times New Roman', Times, serif;">${slot.subject}</div>
-                    <div style="font-size: 9.5px; color: #1e293b; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-top: 1px;">${tStr}</div>
+                  <div style="border: 1px solid #312e81; background: #eef2ff; border-radius: 6px; padding: 4px 2px;">
+                    <div style="font-weight: 900; font-size: 11.5px; color: #1e3a8a; font-family: 'Times New Roman', Times, serif;">${slot.subject}</div>
+                    <div style="font-size: 9.5px; color: #334155; font-weight: 700; font-family: 'Times New Roman', Times, serif; margin-top: 1px;">${tStr}</div>
                   </div>
                 </td>
               `;
             } else {
               rowHtml += `
                 <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%; font-family: 'Times New Roman', Times, serif;">
-                  <div style="border: 1px dashed #94a3b8; background: #ffffff; border-radius: 4px; padding: 6px 2px; color: #94a3b8; font-size: 10px; font-family: 'Times New Roman', Times, serif;">-</div>
+                  <div style="border: 1px dashed #cbd5e1; background: #ffffff; border-radius: 6px; padding: 6px 2px; color: #cbd5e1; font-size: 10px; font-family: 'Times New Roman', Times, serif;">-</div>
                 </td>
               `;
             }
 
             if (p === 4 && index === 0) {
               rowHtml += `
-                <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
+                <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 2px 0px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
                   LUNCH BREAK
                 </td>
               `;

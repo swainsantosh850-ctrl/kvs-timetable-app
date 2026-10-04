@@ -2316,6 +2316,24 @@ function ensureAllotmentExists(teacherId, classNum, section, subject) {
       }
       commitWorkingStateToRepository();
     }
+    function decrementAllotmentCount(teacherId, classNum, section, subject) {
+      if (!teacherId || !classNum || !section || !subject) return;
+      
+      let allot = state.allotments.find(a => 
+        String(a.teacherId).trim() === String(teacherId).trim() && 
+        String(a.class).trim() === String(classNum).trim() && 
+        String(a.section).trim().toUpperCase() === String(section).trim().toUpperCase() && 
+        String(a.subject).trim().toUpperCase() === String(subject).trim().toUpperCase()
+      );
+      
+      if (allot) {
+        allot.periods = Math.max(0, parseInt(allot.periods || 1) - 1);
+        if (allot.periods === 0) {
+          state.allotments = state.allotments.filter(a => a.id !== allot.id);
+        }
+      }
+      commitWorkingStateToRepository();
+    }
     function updateAllotmentField(allotId, field, value) {
       const a = state.allotments.find(item => item.id === allotId);
       if (!a) return;

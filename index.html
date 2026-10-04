@@ -4348,7 +4348,7 @@ function printAllClassesTimetables() {
     }
 function printDayWiseClassTimetable(day) {
       let gridRows = "";
-      CLASSES.forEach((cls) => {
+      CLASSES.forEach((cls, index) => {
         let rowHtml = `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: left; background: #f8fafc; font-size: 10px; color: #0f172a; width: 10%; font-family: 'Times New Roman', Times, serif;">Class ${cls}</td>`;
         
         PERIODS.forEach(p => {
@@ -4375,9 +4375,10 @@ function printDayWiseClassTimetable(day) {
             `;
           }
 
-          if (p === 4) {
+          // Properly span the lunch break across all class rows on the first row index
+          if (p === 4 && index === 0) {
             rowHtml += `
-              <td style="width: 20px; max-width: 20px; padding: 2px 1px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;">
+              <td style="width: 20px; max-width: 20px; padding: 2px 1px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
                 LUNCH BREAK
               </td>
             `;
@@ -4398,7 +4399,7 @@ function printDayWiseClassTimetable(day) {
                 <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P2</th>
                 <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P3</th>
                 <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P4</th>
-                <th style="background: #fef3c7; width: 20px; max-width: 20px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;"></th>
+                <th style="background: #fef3c7; width: 20px; max-width: 20px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}"></th>
                 <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P5</th>
                 <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P6</th>
                 <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P7</th>

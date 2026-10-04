@@ -4548,7 +4548,7 @@ function printDayWiseClassTimetable(day) {
       });
 
       const html = `
-        <div class="print-page">
+       <div class="print-page landscape-page" style="width: 100%; max-width: none; ...">
           ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
           <table style="width: 100%; border-collapse: collapse; font-size: 9.5px;">
             <thead>
@@ -4601,7 +4601,7 @@ function printDayWiseClassTimetable(day) {
         });
 
         fullHtml += `
-          <div class="print-page" style="margin-bottom: 24px;">
+          <div class="print-page landscape-page" style="margin-bottom: 24px; width: 100%; max-width: none;">
             ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
             <table style="width: 100%; border-collapse: collapse; font-size: 9.5px;">
               <thead>

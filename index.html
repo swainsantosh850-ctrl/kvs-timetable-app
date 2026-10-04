@@ -465,7 +465,19 @@
           </button>
         </div>
       </div>
+<div id="pedagogical-audit-container" class="bg-gradient-to-r from-indigo-50/70 to-slate-50 border border-indigo-100 rounded-2xl p-4 shadow-xs">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-shield-check text-indigo-600 text-lg"></i>
+            <h3 class="text-xs font-black uppercase tracking-wider text-indigo-900">Pedagogical Compliance Audit • <span id="audit-class-label">Class 1-A</span></h3>
+          </div>
+          <span id="audit-score-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800">100% Compliant</span>
+        </div>
+        <div id="slide3-pedagogical-audit-items" class="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs"></div>
+      </div>
 
+      <div id="slide3-tables-container" class="space-y-6"></div>
+    </div>
       <div class="bg-gradient-to-r from-indigo-50/70 to-slate-50 border border-indigo-100 rounded-2xl p-4 shadow-xs">
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
@@ -1589,15 +1601,16 @@ function openEditSchoolModal() {
       
       const pill1 = document.getElementById("nav-pill-1");
       const pill2 = document.getElementById("nav-pill-2");
+      const auditContainer = document.getElementById("pedagogical-audit-container");
 
       if (!state.isViewOnly) {
         if (banner) banner.classList.add("hidden");
         if (publishBtn) publishBtn.classList.remove("hidden");
         if (roleLabel) roleLabel.textContent = "Role: Admin";
 
-        // Show Slide 1 & 2 pills for Admin
         if (pill1) pill1.classList.remove("hidden");
         if (pill2) pill2.classList.remove("hidden");
+        if (auditContainer) auditContainer.classList.remove("hidden"); // Show audit for Admin
 
         ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
           const el = document.getElementById(id);
@@ -1626,11 +1639,10 @@ function openEditSchoolModal() {
       if (publishBtn) publishBtn.classList.add("hidden");
       if (roleLabel) roleLabel.textContent = "Role: Staff (View-Only)";
 
-      // Hide Slide 1 & 2 pills for Teachers / Staff
       if (pill1) pill1.classList.add("hidden");
       if (pill2) pill2.classList.add("hidden");
+      if (auditContainer) auditContainer.classList.add("hidden"); // Hide audit for Staff / Teachers
 
-      // Redirect teacher away if currently on Slide 1 or 2
       if (state.activeSlide === 1 || state.activeSlide === 2) {
         goToSlide(3);
       }

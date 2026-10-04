@@ -3469,7 +3469,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       if (modal) modal.style.display = "none";
     }
 
-   function saveTeacherSlotModal() {
+ function saveTeacherSlotModal() {
       const { teacherId, day, period } = currentTeacherSlotContext;
       const classKey = document.getElementById("teacher-slot-class-select").value;
       const subject = document.getElementById("teacher-slot-subject-input").value.trim().toUpperCase();
@@ -3480,9 +3480,10 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         return;
       }
 
-      const [cNum, cSec] = classKey.split("-");
+      // Renamed to avoid global scope collisions
+      const [classNumber, classSection] = classKey.split("-");
 
-      const teacherAllot = state.allotments.find(a => a.teacherId === teacherId && a.class === cNum && a.section === cSec && a.subject === subject);
+      const teacherAllot = state.allotments.find(a => a.teacherId === teacherId && a.class === classNumber && a.section === classSection && a.subject === subject);
       if (teacherAllot) {
         let placedByTeacher = 0;
         DAYS.forEach(d => {
@@ -3502,7 +3503,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         }
       }
 
-      const limits = state.subjectLimits[`Class ${cNum}`] || state.subjectLimits["Class 1"] || {};
+      const limits = state.subjectLimits[`Class ${classNumber}`] || state.subjectLimits["Class 1"] || {};
       const maxAllowed = limits[subject] !== undefined ? limits[subject] : 10;
 
       let totalInClass = 0;
@@ -3534,9 +3535,9 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         isBlock: false
       };
 
-      ensureAllotmentExists(teacherId, cNum, cSec, subject);
+      ensureAllotmentExists(teacherId, classNumber, classSection, subject);
       if (coTeacherId) {
-        ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
+        ensureAllotmentExists(coTeacherId, classNumber, classSection, subject);
       }
 
       closeTeacherSlotModal();

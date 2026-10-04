@@ -43,7 +43,20 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-@media print {
+/* Black & White Print Mode Styles */
+    .monochrome-print,
+    .monochrome-print * {
+      background: white !important;
+      background-color: white !important;
+      color: black !important;
+      border-color: black !important;
+      box-shadow: none !important;
+    }
+    .monochrome-print div[style*="background"] {
+      background: white !important;
+    }
+
+    @media print {
       * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -85,41 +98,40 @@
       th, td { border: 1.5px solid #0f172a !important; }
     }
 
-      /* Multi-teacher portrait 4-up full page stretch rules */
-      .multi-teacher-print-card {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-        margin-bottom: 5px !important;
-        padding-bottom: 3px !important;
-        border-bottom: 1.5px solid #475569 !important;
-      }
-      .multi-teacher-print-card:nth-child(4n) {
-        page-break-after: always !important;
-        break-after: page !important;
-        border-bottom: none !important;
-        margin-bottom: 0 !important;
-      }
-
-      /* Multi-class portrait 2-up print card rules */
-      .multi-class-print-card {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-        margin-bottom: 14px !important;
-        padding-bottom: 10px !important;
-        border-bottom: 2px solid #475569 !important;
-      }
-      .multi-class-print-card:nth-child(2n) {
-        page-break-after: always !important;
-        break-after: page !important;
-        border-bottom: none !important;
-        margin-bottom: 0 !important;
-      }
-
-      table { border-collapse: collapse !important; width: 100% !important; }
-      th, td { border: 1.5px solid #0f172a !important; }
-      .print-shadow-none { box-shadow: none !important; border: 2px solid #0f172a !important; }
-      @page { size: portrait; margin: 4mm; }
+    /* Multi-teacher portrait 4-up full page stretch rules */
+    .multi-teacher-print-card {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      margin-bottom: 5px !important;
+      padding-bottom: 3px !important;
+      border-bottom: 1.5px solid #475569 !important;
     }
+    .multi-teacher-print-card:nth-child(4n) {
+      page-break-after: always !important;
+      break-after: page !important;
+      border-bottom: none !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* Multi-class portrait 2-up print card rules */
+    .multi-class-print-card {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      margin-bottom: 14px !important;
+      padding-bottom: 10px !important;
+      border-bottom: 2px solid #475569 !important;
+    }
+    .multi-class-print-card:nth-child(2n) {
+      page-break-after: always !important;
+      break-after: page !important;
+      border-bottom: none !important;
+      margin-bottom: 0 !important;
+    }
+
+    table { border-collapse: collapse !important; width: 100% !important; }
+    th, td { border: 1.5px solid #0f172a !important; }
+    .print-shadow-none { box-shadow: none !important; border: 2px solid #0f172a !important; }
+    @page { size: portrait; margin: 4mm; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
@@ -4748,16 +4760,45 @@ function printAllTeachersWeeklyTimetables() {
       else if (slideNum === 6) printTeacherWeeklyTimetable(state.selectedTeacherSlide6);
     }
 
-    function showPrintPreviewModal(title, html) {
+   function showPrintPreviewModal(title, html) {
       activePrintHtml = html;
       const titleEl = document.getElementById("print-modal-title");
       if (titleEl) titleEl.textContent = title;
 
+      // Check and add a Color / B&W Toggle into the modal header if it doesn't already exist
+      let headerToolbar = document.getElementById("print-mode-toolbar");
+      if (!headerToolbar && titleEl && titleEl.parentNode) {
+        headerToolbar = document.createElement("div");
+        headerToolbar.id = "print-mode-toolbar";
+        headerToolbar.style.cssText = "display: flex; align-items: center; gap: 8px; margin-left: auto; margin-right: 15px; font-size: 12px; font-weight: bold;";
+        headerToolbar.innerHTML = `
+          <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #334155; font-family: 'Times New Roman', Times, serif;">
+            <span>Mode:</span>
+            <select id="print-mode-select" onchange="togglePrintPreviewMode(this.value)" style="padding: 3px 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: bold; font-family: 'Times New Roman', Times, serif; background: #ffffff;">
+              <option value="color">Color Print</option>
+              <option value="bw">Black & White</option>
+            </select>
+          </label>
+        `;
+        // Insert right next to title element in its flex container
+        titleEl.parentNode.insertBefore(headerToolbar, titleEl.nextSibling);
+      }
+
+      // Reset dropdown and monochrome view when opening
+      const modeSelect = document.getElementById("print-mode-select");
+      if (modeSelect) modeSelect.value = "color";
+
       const contentEl = document.getElementById("print-modal-content");
-      if (contentEl) contentEl.innerHTML = html;
+      if (contentEl) {
+        contentEl.innerHTML = html;
+        contentEl.classList.remove("monochrome-print");
+      }
 
       const printableArea = document.getElementById("printable-report-area");
-      if (printableArea) printableArea.innerHTML = html;
+      if (printableArea) {
+        printableArea.innerHTML = html;
+        printableArea.classList.remove("monochrome-print");
+      }
 
       const countEl = document.getElementById("print-modal-sheet-count");
       const navEl = document.getElementById("print-modal-sheet-nav");
@@ -4799,10 +4840,31 @@ function printAllTeachersWeeklyTimetables() {
       if (modal) modal.style.display = "none";
     }
 
+    function togglePrintPreviewMode(mode) {
+      const printableArea = document.getElementById("printable-report-area");
+      const contentEl = document.getElementById("print-modal-content");
+      
+      if (mode === 'bw') {
+        if (printableArea) printableArea.classList.add("monochrome-print");
+        if (contentEl) contentEl.classList.add("monochrome-print");
+      } else {
+        if (printableArea) printableArea.classList.remove("monochrome-print");
+        if (contentEl) contentEl.classList.remove("monochrome-print");
+      }
+    }
+
    function executeBrowserPrint() {
       const printableArea = document.getElementById("printable-report-area");
       if (printableArea && activePrintHtml) printableArea.innerHTML = activePrintHtml;
       
+      // Check if Black & White mode is active
+      const modeSelect = document.getElementById("print-mode-select");
+      const isBw = modeSelect && modeSelect.value === 'bw';
+
+      if (isBw && printableArea) {
+        printableArea.classList.add("monochrome-print");
+      }
+
       const isLandscape = activePrintHtml.includes('landscape-page');
 
       if (isLandscape) {
@@ -4811,7 +4873,22 @@ function printAllTeachersWeeklyTimetables() {
           showNotification("Please allow popups to print in landscape mode.", "warning");
           return;
         }
-        printWin.document.write(`<!DOCTYPE html><html><head><title>Print Preview</title><style>@page { size: landscape; margin: 8mm; } body { font-family: 'Times New Roman', Times, serif; padding: 0; margin: 0; background: white; color: black; } table { width: 100%; border-collapse: collapse; } th, td { border: 1.5px solid #0f172a; padding: 6px; } .print-page { page-break-after: always; margin-bottom: 20px; }</style></head><body>${activePrintHtml}<script>window.onload = function() { setTimeout(() => window.print(), 300); };<\/script></body></html>`);
+        
+        // Include monochrome styles in the popup if B&W is selected
+        const bwStyle = isBw ? `
+          .monochrome-print, .monochrome-print * {
+            background: white !important;
+            background-color: white !important;
+            color: black !important;
+            border-color: black !important;
+            box-shadow: none !important;
+          }
+          .monochrome-print div[style*="background"] { background: white !important; }
+        ` : '';
+
+        const htmlContent = isBw ? `<div class="monochrome-print">${activePrintHtml}</div>` : activePrintHtml;
+
+        printWin.document.write(`<!DOCTYPE html><html><head><title>Print Preview</title><style>@page { size: landscape; margin: 8mm; } body { font-family: 'Times New Roman', Times, serif; padding: 0; margin: 0; background: white; color: black; } table { width: 100%; border-collapse: collapse; } th, td { border: 1.5px solid #0f172a; padding: 6px; } .print-page { page-break-after: always; margin-bottom: 20px; } ${bwStyle}</style></head><body>${htmlContent}<script>window.onload = function() { setTimeout(() => window.print(), 300); };<\/script></body></html>`);
         printWin.document.close();
       } else {
         window.focus();

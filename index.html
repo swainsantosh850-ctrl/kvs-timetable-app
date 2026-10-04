@@ -4338,7 +4338,7 @@ function printAllClassesTimetables() {
 
       showPrintPreviewModal("All Classes Timetables Master Book (2-Up Portrait)", pagesHtml);
     }
-    function printDayWiseClassTimetable(day) {
+   function printDayWiseClassTimetable(day) {
       let gridRows = "";
       CLASSES.forEach((cls, index) => {
         let rowHtml = `<td style="padding: 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc;">Class ${cls}</td>`;
@@ -4355,7 +4355,6 @@ function printAllClassesTimetables() {
             rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8;">-</td>`;
           }
 
-          // Insert vertical LUNCH BREAK column after P4 (p === 4) spanning all class rows on index === 0
           if (p === 4 && index === 0) {
             rowHtml += `<td style="width: 22px; max-width: 22px; padding: 4px 1px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 10px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="${CLASSES.length}">LUNCH BREAK</td>`;
           }
@@ -4365,7 +4364,7 @@ function printAllClassesTimetables() {
       });
 
       const html = `
-        <div class="print-page">
+        <div class="print-page landscape-page" style="width: 100%; max-width: none;">
           ${renderOfficialHeader(`DAILY MASTER CLASS SCHEDULE • ${day.toUpperCase()}`)}
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
             <thead>
@@ -4390,6 +4389,59 @@ function printAllClassesTimetables() {
       showPrintPreviewModal(`Day-Wise Class Schedule (${day})`, html);
     }
 
+    function printAllDaysClassTimetables() {
+      let fullHtml = "";
+      DAYS.forEach(day => {
+        let gridRows = "";
+        CLASSES.forEach((cls, index) => {
+          let rowHtml = `<td style="padding: 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc;">Class ${cls}</td>`;
+          
+          PERIODS.forEach(p => {
+            const slot = state.schedules[cls]?.[day]?.[p];
+            if (slot) {
+              const t = state.teachers.find(item => item.id === slot.teacherId);
+              const coT = state.teachers.find(item => item.id === slot.coTeacherId);
+              let tStr = t ? t.shortName : '';
+              if (coT) tStr += ` + ${coT.shortName}`;
+              rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 9.5px; color: #475569;">${tStr}</div></td>`;
+            } else {
+              rowHtml += `<td style="padding: 5px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1;">-</td>`;
+            }
+
+            if (p === 4 && index === 0) {
+              rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1.5px solid #0f172a; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="${CLASSES.length}">LUNCH BREAK</td>`;
+            }
+          });
+
+          gridRows += `<tr>${rowHtml}</tr>`;
+        });
+
+        fullHtml += `
+          <div class="print-page landscape-page" style="margin-bottom: 24px; width: 100%; max-width: none;">
+            ${renderOfficialHeader(`DAILY MASTER CLASS SCHEDULE • ${day.toUpperCase()}`)}
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+              <thead>
+                <tr style="background: #e2e8f0; border: 1.5px solid #0f172a;">
+                  <th style="border: 1.5px solid #0f172a;">Class</th>
+                  <th style="border: 1.5px solid #0f172a;">P1</th>
+                  <th style="border: 1.5px solid #0f172a;">P2</th>
+                  <th style="border: 1.5px solid #0f172a;">P3</th>
+                  <th style="border: 1.5px solid #0f172a;">P4</th>
+                  <th style="background: #fef3c7; width: 22px; max-width: 22px; border: 1.5px solid #0f172a;" rowspan="${CLASSES.length}"></th>
+                  <th style="border: 1.5px solid #0f172a;">P5</th>
+                  <th style="border: 1.5px solid #0f172a;">P6</th>
+                  <th style="border: 1.5px solid #0f172a;">P7</th>
+                  <th style="border: 1.5px solid #0f172a;">P8</th>
+                </tr>
+              </thead>
+              <tbody>${gridRows}</tbody>
+            </table>
+            ${renderOfficialFooter(false)}
+          </div>
+        `;
+      });
+      showPrintPreviewModal("Daily Master Schedule • All 6 Days", fullHtml);
+    }
     function printAllDaysClassTimetables() {
       let fullHtml = "";
       DAYS.forEach(day => {

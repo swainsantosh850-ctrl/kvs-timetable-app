@@ -3199,7 +3199,6 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         return;
       }
 
-      // Declared ONCE here at the top
       const [cNum, cSec] = cls.split("-");
       const classKey = `Class ${cNum}`;
       const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
@@ -3254,7 +3253,6 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         };
       }
 
-      // Uses the existing cNum and cSec without redeclaring them
       ensureAllotmentExists(teacherId, cNum, cSec, subject);
       if (coTeacherId) {
         ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
@@ -3471,7 +3469,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       if (modal) modal.style.display = "none";
     }
 
-    function saveTeacherSlotModal() {
+   function saveTeacherSlotModal() {
       const { teacherId, day, period } = currentTeacherSlotContext;
       const classKey = document.getElementById("teacher-slot-class-select").value;
       const subject = document.getElementById("teacher-slot-subject-input").value.trim().toUpperCase();
@@ -3535,11 +3533,12 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         coTeacherId: coTeacherId || null,
         isBlock: false
       };
-const [cNum, cSec] = classKey.split("-");
+
       ensureAllotmentExists(teacherId, cNum, cSec, subject);
       if (coTeacherId) {
         ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
       }
+
       closeTeacherSlotModal();
       refreshAllScheduleViews();
       showNotification(`Assigned ${subject} to Class ${classKey} on ${day} P${period}!`, "success");

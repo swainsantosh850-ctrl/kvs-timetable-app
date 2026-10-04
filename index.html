@@ -4261,7 +4261,7 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
       CLASSES.forEach((c, index) => {
         const [cNum, cSec] = c.split("-");
         
-        // Correctly lookup Class Teacher and Co-Teacher using actual data properties (classNum, section, isClassTeacher, isCoClassTeacher)
+        // Lookup Class Teacher and Co-Teacher
         const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
         const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
         
@@ -4316,13 +4316,11 @@ const coTeacherId = document.getElementById("slot-coteacher-input") ? document.g
           </div>
         `;
 
-        // Output exactly 2 classes per page container
+        // Output exactly 2 classes per page container with a single unique header
         if ((index + 1) % 2 === 0 || index === CLASSES.length - 1) {
           pagesHtml += `
             <div class="print-page" style="page-break-after: always; break-after: page; max-height: 260mm; overflow: hidden;">
-              ${renderOfficialHeader(`PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94`, `PRIMARY SECTION • ACADEMIC SESSION ${state.schoolInfo.session}`)}
-              <div class="no-print" style="text-align: center; font-weight: bold; margin-bottom: 2px; color: #1e3a8a;">ALL CLASSES TIMETABLES MASTER BOOK</div>
-              <div class="no-print" style="text-align: center; font-size: 10px; margin-bottom: 4px; color: #475569;">Consolidated Portrait Edition (2 Classes per Page)</div>
+              ${renderOfficialHeader(`ALL CLASSES TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (2 Classes per Page)`)}
               ${classCardsChunk}
             </div>
           `;

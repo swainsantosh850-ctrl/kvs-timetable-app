@@ -4788,10 +4788,25 @@ function printAllTeachersWeeklyTimetables() {
     function executeBrowserPrint() {
       const printableArea = document.getElementById("printable-report-area");
       if (printableArea && activePrintHtml) printableArea.innerHTML = activePrintHtml;
-      window.focus();
-      setTimeout(() => {
-        try { window.print(); } catch (err) { openPrintInNewWindow(); }
-      }, 150);
+      
+      // Check if the current print view is for Slide 4 (landscape)
+      const isLandscape = activePrintHtml.includes('landscape-page');
+
+      if (isLandscape) {
+        // Open a dedicated landscape print window to guarantee browser print engine compliance
+        const printWin = window.open("", "_blank", "width=1100,height=800");
+        if (!printWin) {
+          showNotification("Please allow popups to print in landscape mode.", "warning");
+          return;
+        }
+        printWin.document.write(`<!DOCTYPE html><html><head><title>Print Preview</title><style>body { font-family: 'Times New Roman', Times, serif; padding: 0; margin: 0; background: white; color: black; } table { width: 100%; border-collapse: collapse; } th, td { border: 1.5px solid #0f172a; padding: 6px; } @page { size: landscape; margin: 6mm; } .print-page { page-break-after: always; margin-bottom: 20px; }</style></head><body>${activePrintHtml}<script>window.onload = function() { setTimeout(() => window.print(), 300); };<\/script></body></html>`);
+        printWin.document.close();
+      } else {
+        window.focus();
+        setTimeout(() => {
+          try { window.print(); } catch (err) { openPrintInNewWindow(); }
+        }, 150);
+      }
     }
 
     function openPrintInNewWindow() {

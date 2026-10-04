@@ -2238,7 +2238,7 @@ function ensureAllotmentExists(teacherId, classNum, section, subject) {
       );
 
       if (existingAllot) {
-        existingAllot.periods = parseInt(existingAllot.periods || 0) + 1;
+        // Keeps or matches existing record
       } else {
         state.allotments.push({
           id: "a_auto_" + Date.now() + "_" + Math.floor(Math.random() * 1000),

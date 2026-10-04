@@ -4375,7 +4375,6 @@ function printDayWiseClassTimetable(day) {
             `;
           }
 
-          // Properly span the lunch break across all class rows on the first row index
           if (p === 4 && index === 0) {
             rowHtml += `
               <td style="width: 20px; max-width: 20px; padding: 2px 1px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
@@ -4418,8 +4417,8 @@ function printDayWiseClassTimetable(day) {
       let fullHtml = "";
       DAYS.forEach(day => {
         let gridRows = "";
-        CLASSES.forEach((cls) => {
-          let rowHtml = `<td style="padding: 8px 6px; border: 1px solid #0f172a; font-weight: 800; text-align: left; background: #f8fafc; font-size: 11px; color: #0f172a; width: 10%; font-family: 'Times New Roman', Times, serif;">Class ${cls}</td>`;
+        CLASSES.forEach((cls, index) => {
+          let rowHtml = `<td style="padding: 4px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: left; background: #f8fafc; font-size: 10px; color: #0f172a; width: 10%; font-family: 'Times New Roman', Times, serif;">Class ${cls}</td>`;
           
           PERIODS.forEach(p => {
             const slot = state.schedules[cls]?.[day]?.[p];
@@ -4430,24 +4429,24 @@ function printDayWiseClassTimetable(day) {
               if (coT) tStr += ` + ${coT.shortName || coT.name}`;
 
               rowHtml += `
-                <td style="padding: 5px 3px; border: 1px solid #0f172a; text-align: center; width: 10%; font-family: 'Times New Roman', Times, serif;">
-                  <div style="border: 1px solid #0f172a; background: #ffffff; border-radius: 6px; padding: 3px 2px;">
-                    <div style="font-weight: 900; font-size: 10.5px; color: #0f172a; font-family: 'Times New Roman', Times, serif;">${slot.subject}</div>
-                    <div style="font-size: 9px; color: #1e293b; font-weight: 700; font-family: 'Times New Roman', Times, serif;">${tStr}</div>
+                <td style="padding: 3px 2px; border: 1.5px solid #0f172a; text-align: center; width: 10%; font-family: 'Times New Roman', Times, serif;">
+                  <div style="border: 1px solid #0f172a; background: #ffffff; border-radius: 4px; padding: 2px 1px;">
+                    <div style="font-weight: 900; font-size: 10px; color: #0f172a; font-family: 'Times New Roman', Times, serif;">${slot.subject}</div>
+                    <div style="font-size: 8.5px; color: #1e293b; font-weight: 700; font-family: 'Times New Roman', Times, serif;">${tStr}</div>
                   </div>
                 </td>
               `;
             } else {
               rowHtml += `
-                <td style="padding: 5px 3px; border: 1px solid #0f172a; text-align: center; width: 10%; font-family: 'Times New Roman', Times, serif;">
-                  <div style="border: 1px dashed #94a3b8; background: #ffffff; border-radius: 6px; padding: 5px 2px; color: #94a3b8; font-size: 9.5px; font-family: 'Times New Roman', Times, serif;">-</div>
+                <td style="padding: 3px 2px; border: 1.5px solid #0f172a; text-align: center; width: 10%; font-family: 'Times New Roman', Times, serif;">
+                  <div style="border: 1px dashed #94a3b8; background: #ffffff; border-radius: 4px; padding: 4px 1px; color: #94a3b8; font-size: 9px; font-family: 'Times New Roman', Times, serif;">-</div>
                 </td>
               `;
             }
 
-            if (p === 4) {
+            if (p === 4 && index === 0) {
               rowHtml += `
-                <td style="width: 24px; max-width: 24px; padding: 2px 1px; border: 1px solid #0f172a; font-weight: 800; font-size: 9px; letter-spacing: 1px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="1">
+                <td style="width: 20px; max-width: 20px; padding: 2px 1px; border: 1.5px solid #0f172a; font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #0f172a; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}">
                   LUNCH BREAK
                 </td>
               `;
@@ -4460,19 +4459,19 @@ function printDayWiseClassTimetable(day) {
         fullHtml += `
           <div class="print-page landscape-page" style="margin-bottom: 24px; width: 100%; max-width: none; font-family: 'Times New Roman', Times, serif;">
             ${renderOfficialHeader(`DAILY MASTER CLASS SCHEDULE • ${day.toUpperCase()}`)}
-            <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; text-align: center; font-family: 'Times New Roman', Times, serif;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 4px;">
               <thead>
-                <tr style="background: #e2e8f0; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; text-align: left; font-family: 'Times New Roman', Times, serif;">Class</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P1</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P2</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P3</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P4</th>
-                  <th style="background: #fef3c7; width: 24px; max-width: 24px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;"></th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P5</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P6</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P7</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif;">P8</th>
+                <tr style="background: #f1f5f9; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; text-align: left; font-family: 'Times New Roman', Times, serif;">Class</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P1</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P2</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P3</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P4</th>
+                  <th style="background: #fef3c7; width: 20px; max-width: 20px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${CLASSES.length}"></th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P5</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P6</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P7</th>
+                  <th style="border: 1.5px solid #0f172a; padding: 5px; font-family: 'Times New Roman', Times, serif;">P8</th>
                 </tr>
               </thead>
               <tbody>${gridRows}</tbody>

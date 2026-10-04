@@ -2628,7 +2628,7 @@ function autoGenerateSingleClass(cls) {
       });
     }
 
-    function renderSlide5DayWiseTeachers() {
+   function renderSlide5DayWiseTeachers() {
       const tbody = document.getElementById("slide5-teachers-tbody");
       if (!tbody) return;
       tbody.innerHTML = "";
@@ -2656,7 +2656,8 @@ function autoGenerateSingleClass(cls) {
           let teachingSlots = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[day]?.[p];
-            if (slot && slot.teacherId === t.id) {
+            // Updated to check both primary and co-teacher IDs
+            if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
               teachingSlots.push({ class: c, subject: slot.subject });
             }
           });
@@ -2706,7 +2707,6 @@ function autoGenerateSingleClass(cls) {
         tbody.appendChild(tr);
       });
     }
-
     function handleSlide5Regenerate() {
       if (state.isViewOnly) return;
       handleSlide4Regenerate();
@@ -4672,7 +4672,7 @@ function printDayWiseClassTimetable(day) {
       });
       showPrintPreviewModal("Staff Deployment • All 6 Days", fullHtml);
     }
-   function printTeacherWeeklyTimetable(teacherId) {
+  function printTeacherWeeklyTimetable(teacherId) {
       const t = state.teachers.find(item => item.id === teacherId);
       if (!t) return;
       let gridRows = "";
@@ -4684,7 +4684,7 @@ function printDayWiseClassTimetable(day) {
         
         PERIODS.forEach(p => {
           let assigned = [];
-         CLASSES.forEach(c => {
+          CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[d]?.[p];
             if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
               assigned.push(`${c}: ${slot.subject}`);
@@ -4730,25 +4730,24 @@ function printDayWiseClassTimetable(day) {
       showPrintPreviewModal(`${t.name} Weekly Timetable`, html);
     }
 
-function printAllTeachersWeeklyTimetables() {
+    function printAllTeachersWeeklyTimetables() {
       let fullHtml = "";
       state.teachers.forEach(t => {
         let gridRows = "";
         let totalWeekly = 0;
         
         DAYS.forEach(d => {
-          // Increased padding to 8px to expand table height and fill the page
           let rowHtml = `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 9px; width: 10%;">&#x200B;${d}</td>`;
           let dayCount = 0;
           
           PERIODS.forEach(p => {
             let assigned = [];
-           CLASSES.forEach(c => {
-            const slot = state.schedules[c]?.[d]?.[p];
-            if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
-              assigned.push(`${c}: ${slot.subject}`);
-            }
-          });
+            CLASSES.forEach(c => {
+              const slot = state.schedules[c]?.[d]?.[p];
+              if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
+                assigned.push(`${c}: ${slot.subject}`);
+              }
+            });
             
             if (assigned.length > 0) {
               dayCount += assigned.length;

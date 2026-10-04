@@ -84,15 +84,15 @@
         margin: 4mm;
       }
 
-      /* Dedicated Landscape Page rule for Slide 4 */
-      @page landscape-sheet {
-        size: landscape;
-        margin: 6mm;
-      }
-      .landscape-page {
-        page: landscape-sheet !important;
-        size: landscape !important;
-      }
+      /* Dedicated Landscape Page rule for Slide 4 & 5 */
+    @page landscape-sheet {
+      size: landscape;
+      margin: 6mm;
+    }
+    .landscape-page {
+      page: landscape-sheet !important;
+      size: landscape !important;
+    }
 
       table { border-collapse: collapse !important; width: 100% !important; }
       th, td { border: 1.5px solid #0f172a !important; }
@@ -4853,7 +4853,7 @@ function printAllTeachersWeeklyTimetables() {
       }
     }
 
-   function executeBrowserPrint() {
+  function executeBrowserPrint() {
       const printableArea = document.getElementById("printable-report-area");
       if (printableArea && activePrintHtml) printableArea.innerHTML = activePrintHtml;
       
@@ -4865,7 +4865,9 @@ function printAllTeachersWeeklyTimetables() {
         printableArea.classList.add("monochrome-print");
       }
 
-      const isLandscape = activePrintHtml.includes('landscape-page');
+      // Automatically detects 'landscape-page' class for both Slide 4 and Slide 5
+      const isLandscape = activePrintHtml.includes('landscape-page') || 
+                          (printableArea && printableArea.querySelector('.landscape-page'));
 
       if (isLandscape) {
         const printWin = window.open("", "_blank", "width=1100,height=800");

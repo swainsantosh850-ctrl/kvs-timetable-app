@@ -2378,15 +2378,25 @@ function ensureAllotmentExists(teacherId, classNum, section, subject) {
       renderSlide2WorkloadStatus();
     }
 
-    function renderSlide2WorkloadStatus() {
+  function renderSlide2WorkloadStatus() {
       const container = document.getElementById("slide2-class-workload-gauges");
       if (!container) return;
       container.innerHTML = "";
 
       CLASSES.forEach(cls => {
         const [cNum, cSec] = cls.split("-");
-        const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
-        const total = classAllots.reduce((sum, a) => sum + parseInt(a.periods || 0), 0);
+        const targetClassKey = `${cNum}-${cSec}`;
+        
+        // Count unique scheduled periods directly from the timetable grid
+        let total = 0;
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            const slot = state.schedules[targetClassKey]?.[d]?.[p];
+            if (slot && slot.subject) {
+              total++;
+            }
+          });
+        });
 
         const isComplete = total === 48;
         const isOver = total > 48;

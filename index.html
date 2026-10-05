@@ -3152,7 +3152,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       }
     }
 
-    function renderModalSubjectBadges() {
+   function renderModalSubjectBadges() {
       const container = document.getElementById("slot-modal-subject-badges");
       if (!container) return;
       container.innerHTML = "";
@@ -3166,43 +3166,37 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       DAYS.forEach(d => {
         PERIODS.forEach(p => {
           const s = state.schedules[cls]?.[d]?.[p];
-          if (s) {
-            scheduledCounts[s.subject] = (scheduledCounts[s.subject] || 0) + 1;
+          if (s && s.subject) {
+            const subUpper = s.subject.trim().toUpperCase();
+            scheduledCounts[subUpper] = (scheduledCounts[subUpper] || 0) + 1;
           }
         });
       });
 
       const subjectMap = {};
-      state.allotments
-        .filter(a => a.class === cNum && a.section === cSec)
-        .forEach(a => {
-          if (!subjectMap[a.subject]) {
-            subjectMap[a.subject] = {
-              subject: a.subject,
-              target: 0,
-              teacherId: a.teacherId
-            };
-          }
-          subjectMap[a.subject].target += parseInt(a.periods || 0);
-        });
 
+      // 1. Load targets strictly from master class limits as the primary definition of max weekly periods
       Object.keys(classLimits).forEach(subj => {
-        if (!subjectMap[subj]) {
-          subjectMap[subj] = {
-            subject: subj,
-            target: parseInt(classLimits[subj] || 0),
-            teacherId: ""
-          };
-        } else {
-          const limitCap = classLimits[subj];
-          if (limitCap !== undefined) {
-            subjectMap[subj].target = Math.min(subjectMap[subj].target, limitCap);
-          }
-        }
+        const cleanSubj = subj.trim().toUpperCase();
+        subjectMap[cleanSubj] = {
+          subject: cleanSubj,
+          target: parseInt(classLimits[subj] || 4),
+          teacherId: ""
+        };
       });
 
+      // 2. Map teacher IDs from allotments so selecting a badge auto-fills the teacher
+      state.allotments
+        .filter(a => String(a.class) === String(cNum) && String(a.section).toUpperCase() === String(cSec).toUpperCase())
+        .forEach(a => {
+          const cleanSubj = String(a.subject).trim().toUpperCase();
+          if (subjectMap[cleanSubj] && a.teacherId) {
+            subjectMap[cleanSubj].teacherId = a.teacherId;
+          }
+        });
+
       const currentSlot = state.schedules[cls]?.[currentSlotContext.day]?.[currentSlotContext.period];
-      const currentSlotSubject = currentSlot ? currentSlot.subject : null;
+      const currentSlotSubject = currentSlot ? currentSlot.subject.trim().toUpperCase() : null;
 
       Object.values(subjectMap).forEach(item => {
         let currentAssigned = scheduledCounts[item.subject] || 0;
@@ -3224,7 +3218,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
             <span class="text-[10px] font-black text-emerald-700 bg-white/70 px-1.5 py-0.5 rounded-md">${currentAssigned + (currentSlotSubject === item.subject ? 1 : 0)}/${item.target} (Full)</span>
           `;
         } else {
-          const remaining = item.target - currentAssigned;
+          const remaining = Math.max(0, item.target - currentAssigned);
           badge.onclick = () => {
             document.getElementById("slot-modal-subject-input").value = item.subject;
             if (item.teacherId) {
@@ -3242,7 +3236,6 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
         container.appendChild(badge);
       });
     }
-
     function renderModalTeacherAvailability() {
       const container = document.getElementById("slot-modal-teacher-availability-list");
       if (!container) return;

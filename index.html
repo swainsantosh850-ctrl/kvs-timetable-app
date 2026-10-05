@@ -214,7 +214,10 @@
           <i class="ph-bold ph-broadcast text-sm"></i>
           <span>Publish to Teachers</span>
         </button>
-
+<button id="btn-undo-action" onclick="undoLastAction()" disabled class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 shadow-xs opacity-50 cursor-not-allowed" title="No actions to undo">
+          <i class="ph-bold ph-arrow-u-up-left text-sm"></i>
+          <span>Undo</span>
+        </button>
         <button onclick="openAuthModal()" id="btn-role-switcher" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1.5 shadow-xs">
           <i class="ph-bold ph-user-switch text-sm"></i>
           <span id="role-switcher-label">Role: Staff</span>
@@ -1148,6 +1151,61 @@
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
   <script>
+    // History Stack for Undo functionality
+    let timetableUndoStack = [];
+    const MAX_HISTORY_STEPS = 10;
+
+    function pushUndoSnapshot() {
+      // Save a deep clone of the current repository and state before a major action/publish
+      const snapshot = JSON.parse(JSON.stringify({
+        schoolRepository: schoolRepository,
+        state: state
+      }));
+      
+      timetableUndoStack.push(snapshot);
+      if (timetableUndoStack.length > MAX_HISTORY_STEPS) {
+        timetableUndoStack.shift(); // Keep stack size manageable
+      }
+      
+      // Update undo button UI state if present
+      updateUndoButtonUI();
+    }
+
+    function undoLastAction() {
+      if (timetableUndoStack.length === 0) {
+        showNotification("No previous state to undo.", "warning");
+        return;
+      }
+
+      const previousSnapshot = timetableUndoStack.pop();
+      try {
+        schoolRepository = previousSnapshot.schoolRepository;
+        Object.assign(state, previousSnapshot.state);
+        
+        syncActiveSchoolFromRepository();
+        goToSlide(state.activeSlide || 1);
+        updateUndoButtonUI();
+        
+        showNotification("Successfully undone to previous entry!", "success");
+      } catch (err) {
+        showNotification("Failed to restore previous state: " + err.message, "warning");
+      }
+    }
+
+    function updateUndoButtonUI() {
+      const undoBtn = document.getElementById("btn-undo-action");
+      if (undoBtn) {
+        if (timetableUndoStack.length > 0) {
+          undoBtn.classList.remove("opacity-50", "cursor-not-allowed");
+          undoBtn.disabled = false;
+          undoBtn.title = `Undo available (${timetableUndoStack.length} steps)`;
+        } else {
+          undoBtn.classList.add("opacity-50", "cursor-not-allowed");
+          undoBtn.disabled = true;
+          undoBtn.title = "No actions to undo";
+        }
+      }
+    }
     const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
@@ -5352,6 +5410,28 @@ function runPedagogicalAudit() {
 
     window.syncToAllTeachers = function () {
       try {
+        pushUndoSnapshot();
+
+        commitWorkingStateToRepository();
+        const payload = {
+          schoolRepository: schoolRepository,
+          state: state
+        };
+        const raw = JSON.stringify(payload);
+        const compressed = LZString.compressToEncodedURIComponent(raw);
+
+        timetableCloudRef.set({
+          compressed: compressed,
+          updatedAt: new Date().toISOString()
+        }).then(() => {
+          showNotification("Timetable synced live to cloud!", "success");
+        }).catch((err) => {
+          showNotification("Cloud sync failed: " + err.message, "warning");
+        });
+      } catch (err) {
+        showNotification("Sync error: " + err.message, "warning");
+      }
+    };
         commitWorkingStateToRepository();
         const payload = {
           schoolRepository: schoolRepository,

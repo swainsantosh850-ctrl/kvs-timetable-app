@@ -2073,7 +2073,7 @@ function auditGlobalCollisions() {
       });
     }
 
-   function renderSlide2Allotments() {
+  function renderSlide2Allotments() {
       const container = document.getElementById("slide2-teachers-allotment-container");
       if (!container) return;
       
@@ -2198,12 +2198,22 @@ function auditGlobalCollisions() {
           const limitsForClass = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
           const availableSubjects = Object.keys(limitsForClass);
 
-          const totalAllottedOthers = state.allotments
-            .filter(item => item.id !== a.id && item.class === a.class && item.section === a.section && item.subject === a.subject)
-            .reduce((sum, item) => sum + parseInt(item.periods || 0), 0);
+          const targetClassKey = `${a.class}-${a.section}`;
+
+          // Calculate grid usage directly from unique timetable slots (co-teachers sharing slots won't inflate count)
+          let gridUsageForSubject = 0;
+          DAYS.forEach(d => {
+            PERIODS.forEach(p => {
+              const slot = state.schedules[targetClassKey]?.[d]?.[p];
+              if (slot && slot.subject && slot.subject.toUpperCase() === a.subject.toUpperCase()) {
+                gridUsageForSubject++;
+              }
+            });
+          });
 
           const maxAllowedTotal = limitsForClass[a.subject] !== undefined ? limitsForClass[a.subject] : 10;
-          const maxRemainingForRow = Math.max(0, maxAllowedTotal - totalAllottedOthers);
+          const otherUsage = Math.max(0, gridUsageForSubject - parseInt(a.periods || 0));
+          const maxRemainingForRow = Math.max(0, maxAllowedTotal - otherUsage);
 
           rowEl.innerHTML = `
             <div class="sm:col-span-3">
@@ -2229,10 +2239,16 @@ function auditGlobalCollisions() {
               <select onchange="updateAllotmentField('${a.id}', 'subject', this.value)" class="w-full px-2.5 py-1.5 rounded-lg text-xs font-extrabold border border-slate-200 bg-white">
                 ${availableSubjects.map(s => {
                   const sLimit = limitsForClass[s] !== undefined ? limitsForClass[s] : 10;
-                  const alreadyUsed = state.allotments
-                    .filter(item => item.id !== a.id && item.class === a.class && item.section === a.section && item.subject === s)
-                    .reduce((sum, item) => sum + parseInt(item.periods || 0), 0);
-                  const rem = Math.max(0, sLimit - alreadyUsed);
+                  let sGridUsed = 0;
+                  DAYS.forEach(d => {
+                    PERIODS.forEach(p => {
+                      const slot = state.schedules[targetClassKey]?.[d]?.[p];
+                      if (slot && slot.subject && slot.subject.toUpperCase() === s.toUpperCase()) {
+                        sGridUsed++;
+                      }
+                    });
+                  });
+                  const rem = Math.max(0, sLimit - sGridUsed);
                   return `<option value="${s}" ${a.subject === s ? "selected" : ""}>${s} (Max: ${sLimit}, Avail:${rem})</option>`;
                 }).join("")}
               </select>

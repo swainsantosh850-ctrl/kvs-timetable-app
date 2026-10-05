@@ -3602,18 +3602,37 @@ function saveTeacherSlotModal() {
 
       const [classNum, classSec] = classKey.split("-");
 
-      // Clear any previous teacher occupying this exact slot
+      // 1. Clear this teacher from any OTHER class during this exact same day and period (to prevent teacher overlap)
       CLASSES.forEach(c => {
-        const existingSlot = state.schedules[c]?.[day]?.[period];
-        if (existingSlot && (existingSlot.teacherId || existingSlot.coTeacherId)) {
+        const slot = state.schedules[c]?.[day]?.[period];
+        if (slot && (slot.teacherId === teacherId || slot.coTeacherId === teacherId)) {
           const [eNum, eSec] = c.split("-");
-          if (existingSlot.teacherId) decrementAllotmentCount(existingSlot.teacherId, eNum, eSec, existingSlot.subject);
-          if (existingSlot.coTeacherId) decrementAllotmentCount(existingSlot.coTeacherId, eNum, eSec, existingSlot.subject);
-          state.schedules[c][day][period] = null;
+          if (slot.teacherId === teacherId) {
+            decrementAllotmentCount(teacherId, eNum, eSec, slot.subject);
+            slot.teacherId = null;
+          }
+          if (slot.coTeacherId === teacherId) {
+            decrementAllotmentCount(teacherId, eNum, eSec, slot.subject);
+            slot.coTeacherId = null;
+          }
+          if (!slot.teacherId && !slot.coTeacherId) {
+            state.schedules[c][day][period] = null;
+          }
         }
       });
 
-      // Save into master schedule with co-teacher properly linked
+      // 2. Clear previous occupant of this specific target class slot if someone else was there
+      const existingSlot = state.schedules[classKey]?.[day]?.[period];
+      if (existingSlot && (existingSlot.teacherId || existingSlot.subject)) {
+        const [eNum, eSec] = classKey.split("-");
+        if (existingSlot.teacherId) decrementAllotmentCount(existingSlot.teacherId, eNum, eSec, existingSlot.subject);
+        if (existingSlot.coTeacherId) decrementAllotmentCount(existingSlot.coTeacherId, eNum, eSec, existingSlot.subject);
+      }
+
+      // 3. Save into master schedule for this specific class and period
+      if (!state.schedules[classKey]) state.schedules[classKey] = {};
+      if (!state.schedules[classKey][day]) state.schedules[classKey][day] = {};
+
       state.schedules[classKey][day][period] = {
         subject: subject,
         teacherId: teacherId,
@@ -3621,7 +3640,7 @@ function saveTeacherSlotModal() {
         isBlock: false
       };
 
-      // Auto-assign or increment in Slide 2 allotments for both primary and co-teacher
+      // Auto-assign or increment allotments for primary and co-teacher
       ensureAllotmentExists(teacherId, classNum, classSec, subject);
       if (coTeacherId) {
         ensureAllotmentExists(coTeacherId, classNum, classSec, subject);
@@ -3629,9 +3648,8 @@ function saveTeacherSlotModal() {
 
       closeTeacherSlotModal();
       refreshAllScheduleViews();
-      showNotification(`Assigned ${subject} to Class ${classKey} on ${day} P${period} with co-teacher!`, "success");
+      showNotification(`Assigned ${subject} to Class ${classKey} on ${day} P${period}!`, "success");
     }
-
     function clearTeacherSlot() {
       const { teacherId, day, period } = currentTeacherSlotContext;
       CLASSES.forEach(c => {

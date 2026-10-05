@@ -5408,30 +5408,10 @@ function runPedagogicalAudit() {
       }
     });
 
-    window.syncToAllTeachers = function () {
+   window.syncToAllTeachers = function () {
       try {
         pushUndoSnapshot();
 
-        commitWorkingStateToRepository();
-        const payload = {
-          schoolRepository: schoolRepository,
-          state: state
-        };
-        const raw = JSON.stringify(payload);
-        const compressed = LZString.compressToEncodedURIComponent(raw);
-
-        timetableCloudRef.set({
-          compressed: compressed,
-          updatedAt: new Date().toISOString()
-        }).then(() => {
-          showNotification("Timetable synced live to cloud!", "success");
-        }).catch((err) => {
-          showNotification("Cloud sync failed: " + err.message, "warning");
-        });
-      } catch (err) {
-        showNotification("Sync error: " + err.message, "warning");
-      }
-    };
         commitWorkingStateToRepository();
         const payload = {
           schoolRepository: schoolRepository,

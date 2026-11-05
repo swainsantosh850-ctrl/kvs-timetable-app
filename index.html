@@ -24,37 +24,29 @@
           .catch((err) => console.warn('ServiceWorker error:', err));
       });
     }
-  </script>
-  <style>
+ <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; box-sizing: border-box; }
     
+    html, body {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow-x: hidden !important;
+    }
+
+    header, nav, main {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-html, body {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-x: hidden !important;
-  }
-
-  header, nav, main {
-    width: 100% !important;
-    max-width: 100% !important;
-  }    
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* Black & White Print Mode Styles */
+    /* Black & White Print Mode Styles */
     .monochrome-print,
     .monochrome-print * {
       background: white !important;
@@ -96,14 +88,14 @@ html, body {
       }
 
       /* Dedicated Landscape Page rule for Slide 4 & 5 */
-    @page landscape-sheet {
-      size: landscape;
-      margin: 6mm;
-    }
-    .landscape-page {
-      page: landscape-sheet !important;
-      size: landscape !important;
-    }
+      @page landscape-sheet {
+        size: landscape;
+        margin: 6mm;
+      }
+      .landscape-page {
+        page: landscape-sheet !important;
+        size: landscape !important;
+      }
 
       table { border-collapse: collapse !important; width: 100% !important; }
       th, td { border: 1.5px solid #0f172a !important; }

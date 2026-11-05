@@ -5316,7 +5316,7 @@ function runPedagogicalAudit() {
       }
     }
 
-    function handleLoginSubmit() {
+  function handleLoginSubmit() {
       const roleSelect = document.getElementById("login-role-select");
       const passInput = document.getElementById("login-password-input");
       const errorMsg = document.getElementById("auth-error-msg");
@@ -5341,8 +5341,10 @@ function runPedagogicalAudit() {
           }
           showNotification("Welcome Super Admin! All schools accessible.", "success");
         } else {
-          // Check individual school admin passwords
-          let matchedSchool = schoolRepository.schools && schoolRepository.schools.find(s => s.adminPassword === passVal);
+          // Check individual school admin passwords safely
+          const schoolsList = (schoolRepository && Array.isArray(schoolRepository.schools)) ? schoolRepository.schools : [];
+          let matchedSchool = schoolsList.find(s => s.adminPassword === passVal);
+          
           if (matchedSchool) {
             schoolRepository.activeSchoolId = matchedSchool.id;
             state.isViewOnly = false;

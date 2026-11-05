@@ -164,9 +164,11 @@
         <button onclick="handleLoginSubmit()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm">
           Enter Timetable Studio
         </button>
-      </div>
-    </div>
-  </div>
+        <div class="text-center pt-2 border-t border-slate-100">
+          <button onclick="registerNewSchoolPortal()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+            + Register a New School
+          </button>
+        </div>
 
   <div id="view-only-banner" class="hidden bg-amber-500 text-white px-4 py-2 text-xs font-bold shadow-sm no-print">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -5479,6 +5481,53 @@ function runPedagogicalAudit() {
         showNotification("Sync error: " + err.message, "warning");
       }
     };
+   };
+
+    function registerNewSchoolPortal() {
+      const schoolName = prompt("Enter New School Name (e.g., KV IIT CAMPUS CHENNAI):");
+      if (!schoolName) return;
+      
+      const adminPass = prompt("Set a secure Admin Password for this school:");
+      if (!adminPass) return;
+
+      const schoolId = "sch_" + Date.now();
+      const session = "2026-27";
+
+      const newSchoolPayload = {
+        id: schoolId,
+        name: schoolName.trim().toUpperCase(),
+        session: session,
+        adminPassword: adminPass.trim(),
+        sectionsCount: "2",
+        teachers: [
+          { id: "t_init_1", name: "Principal / Head", shortName: "HM", isClassTeacher: false, classNum: "", section: "", secondaryBusySlots: {} }
+        ],
+        subjectLimits: {
+          "Class 1": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+          "Class 2": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+          "Class 3": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+          "Class 4": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
+          "Class 5": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 }
+        },
+        allotments: [],
+        schedules: {},
+        rules: []
+      };
+
+      const raw = JSON.stringify({ schoolData: newSchoolPayload });
+      const compressed = LZString.compressToEncodedURIComponent(raw);
+
+      schoolsRef.child(schoolId).set({
+        compressed: compressed,
+        schoolName: newSchoolPayload.name,
+        updatedAt: new Date().toISOString()
+      }).then(() => {
+        alert("School registered successfully! You can now log in using your new password.");
+        location.reload();
+      }).catch((err) => {
+        alert("Registration failed: " + err.message);
+      });
+    } 
 
     window.onload = function () {
       checkUserSession();

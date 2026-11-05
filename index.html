@@ -5528,7 +5528,44 @@ function runPedagogicalAudit() {
         alert("Registration failed: " + err.message);
       });
     } 
+function openSchoolManagerModal() {
+      const modal = document.getElementById("school-manager-modal");
+      if (modal) {
+        modal.style.display = "flex";
+        if (typeof renderSchoolManagerList === 'function') {
+          renderSchoolManagerList();
+        }
+      }
+    }
 
+    function closeSchoolManagerModal() {
+      const modal = document.getElementById("school-manager-modal");
+      if (modal) {
+        modal.style.display = "none";
+      }
+    }
+
+    function openEditSchoolModal() {
+      if (state.isViewOnly) {
+        showNotification("View-Only Mode: Cannot edit school details.", "warning");
+        return;
+      }
+      const nameInput = document.getElementById("modal-edit-school-name");
+      const sessInput = document.getElementById("modal-edit-school-session");
+      const secSelect = document.getElementById("modal-edit-school-sections");
+
+      if (nameInput) nameInput.value = state.schoolInfo.name;
+      if (sessInput) sessInput.value = state.schoolInfo.session;
+      if (secSelect) secSelect.value = state.schoolInfo.sectionsCount || "2";
+
+      const modal = document.getElementById("edit-school-modal");
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeEditSchoolModal() {
+      const modal = document.getElementById("edit-school-modal");
+      if (modal) modal.style.display = "none";
+    }
     window.onload = function () {
       checkUserSession();
 

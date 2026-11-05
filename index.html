@@ -5394,7 +5394,7 @@ function runPedagogicalAudit() {
         }
       }
     }
-    // --- FIREBASE REALTIME CLOUD SYNC ---
+   // --- FIREBASE REALTIME CLOUD SYNC ---
     const firebaseConfig = {
       apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",
       authDomain: "kvs-timetable-sync.firebaseapp.com",
@@ -5408,11 +5408,12 @@ function runPedagogicalAudit() {
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
+
+    // Consolidated single references
     const rtdb = firebase.database();
     const timetableCloudRef = rtdb.ref("kvs_live_timetable");
-const rtdb = firebase.database();
-    const timetableCloudRef = rtdb.ref("kvs_live_timetable");
-    const schoolsRef = rtdb.ref("kvs_platform_schools"); // <--- Add this line here
+    const schoolsRef = rtdb.ref("kvs_platform_schools");
+
     function applyCloudMasterData(cloudData) {
       if (!cloudData || !cloudData.compressed) return false;
       try {
@@ -5445,11 +5446,10 @@ const rtdb = firebase.database();
       }
     });
 
-   window.syncToAllTeachers = function () {
+    window.syncToAllTeachers = function () {
       try {
         pushUndoSnapshot();
         commitWorkingStateToRepository();
-
         // Find the active school profile
         const activeSchool = schoolRepository.schools.find(s => s.id === schoolRepository.activeSchoolId);
         if (!activeSchool) {

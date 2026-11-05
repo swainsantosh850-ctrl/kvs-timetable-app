@@ -5375,7 +5375,9 @@ function runPedagogicalAudit() {
     }
     const rtdb = firebase.database();
     const timetableCloudRef = rtdb.ref("kvs_live_timetable");
-
+const rtdb = firebase.database();
+    const timetableCloudRef = rtdb.ref("kvs_live_timetable");
+    const schoolsRef = rtdb.ref("kvs_platform_schools"); // <--- Add this line here
     function applyCloudMasterData(cloudData) {
       if (!cloudData || !cloudData.compressed) return false;
       try {
@@ -5411,20 +5413,30 @@ function runPedagogicalAudit() {
    window.syncToAllTeachers = function () {
       try {
         pushUndoSnapshot();
-
         commitWorkingStateToRepository();
+
+        // Find the active school profile
+        const activeSchool = schoolRepository.schools.find(s => s.id === schoolRepository.activeSchoolId);
+        if (!activeSchool) {
+          showNotification("No active school selected to sync.", "warning");
+          return;
+        }
+
         const payload = {
-          schoolRepository: schoolRepository,
-          state: state
+          schoolData: activeSchool,
+          updatedAt: new Date().toISOString()
         };
+
         const raw = JSON.stringify(payload);
         const compressed = LZString.compressToEncodedURIComponent(raw);
 
-        timetableCloudRef.set({
+        // Push only to this specific school's node in Firebase
+        schoolsRef.child(activeSchool.id).set({
           compressed: compressed,
+          schoolName: activeSchool.name,
           updatedAt: new Date().toISOString()
         }).then(() => {
-          showNotification("Timetable synced live to cloud!", "success");
+          showNotification(`Timetable for ${activeSchool.name} published successfully!`, "success");
         }).catch((err) => {
           showNotification("Cloud sync failed: " + err.message, "warning");
         });
@@ -5436,16 +5448,31 @@ function runPedagogicalAudit() {
     window.onload = function () {
       checkUserSession();
 
-      timetableCloudRef.once("value").then((snapshot) => {
+      // Fetch all schools from the central multi-tenant registry
+      schoolsRef.once("value").then((snapshot) => {
         const val = snapshot.val();
-        const loaded = applyCloudMasterData(val);
+        if (val) {
+          let loadedSchools = [];
+          Object.keys(val).forEach(key => {
+            try {
+              const decompressed = LZString.decompressFromEncodedURIComponent(val[key].compressed);
+              if (decompressed) {
+                const parsed = JSON.parse(decompressed);
+                loadedSchools.push(parsed.schoolData || parsed);
+              }
+            } catch (e) {
+              console.warn("Failed to unpack school record:", key);
+            }
+          });
 
-        if (!loaded) {
-          syncActiveSchoolFromRepository();
-          goToSlide(1);
-          updateSchoolInfo();
+          if (loadedSchools.length > 0) {
+            schoolRepository.schools = loadedSchools;
+          }
         }
 
+        syncActiveSchoolFromRepository();
+        goToSlide(1);
+        updateSchoolInfo();
         applyViewOnlyLocks();
       }).catch((err) => {
         console.warn("Cloud connection error, using local state:", err);

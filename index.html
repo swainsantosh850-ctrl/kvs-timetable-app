@@ -18,13 +18,18 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
+     window.addEventListener('load', () => {
+        // Automatically adjust path for GitHub Pages subpath vs local environment
+        const swPath = window.location.pathname.includes('/kvs-timetable-app/') 
+          ? '/kvs-timetable-app/sw.js' 
+          : './sw.js';
+
+        navigator.serviceWorker.register(swPath)
           .then((reg) => console.log('PWA ServiceWorker registered:', reg.scope))
           .catch((err) => console.warn('ServiceWorker error:', err));
       });
     }
- </script>
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; box-sizing: border-box; }

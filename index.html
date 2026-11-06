@@ -14,7 +14,9 @@
   <!-- LZ-String for Link Compression -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
  <!-- Firebase SDK -->
+<!-- Firebase SDKs (Compat Mode) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script> 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   
   <!-- EmailJS SDK & Initialization -->
@@ -5416,6 +5418,7 @@ function verifyTeacherOTP() {
 
   const { email, password, name, post, school } = pendingSignUpData;
 
+  // Ensure firebase.auth() is called correctly
   firebase.auth().createUserWithEmailAndPassword(email, password)
     .then((userCredential) => {
       const uid = userCredential.user.uid;

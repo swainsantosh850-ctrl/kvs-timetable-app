@@ -191,51 +191,30 @@
     </div>
   </div>
 </div>
-<!-- School Admin Registration Modal -->
-<div id="admin-signup-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
-  <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 space-y-4">
+<!-- Admin OTP Verification Modal -->
+<div id="admin-otp-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-sm shadow-2xl p-6 space-y-4">
     <div class="text-center space-y-1">
       <div class="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center mx-auto text-2xl shadow-sm">
-        <i class="ph-bold ph-shield-star"></i>
+        <i class="ph-bold ph-shield-check"></i>
       </div>
-      <h3 class="text-base font-extrabold text-slate-900">School Admin Registration</h3>
-      <p class="text-xs text-slate-500 font-medium">Generate Timetable & Create Teacher Pass Key</p>
+      <h3 class="text-base font-extrabold text-slate-900">Verify Admin Email</h3>
+      <p class="text-xs text-slate-500 font-medium">Enter the 6-digit code sent to your Admin Email</p>
     </div>
 
     <div class="space-y-3 pt-2">
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Admin Full Name</label>
-        <input type="text" id="admin-su-name" placeholder="Principal / In-Charge Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
+        <label class="block text-xs font-bold text-slate-700 mb-1">6-Digit Verification Code</label>
+        <input type="text" id="admin-otp-input" placeholder="123456" maxlength="6" class="w-full px-3 py-2 rounded-xl text-center text-sm font-bold tracking-widest border border-slate-200 focus:ring-2 focus:ring-amber-500">
       </div>
 
-      <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">School Name</label>
-        <input type="text" id="admin-su-school" placeholder="PM SHRI KV School Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Admin Email ID</label>
-        <input type="email" id="admin-su-email" placeholder="admin@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Admin Password</label>
-        <input type="password" id="admin-su-passkey" placeholder="Secure admin password" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Pass Key to Share With Your Teachers</label>
-        <input type="text" id="admin-su-teacher-passkey" placeholder="e.g. gillnagar2026" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-amber-50">
-        <p class="text-[10px] text-slate-400 mt-1">Teachers enter this pass key to view only your school's timetable.</p>
-      </div>
-
-      <button onclick="handleAdminRegistration()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-amber-600 hover:bg-amber-700 text-white transition shadow-sm">
-        Register Admin & Generate Pass Key
+      <button onclick="verifyAdminOTP()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-amber-600 hover:bg-amber-700 text-white transition shadow-sm">
+        Verify & Complete Admin Registration
       </button>
 
       <div class="text-center pt-2">
-        <button onclick="switchModal('admin-signup', 'auth')" class="text-xs font-bold text-indigo-600 hover:underline">
-          Back to Portal Login
+        <button onclick="switchModal('admin-otp', 'admin-signup')" class="text-xs font-bold text-slate-500 hover:underline">
+          Back to Admin Form
         </button>
       </div>
     </div>
@@ -5532,6 +5511,10 @@ function runPedagogicalAudit() {
     }
   }
   // School Admin Registration & Teacher Pass Key Generation Handler
+ // Temporary storage for pending school admin registration data
+  let pendingAdminData = null;
+
+  // 1. Trigger EmailJS OTP for School Admin Registration
   function handleAdminRegistration() {
     const name = document.getElementById("admin-su-name").value.trim();
     const school = document.getElementById("admin-su-school").value.trim().toUpperCase();
@@ -5544,6 +5527,55 @@ function runPedagogicalAudit() {
       return;
     }
 
+    if (adminPass.length < 6) {
+      showNotification("Admin Password must be at least 6 characters long.", "warning");
+      return;
+    }
+
+    // Save pending details temporarily until OTP is verified
+    pendingAdminData = { name, school, email, adminPass, teacherPassKey };
+
+    // Generate secure 6-digit OTP
+    const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    sessionStorage.setItem("kvs_admin_verification_otp", generatedOTP);
+
+    const templateParams = {
+      email: email,
+      passcode: generatedOTP,
+      time: "15 minutes"
+    };
+
+    // Dispatch OTP via EmailJS
+    emailjs.send("service_g95dc48", "template_jobk0ho", templateParams)
+      .then(function(response) {
+        console.log("Admin OTP sent successfully!", response.status, response.text);
+        showNotification("Verification OTP sent to your Admin Email inbox!", "success");
+        switchModal("admin-signup", "admin-otp");
+      }, function(error) {
+        console.error("Email failed...", error);
+        showNotification("Failed to send OTP email. Check your configuration.", "warning");
+      });
+  }
+
+  // 2. Verify OTP and Finalize Admin Registration & Clean Workspace
+  function verifyAdminOTP() {
+    const enteredOTP = document.getElementById("admin-otp-input").value.trim();
+    const actualOTP = sessionStorage.getItem("kvs_admin_verification_otp");
+
+    if (enteredOTP !== actualOTP) {
+      showNotification("Invalid OTP. Please check your Email inbox.", "warning");
+      return;
+    }
+
+    if (!pendingAdminData) {
+      showNotification("Session expired. Please fill out the form again.", "warning");
+      switchModal("admin-otp", "admin-signup");
+      return;
+    }
+
+    const { name, school, email, adminPass, teacherPassKey } = pendingAdminData;
+
+    // Save admin credentials and pass key to registry
     let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
     adminRegistry[email] = {
       name,
@@ -5554,17 +5586,22 @@ function runPedagogicalAudit() {
     };
     localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
 
+    // Initialize clean school workspace in repository immediately
+    isolateSchoolWorkspace(school);
+    commitWorkingStateToRepository();
+
     if (typeof rtdb !== 'undefined') {
-      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}` ).set({
+      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}`).set({
         name, school, passKey: adminPass, teacherPassKey
       });
     }
 
-    showNotification(`Registered successfully for ${school}! Teacher Pass Key generated: ${teacherPassKey}`, "success");
-    switchModal("admin-signup", "auth");
+    document.getElementById("admin-otp-modal").style.display = "none";
+    showNotification(`Admin verified for ${school}! Clean workspace created. Teacher Pass Key: ${teacherPassKey}`, "success");
+    switchModal("admin-otp", "auth");
   }
 
-// Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
+  // Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
   function isolateSchoolWorkspace(schoolName) {
     const upperName = schoolName.toUpperCase();
     let targetSchool = schoolRepository.schools.find(s => s.name.toUpperCase() === upperName);
@@ -5605,44 +5642,6 @@ function runPedagogicalAudit() {
   function unlockAllSchoolsForSuperAdmin() {
     renderSchoolSelectors();
     showNotification("Super Admin Master View Unlocked: All school schedules visible.", "success");
-  }
-
-  // School Admin Registration: Automatically initializes their isolated school profile
-  function handleAdminRegistration() {
-    const name = document.getElementById("admin-su-name").value.trim();
-    const school = document.getElementById("admin-su-school").value.trim().toUpperCase();
-    const email = document.getElementById("admin-su-email").value.trim().toLowerCase();
-    const adminPass = document.getElementById("admin-su-passkey").value;
-    const teacherPassKey = document.getElementById("admin-su-teacher-passkey")?.value || "pass_" + Math.floor(1000 + Math.random() * 9000);
-
-    if (!name || !school || !email || !adminPass) {
-      showNotification("Please fill in all required fields.", "warning");
-      return;
-    }
-
-    // Save admin credentials and pass key to registry
-    let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-    adminRegistry[email] = {
-      name,
-      school,
-      passKey: adminPass,
-      teacherPassKey: teacherPassKey,
-      createdAt: new Date().toISOString()
-    };
-    localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
-
-    // Initialize clean school workspace in repository immediately
-    isolateSchoolWorkspace(school);
-    commitWorkingStateToRepository();
-
-    if (typeof rtdb !== 'undefined') {
-      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}`).set({
-        name, school, passKey: adminPass, teacherPassKey
-      });
-    }
-
-    showNotification(`Admin registered for ${school}! Clean timetable workspace created. Teacher Pass Key: ${teacherPassKey}`, "success");
-    switchModal("admin-signup", "auth");
   }
 
   // Teacher Sign Up with Email OTP Dispatch

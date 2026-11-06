@@ -135,55 +135,55 @@
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
-  <!-- Role Access / Authentication Modal -->
-  <div id="auth-modal" style="display: flex;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-sm shadow-2xl p-6 space-y-4">
-      <div class="text-center space-y-1">
-        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-2xl shadow-sm">
-          <i class="ph-bold ph-lock-key"></i>
-        </div>
-        <h3 class="text-base font-extrabold text-slate-900">KVS Timetable Portal</h3>
-        <p class="text-xs text-slate-500 font-medium">Select your portal role to continue</p>
+ <!-- Role Access / Authentication Modal -->
+<div id="auth-modal" style="display: flex;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-sm shadow-2xl p-6 space-y-4">
+    <div class="text-center space-y-1">
+      <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-2xl shadow-sm">
+        <i class="ph-bold ph-lock-key"></i>
+      </div>
+      <h3 class="text-base font-extrabold text-slate-900">KVS Timetable Portal</h3>
+      <p class="text-xs text-slate-500 font-medium">Select your portal role to continue</p>
+    </div>
+
+    <div class="space-y-3 pt-2">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Access Role</label>
+        <select id="login-role-select" onchange="togglePasswordField()" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="teacher">Teacher / Staff (View-Only)</option>
+          <option value="admin">Super Admin / Timetable In-Charge (Editor)</option>
+        </select>
       </div>
 
-      <div class="space-y-3 pt-2">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Access Role</label>
-          <select id="login-role-select" onchange="togglePasswordField()" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="teacher">Teacher / Staff (View-Only)</option>
-            <option value="admin">Super Admin / Timetable In-Charge (Editor)</option>
-          </select>
-        </div>
+      <!-- Email Field -->
+      <div id="email-field-container">
+        <label class="block text-xs font-bold text-slate-700 mb-1">Email ID</label>
+        <input type="email" id="login-email-input" placeholder="teacher@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
 
-        <!-- Email Field for Teachers / Admin identification -->
-        <div id="email-field-container">
-          <label class="block text-xs font-bold text-slate-700 mb-1">Email ID</label>
-          <input type="email" id="login-email-input" placeholder="teacher@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <div id="password-field-container" class="hidden">
-          <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
-          <input type="password" id="login-password-input" placeholder="Enter password" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
+      <!-- Password Field -->
+      <div id="password-field-container">
+        <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+        <input type="password" id="login-password-input" placeholder="Enter password" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <p id="auth-error-msg" class="text-[11px] text-rose-600 font-bold mt-1 hidden">Incorrect credentials.</p>
+      </div>
 
-        <button onclick="handleLoginSubmit()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm">
-          Enter Timetable Studio
+      <button onclick="handleLoginSubmit()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm">
+        Enter Timetable Studio
+      </button>
+
+      <!-- Navigation Links for Sign Up & Forgot Password -->
+      <div class="flex items-center justify-between pt-2 text-xs font-bold">
+        <button onclick="switchModal('auth', 'signup')" class="text-indigo-600 hover:underline">
+          New Teacher? Sign Up
         </button>
-
-        <!-- Navigation Links for Sign Up & Forgot Password -->
-        <div class="flex items-center justify-between pt-2 text-xs font-bold">
-          <button onclick="switchModal('auth', 'signup')" class="text-indigo-600 hover:underline">
-            New Teacher? Sign Up
-          </button>
-          <button onclick="switchModal('auth', 'forgot-password')" class="text-slate-500 hover:text-slate-800">
-            Forgot Password?
-          </button>
-        </div>
+        <button onclick="switchModal('auth', 'forgot-password')" class="text-slate-500 hover:text-slate-800">
+          Forgot Password?
+        </button>
       </div>
     </div>
   </div>
+</div>
       <!-- Brand & Active School Profile Selector -->
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-800 flex items-center justify-center text-white shadow-sm font-black text-lg">

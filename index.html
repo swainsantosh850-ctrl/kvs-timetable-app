@@ -24,7 +24,12 @@
           .catch((err) => console.warn('ServiceWorker error:', err));
       });
     }
-  </script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+   (function() {
+      emailjs.init("ZYd9mhrFFbLYYjkLZ");
+   })();
+</script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -5366,68 +5371,84 @@ function runPedagogicalAudit() {
   // Teacher Sign Up with Simulated Email/SMS OTP Dispatch
   let pendingSignUpData = null;
 
-  function handleTeacherSignUp() {
-    const name = document.getElementById("su-name").value.trim();
-    const post = document.getElementById("su-post").value;
-    const school = document.getElementById("su-school").value.trim();
-    const region = document.getElementById("su-region").value.trim();
-    const phone = document.getElementById("su-phone").value.trim();
-    const email = document.getElementById("su-email").value.trim();
-    const password = document.getElementById("su-password").value;
+  let pendingSignUpData = null;
 
-    if (!name || !school || !phone || !email || !password) {
-      showNotification("Please fill in all required sign-up fields.", "warning");
-      return;
-    }
+// 1. Handle Sign Up: Send real OTP via EmailJS and switch to OTP Modal
+function handleTeacherSignUp() {
+  const name = document.getElementById("su-name").value.trim();
+  const post = document.getElementById("su-post").value;
+  const school = document.getElementById("su-school").value.trim();
+  const region = document.getElementById("su-region").value.trim();
+  const phone = document.getElementById("su-phone").value.trim();
+  const email = document.getElementById("su-email").value.trim();
+  const password = document.getElementById("su-password").value;
 
-    pendingSignUpData = { name, post, school, region, phone, email, password };
-    
-    const simulatedOTP = Math.floor(100000 + Math.random() * 900000);
-    sessionStorage.setItem("kvs_verification_otp", simulatedOTP);
-
-    alert(`[SIMULATED OTP SENT] A 6-digit OTP has been sent to Email (${email}) and SMS (+91 ${phone}): ${simulatedOTP}`);
-    
-    switchModal("signup", "otp");
+  if (!name || !school || !phone || !email || !password) {
+    showNotification("Please fill in all required sign-up fields.", "warning");
+    return;
   }
 
-  // Verify OTP and create Firebase Auth Account
-  function verifyTeacherOTP() {
-    const enteredOTP = document.getElementById("otp-input").value.trim();
-    const actualOTP = sessionStorage.getItem("kvs_verification_otp");
+  pendingSignUpData = { name, post, school, region, phone, email, password };
+  
+  // Generate secure 6-digit OTP and store as a string for precise comparison
+  const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+  sessionStorage.setItem("kvs_verification_otp", generatedOTP);
 
-    if (enteredOTP !== actualOTP) {
-      showNotification("Invalid OTP. Please check your SMS/Email.", "warning");
-      return;
-    }
+  const templateParams = {
+    email: email,           // Maps to {{email}} in your EmailJS To field
+    passcode: generatedOTP, // Maps to {{passcode}} in your email template content
+    time: "15 minutes"      // Maps to {{time}} in your email template content
+  };
 
-    const { email, password, name, post, school } = pendingSignUpData;
+  // Dispatch real email via EmailJS
+  emailjs.send("service_g95dc48", "template_7tt4rzd", templateParams)
+    .then(function(response) {
+      console.log("Email sent successfully!", response.status, response.text);
+      showNotification("OTP sent successfully to your Gmail inbox!", "success");
+      switchModal("signup", "otp");
+    }, function(error) {
+      console.error("Email failed...", error);
+      showNotification("Failed to send email. Check your EmailJS configuration.", "warning");
+    });
+}
 
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then((userCredential) => {
-        const uid = userCredential.user.uid;
-        rtdb.ref(`kvs_teachers_profiles/${uid}`).set({
-          name, post, school, email, createdAt: new Date().toISOString()
-        });
+// 2. Verify OTP and create Firebase Auth Account
+function verifyTeacherOTP() {
+  const enteredOTP = document.getElementById("otp-input").value.trim();
+  const actualOTP = sessionStorage.getItem("kvs_verification_otp");
 
-        state.teachers.push({
-          id: "t_" + uid.substring(0, 6),
-          name: `${post}. ${name}`,
-          shortName: name.split(" ").pop().substring(0, 3).toUpperCase(),
-          isClassTeacher: false,
-          secondaryBusySlots: {}
-        });
-        commitWorkingStateToRepository();
-        renderSlide1Teachers();
+  if (enteredOTP !== actualOTP) {
+    showNotification("Invalid OTP. Please check your Email inbox.", "warning");
+    return;
+  }
 
-        document.getElementById("otp-modal").style.display = "none";
-        showNotification("Account created and verified successfully! You can now log in.", "success");
-        openAuthModal();
-      })
-      .catch((error) => {
-        showNotification("Sign-up error: " + error.message, "warning");
+  const { email, password, name, post, school } = pendingSignUpData;
+
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      const uid = userCredential.user.uid;
+      rtdb.ref(`kvs_teachers_profiles/${uid}`).set({
+        name, post, school, email, createdAt: new Date().toISOString()
       });
-  }
 
+      state.teachers.push({
+        id: "t_" + uid.substring(0, 6),
+        name: `${post}. ${name}`,
+        shortName: name.split(" ").pop().substring(0, 3).toUpperCase(),
+        isClassTeacher: false,
+        secondaryBusySlots: {}
+      });
+      commitWorkingStateToRepository();
+      renderSlide1Teachers();
+
+      document.getElementById("otp-modal").style.display = "none";
+      showNotification("Account created and verified successfully! You can now log in.", "success");
+      openAuthModal();
+    })
+    .catch((error) => {
+      showNotification("Sign-up error: " + error.message, "warning");
+    });
+}
   // Forgot Password Feature
   function handlePasswordResetRequest() {
     const email = document.getElementById("forgot-email-input").value.trim();

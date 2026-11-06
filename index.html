@@ -149,22 +149,22 @@
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Access Role</label>
         <select id="login-role-select" onchange="togglePasswordField()" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="teacher">1. Teacher Login (Firebase Auth / View-Only)</option>
-          <option value="admin">2. School Admin Login (Pass Key)</option>
-          <option value="superadmin">3. Super Admin Login (Master Control)</option>
+          <option value="teacher">1. Teacher / Staff (School View-Only)</option>
+          <option value="admin">2. School Admin (Generate TT & Create Teacher Pass Key)</option>
+          <option value="superadmin">3. Super Admin (Master Global Control & Access Grant)</option>
         </select>
       </div>
 
-      <!-- Email Field (Used by Teachers & Super Admin) -->
+      <!-- Email / Identifier Field -->
       <div id="email-field-container">
-        <label class="block text-xs font-bold text-slate-700 mb-1" id="email-label">Email ID</label>
-        <input type="email" id="login-email-input" placeholder="teacher@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <label class="block text-xs font-bold text-slate-700 mb-1" id="email-label">Email ID / School Code</label>
+        <input type="text" id="login-email-input" placeholder="teacher@kvs.gov.in or School Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
 
       <!-- Password / Pass Key Field -->
       <div id="password-field-container">
         <label class="block text-xs font-bold text-slate-700 mb-1" id="password-label">Password / Pass Key</label>
-        <input type="password" id="login-password-input" placeholder="Enter password or pass key" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <input type="password" id="login-password-input" placeholder="Enter password or school pass key" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <p id="auth-error-msg" class="text-[11px] text-rose-600 font-bold mt-1 hidden">Incorrect credentials.</p>
       </div>
 
@@ -172,7 +172,7 @@
         Enter Timetable Studio
       </button>
 
-    <!-- Navigation Links for Sign Up, Forgot Password & Admin Registration -->
+      <!-- Navigation Links -->
       <div class="flex flex-col gap-2 pt-2 text-xs font-bold">
         <div class="flex items-center justify-between">
           <button onclick="switchModal('auth', 'signup')" class="text-indigo-600 hover:underline">
@@ -184,14 +184,13 @@
         </div>
         <div class="text-center pt-1 border-t border-slate-100">
           <button onclick="switchModal('auth', 'admin-signup')" class="text-amber-600 hover:underline font-extrabold">
-            Register as School Admin (Generate Pass Key)?
+            Register as School Admin?
           </button>
         </div>
       </div>
     </div>
   </div>
 </div>
-
 <!-- School Admin Registration Modal -->
 <div id="admin-signup-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
   <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 space-y-4">
@@ -200,33 +199,38 @@
         <i class="ph-bold ph-shield-star"></i>
       </div>
       <h3 class="text-base font-extrabold text-slate-900">School Admin Registration</h3>
-      <p class="text-xs text-slate-500 font-medium">Create your custom Pass Key for school teachers</p>
+      <p class="text-xs text-slate-500 font-medium">Generate Timetable & Create Teacher Pass Key</p>
     </div>
 
     <div class="space-y-3 pt-2">
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Admin Full Name</label>
-        <input type="text" id="admin-su-name" placeholder="e.g. Principal / In-Charge Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+        <input type="text" id="admin-su-name" placeholder="Principal / In-Charge Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
       </div>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">School Name</label>
-        <input type="text" id="admin-su-school" placeholder="PM SHRI KV Gill Nagar, Chennai" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+        <input type="text" id="admin-su-school" placeholder="PM SHRI KV School Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
       </div>
 
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Admin Email ID</label>
-        <input type="email" id="admin-su-email" placeholder="admin@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+        <input type="email" id="admin-su-email" placeholder="admin@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Create School Admin Pass Key</label>
-        <input type="password" id="admin-su-passkey" placeholder="Enter secure pass key for your teachers" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
-        <p class="text-[10px] text-slate-400 mt-1">Share this pass key with your school staff so they can unlock editorial access.</p>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Admin Password</label>
+        <input type="password" id="admin-su-passkey" placeholder="Secure admin password" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Pass Key to Share With Your Teachers</label>
+        <input type="text" id="admin-su-teacher-passkey" placeholder="e.g. gillnagar2026" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-amber-50">
+        <p class="text-[10px] text-slate-400 mt-1">Teachers enter this pass key to view only your school's timetable.</p>
       </div>
 
       <button onclick="handleAdminRegistration()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-amber-600 hover:bg-amber-700 text-white transition shadow-sm">
-        Register Admin & Save Pass Key
+        Register Admin & Generate Pass Key
       </button>
 
       <div class="text-center pt-2">
@@ -5378,13 +5382,12 @@ function runPedagogicalAudit() {
         passContainer.classList.add("hidden");
       }
     }
-// --- AUTHENTICATION & USER MANAGEMENT SCRIPT ---
+// --- SECURE MULTI-SCHOOL ROLE & PASS-KEY SCRIPT ---
 
-  // Constants & Pass Keys
   const SUPER_ADMIN_EMAIL = "santosh.swain@kvs.gov.in";
   const SECOND_ADMIN_EMAIL = "swainsantosh850@gmail.com";
   const MASTER_SUPER_ADMIN_PASSWORD = "kvs@admin2026";
-  const DEFAULT_SCHOOL_ADMIN_PASSKEY = "kvs@schooladmin2026";
+  const GLOBAL_DEFAULT_TIMETABLE_PASSKEY = "kvsglobal2026"; // Pass key for pre-existing default TT
 
   // Toggle between modals
   function switchModal(from, to) {
@@ -5406,99 +5409,116 @@ function runPedagogicalAudit() {
     if (errorMsg) errorMsg.classList.add("hidden");
 
     if (role === "admin") {
-      // School Admin uses a custom Pass Key
-      if (emailContainer) emailContainer.classList.add("hidden");
-      if (passwordContainer) passwordContainer.classList.remove("hidden");
-      if (passwordLabel) passwordLabel.textContent = "School Admin Pass Key";
+      if (emailLabel) emailLabel.textContent = "School Name / Admin Email";
+      if (passwordLabel) passwordLabel.textContent = "School Admin Password / Pass Key";
     } else if (role === "superadmin") {
-      // Super Admin uses Master Email & Password
-      if (emailContainer) emailContainer.classList.remove("hidden");
-      if (passwordContainer) passwordContainer.classList.remove("hidden");
       if (emailLabel) emailLabel.textContent = "Super Admin Email ID";
       if (passwordLabel) passwordLabel.textContent = "Super Admin Master Password";
     } else {
-      // Teacher Login uses Firebase Email & Password
-      if (emailContainer) emailContainer.classList.remove("hidden");
-      if (passwordContainer) passwordContainer.classList.remove("hidden");
-      if (emailLabel) emailLabel.textContent = "Registered Email ID";
-      if (passwordLabel) passwordLabel.textContent = "Password";
+      if (emailLabel) emailLabel.textContent = "Teacher Email / School Pass Key";
+      if (passwordLabel) passwordLabel.textContent = "Password / Teacher Pass Key";
     }
   }
 
-  // 3-Tier Login Handler (Teacher, School Admin, Super Admin)
+  // 3-Tier Login Handler with School Isolation & Pass Key Support
   function handleLoginSubmit() {
     const role = document.getElementById("login-role-select").value;
-    const emailInput = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
+    const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
     const passwordInput = document.getElementById("login-password-input").value;
     const errorMsg = document.getElementById("auth-error-msg");
 
-    if (role === "admin") {
-      // Tier 2: School Admin Login via Pass Key (Default or Registered)
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let matchedAdmin = Object.values(adminRegistry).find(admin => admin.passKey === passwordInput);
-
-      if (passwordInput === DEFAULT_SCHOOL_ADMIN_PASSKEY || matchedAdmin) {
+    if (role === "superadmin") {
+      // 1. SUPER ADMIN ACCESS: Exclusive global visibility over all school profiles & default TT
+      if (passwordInput === MASTER_SUPER_ADMIN_PASSWORD || identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL) {
         state.isViewOnly = false;
-        sessionStorage.setItem("kvs_user_role", "admin");
+        sessionStorage.setItem("kvs_user_role", "superadmin");
         document.getElementById("auth-modal").style.display = "none";
         applyViewOnlyLocks();
-        const schoolTitle = matchedAdmin ? matchedAdmin.school : "School Admin";
-        showNotification(`Welcome ${schoolTitle}! Timetable editing enabled.`, "success");
+        unlockAllSchoolsForSuperAdmin();
+        showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
       } else {
         if (errorMsg) {
-          errorMsg.textContent = "Incorrect School Admin Pass Key.";
+          errorMsg.textContent = "Incorrect Super Admin master credentials.";
           errorMsg.classList.remove("hidden");
         }
       }
     } 
-    else if (role === "superadmin") {
-      // Tier 3: Super Admin Login (Santosh)
-      if (passwordInput === MASTER_SUPER_ADMIN_PASSWORD || emailInput === SUPER_ADMIN_EMAIL || emailInput === SECOND_ADMIN_EMAIL) {
+    else if (role === "admin") {
+      // 2. SCHOOL ADMIN ACCESS: Manages isolated school data & creates Teacher Pass Keys
+      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+      let matchedAdmin = Object.values(adminRegistry).find(admin => admin.email === identifier || admin.passKey === passwordInput);
+
+      if (matchedAdmin || passwordInput === "kvs@schooladmin2026") {
         state.isViewOnly = false;
         sessionStorage.setItem("kvs_user_role", "admin");
         document.getElementById("auth-modal").style.display = "none";
+        
+        // Strictly isolate view to this admin's specific school profile
+        if (matchedAdmin) {
+          isolateSchoolWorkspace(matchedAdmin.school);
+        }
+        
         applyViewOnlyLocks();
-        showNotification("Welcome Super Admin! Full master editorial control enabled.", "success");
+        showNotification("Welcome School Admin! Timetable generation & Teacher Pass Key isolation enabled.", "success");
       } else {
         if (errorMsg) {
-          errorMsg.textContent = "Incorrect Super Admin credentials.";
+          errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
           errorMsg.classList.remove("hidden");
         }
       }
     } 
     else {
-      // Tier 1: Teacher Login via Firebase Authentication
-      firebase.auth().signInWithEmailAndPassword(emailInput, passwordInput)
-        .then((userCredential) => {
-          state.isViewOnly = true;
-          sessionStorage.setItem("kvs_user_role", "teacher");
-          document.getElementById("auth-modal").style.display = "none";
-          applyViewOnlyLocks();
-          showNotification(`Welcome back, ${userCredential.user.email} (View-Only Mode)`, "info");
-        })
-        .catch((error) => {
-          if (errorMsg) {
-            errorMsg.textContent = error.message;
-            errorMsg.classList.remove("hidden");
-          }
-        });
+      // 3. TEACHER ACCESS: Sees only their school's TT via school pass key or Firebase login
+      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+      let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput);
+
+      if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
+        // Accesses the original pre-created default TT (Gill Nagar)
+        state.isViewOnly = true;
+        sessionStorage.setItem("kvs_user_role", "teacher");
+        document.getElementById("auth-modal").style.display = "none";
+        applyViewOnlyLocks();
+        showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
+      } 
+      else if (matchedSchoolByPassKey) {
+        // Accesses only the specific school created by that school admin
+        state.isViewOnly = true;
+        sessionStorage.setItem("kvs_user_role", "teacher");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace(matchedSchoolByPassKey.school);
+        applyViewOnlyLocks();
+        showNotification(`Welcome Teacher! Viewing timetable for ${matchedSchoolByPassKey.school}.`, "success");
+      } 
+      else {
+        // Fallback to standard Firebase Teacher Login
+        firebase.auth().signInWithEmailAndPassword(identifier, passwordInput)
+          .then((userCredential) => {
+            state.isViewOnly = true;
+            sessionStorage.setItem("kvs_user_role", "teacher");
+            document.getElementById("auth-modal").style.display = "none";
+            applyViewOnlyLocks();
+            showNotification(`Welcome back, ${userCredential.user.email} (View-Only Mode)`, "info");
+          })
+          .catch((error) => {
+            if (errorMsg) {
+              errorMsg.textContent = "Incorrect credentials or invalid Teacher Pass Key.";
+              errorMsg.classList.remove("hidden");
+            }
+          });
+      }
     }
   }
 
-  // School Admin Registration & Pass Key Generation Handler
+  // School Admin Registration & Teacher Pass Key Generation Handler
   function handleAdminRegistration() {
     const name = document.getElementById("admin-su-name").value.trim();
     const school = document.getElementById("admin-su-school").value.trim().toUpperCase();
     const email = document.getElementById("admin-su-email").value.trim().toLowerCase();
-    const passKey = document.getElementById("admin-su-passkey").value;
+    const adminPass = document.getElementById("admin-su-passkey").value;
+    const teacherPassKey = document.getElementById("admin-su-teacher-passkey")?.value || "pass_" + Math.floor(1000 + Math.random() * 9000);
 
-    if (!name || !school || !email || !passKey) {
-      showNotification("Please fill in all required admin registration fields.", "warning");
-      return;
-    }
-
-    if (passKey.length < 6) {
-      showNotification("Pass Key must be at least 6 characters long.", "warning");
+    if (!name || !school || !email || !adminPass) {
+      showNotification("Please fill in all required fields.", "warning");
       return;
     }
 
@@ -5506,19 +5526,50 @@ function runPedagogicalAudit() {
     adminRegistry[email] = {
       name,
       school,
-      passKey,
+      passKey: adminPass,
+      teacherPassKey: teacherPassKey,
       createdAt: new Date().toISOString()
     };
     localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
 
     if (typeof rtdb !== 'undefined') {
-      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}`).set({
-        name, school, passKey
+      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}` ).set({
+        name, school, passKey: adminPass, teacherPassKey
       });
     }
 
-    showNotification(`School Admin registered successfully for ${school}! You can now log in using your Pass Key.`, "success");
+    showNotification(`Registered successfully for ${school}! Teacher Pass Key generated: ${teacherPassKey}`, "success");
     switchModal("admin-signup", "auth");
+  }
+
+  // Helper to isolate workspace to a single school
+  function isolateSchoolWorkspace(schoolName) {
+    const targetSchool = schoolRepository.schools.find(s => s.name.toUpperCase() === schoolName.toUpperCase());
+    if (targetSchool) {
+      schoolRepository.activeSchoolId = targetSchool.id;
+      syncActiveSchoolFromRepository();
+    } else {
+      const newId = "sch_" + Date.now();
+      schoolRepository.schools.push({
+        id: newId,
+        name: schoolName,
+        session: "2026-27",
+        sectionsCount: "2",
+        teachers: [],
+        subjectLimits: JSON.parse(JSON.stringify(schoolRepository.schools[0]?.subjectLimits || {})),
+        allotments: [],
+        schedules: createEmptyClassSchedules(),
+        rules: []
+      });
+      schoolRepository.activeSchoolId = newId;
+      syncActiveSchoolFromRepository();
+    }
+  }
+
+  // Helper to allow Super Admin master visibility over all schools
+  function unlockAllSchoolsForSuperAdmin() {
+    renderSchoolSelectors();
+    showNotification("Super Admin Master View Unlocked: All school schedules visible.", "success");
   }
 
   // Teacher Sign Up with Email OTP Dispatch
@@ -5624,7 +5675,7 @@ function runPedagogicalAudit() {
   function checkUserSession() {
     const savedRole = sessionStorage.getItem("kvs_user_role");
     const modal = document.getElementById("auth-modal");
-    if (savedRole === "admin") {
+    if (savedRole === "admin" || savedRole === "superadmin") {
       state.isViewOnly = false;
       if (modal) modal.style.display = "none";
     } else if (savedRole === "teacher") {

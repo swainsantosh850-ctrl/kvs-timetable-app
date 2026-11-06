@@ -135,7 +135,6 @@
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
- <!-- Role Access / Authentication Modal -->
 <div id="auth-modal" style="display: flex;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
   <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-sm shadow-2xl p-6 space-y-4">
     <div class="text-center space-y-1">
@@ -143,28 +142,29 @@
         <i class="ph-bold ph-lock-key"></i>
       </div>
       <h3 class="text-base font-extrabold text-slate-900">KVS Timetable Portal</h3>
-      <p class="text-xs text-slate-500 font-medium">Select your portal role to continue</p>
+      <p class="text-xs text-slate-500 font-medium">Select your portal access level</p>
     </div>
 
     <div class="space-y-3 pt-2">
       <div>
         <label class="block text-xs font-bold text-slate-700 mb-1">Access Role</label>
         <select id="login-role-select" onchange="togglePasswordField()" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="teacher">Teacher / Staff (View-Only)</option>
-          <option value="admin">Super Admin / Timetable In-Charge (Editor)</option>
+          <option value="teacher">1. Teacher Login (Firebase Auth / View-Only)</option>
+          <option value="admin">2. School Admin Login (Pass Key)</option>
+          <option value="superadmin">3. Super Admin Login (Master Control)</option>
         </select>
       </div>
 
-      <!-- Email Field -->
+      <!-- Email Field (Used by Teachers & Super Admin) -->
       <div id="email-field-container">
-        <label class="block text-xs font-bold text-slate-700 mb-1">Email ID</label>
+        <label class="block text-xs font-bold text-slate-700 mb-1" id="email-label">Email ID</label>
         <input type="email" id="login-email-input" placeholder="teacher@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
 
-      <!-- Password Field -->
+      <!-- Password / Pass Key Field -->
       <div id="password-field-container">
-        <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
-        <input type="password" id="login-password-input" placeholder="Enter password" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <label class="block text-xs font-bold text-slate-700 mb-1" id="password-label">Password / Pass Key</label>
+        <input type="password" id="login-password-input" placeholder="Enter password or pass key" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <p id="auth-error-msg" class="text-[11px] text-rose-600 font-bold mt-1 hidden">Incorrect credentials.</p>
       </div>
 
@@ -172,13 +172,66 @@
         Enter Timetable Studio
       </button>
 
-      <!-- Navigation Links for Sign Up & Forgot Password -->
-      <div class="flex items-center justify-between pt-2 text-xs font-bold">
-        <button onclick="switchModal('auth', 'signup')" class="text-indigo-600 hover:underline">
-          New Teacher? Sign Up
-        </button>
-        <button onclick="switchModal('auth', 'forgot-password')" class="text-slate-500 hover:text-slate-800">
-          Forgot Password?
+    <!-- Navigation Links for Sign Up, Forgot Password & Admin Registration -->
+      <div class="flex flex-col gap-2 pt-2 text-xs font-bold">
+        <div class="flex items-center justify-between">
+          <button onclick="switchModal('auth', 'signup')" class="text-indigo-600 hover:underline">
+            New Teacher? Sign Up
+          </button>
+          <button onclick="switchModal('auth', 'forgot-password')" class="text-slate-500 hover:text-slate-800">
+            Forgot Password?
+          </button>
+        </div>
+        <div class="text-center pt-1 border-t border-slate-100">
+          <button onclick="switchModal('auth', 'admin-signup')" class="text-amber-600 hover:underline font-extrabold">
+            Register as School Admin (Generate Pass Key)?
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- School Admin Registration Modal -->
+<div id="admin-signup-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 space-y-4">
+    <div class="text-center space-y-1">
+      <div class="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center mx-auto text-2xl shadow-sm">
+        <i class="ph-bold ph-shield-star"></i>
+      </div>
+      <h3 class="text-base font-extrabold text-slate-900">School Admin Registration</h3>
+      <p class="text-xs text-slate-500 font-medium">Create your custom Pass Key for school teachers</p>
+    </div>
+
+    <div class="space-y-3 pt-2">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Admin Full Name</label>
+        <input type="text" id="admin-su-name" placeholder="e.g. Principal / In-Charge Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">School Name</label>
+        <input type="text" id="admin-su-school" placeholder="PM SHRI KV Gill Nagar, Chennai" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Admin Email ID</label>
+        <input type="email" id="admin-su-email" placeholder="admin@kvs.gov.in" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Create School Admin Pass Key</label>
+        <input type="password" id="admin-su-passkey" placeholder="Enter secure pass key for your teachers" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+        <p class="text-[10px] text-slate-400 mt-1">Share this pass key with your school staff so they can unlock editorial access.</p>
+      </div>
+
+      <button onclick="handleAdminRegistration()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-amber-600 hover:bg-amber-700 text-white transition shadow-sm">
+        Register Admin & Save Pass Key
+      </button>
+
+      <div class="text-center pt-2">
+        <button onclick="switchModal('admin-signup', 'auth')" class="text-xs font-bold text-indigo-600 hover:underline">
+          Back to Portal Login
         </button>
       </div>
     </div>
@@ -5327,36 +5380,94 @@ function runPedagogicalAudit() {
     }
 // --- AUTHENTICATION & USER MANAGEMENT SCRIPT ---
 
-  // Super Admin Master Email Constant
-  const SUPER_ADMIN_EMAIL = "santosh.swain@kvs.gov.in"; 
+  // Constants & Pass Keys
+  const SUPER_ADMIN_EMAIL = "santosh.swain@kvs.gov.in";
+  const SECOND_ADMIN_EMAIL = "swainsantosh850@gmail.com";
+  const MASTER_SUPER_ADMIN_PASSWORD = "kvs@admin2026";
+  const DEFAULT_SCHOOL_ADMIN_PASSKEY = "kvs@schooladmin2026";
 
   // Toggle between modals
   function switchModal(from, to) {
-    document.getElementById(`${from}-modal`).style.display = "none";
-    document.getElementById(`${to}-modal`).style.display = "flex";
+    const fromModal = document.getElementById(`${from}-modal`);
+    const toModal = document.getElementById(`${to}-modal`);
+    if (fromModal) fromModal.style.display = "none";
+    if (toModal) toModal.style.display = "flex";
   }
 
-  // Enhanced Login Handler supporting Super Admin & Registered Teachers
+  // Dynamic UI update when switching roles in the login dropdown
+  function togglePasswordField() {
+    const role = document.getElementById("login-role-select").value;
+    const emailContainer = document.getElementById("email-field-container");
+    const passwordContainer = document.getElementById("password-field-container");
+    const emailLabel = document.getElementById("email-label");
+    const passwordLabel = document.getElementById("password-label");
+    const errorMsg = document.getElementById("auth-error-msg");
+    
+    if (errorMsg) errorMsg.classList.add("hidden");
+
+    if (role === "admin") {
+      // School Admin uses a custom Pass Key
+      if (emailContainer) emailContainer.classList.add("hidden");
+      if (passwordContainer) passwordContainer.classList.remove("hidden");
+      if (passwordLabel) passwordLabel.textContent = "School Admin Pass Key";
+    } else if (role === "superadmin") {
+      // Super Admin uses Master Email & Password
+      if (emailContainer) emailContainer.classList.remove("hidden");
+      if (passwordContainer) passwordContainer.classList.remove("hidden");
+      if (emailLabel) emailLabel.textContent = "Super Admin Email ID";
+      if (passwordLabel) passwordLabel.textContent = "Super Admin Master Password";
+    } else {
+      // Teacher Login uses Firebase Email & Password
+      if (emailContainer) emailContainer.classList.remove("hidden");
+      if (passwordContainer) passwordContainer.classList.remove("hidden");
+      if (emailLabel) emailLabel.textContent = "Registered Email ID";
+      if (passwordLabel) passwordLabel.textContent = "Password";
+    }
+  }
+
+  // 3-Tier Login Handler (Teacher, School Admin, Super Admin)
   function handleLoginSubmit() {
     const role = document.getElementById("login-role-select").value;
-    const emailInput = document.getElementById("login-email-input")?.value || "";
+    const emailInput = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
     const passwordInput = document.getElementById("login-password-input").value;
     const errorMsg = document.getElementById("auth-error-msg");
 
     if (role === "admin") {
-      if (passwordInput === ADMIN_PASSWORD || emailInput === SUPER_ADMIN_EMAIL) {
+      // Tier 2: School Admin Login via Pass Key (Default or Registered)
+      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+      let matchedAdmin = Object.values(adminRegistry).find(admin => admin.passKey === passwordInput);
+
+      if (passwordInput === DEFAULT_SCHOOL_ADMIN_PASSKEY || matchedAdmin) {
         state.isViewOnly = false;
         sessionStorage.setItem("kvs_user_role", "admin");
         document.getElementById("auth-modal").style.display = "none";
         applyViewOnlyLocks();
-        showNotification("Welcome Super Admin! Full editorial control enabled.", "success");
+        const schoolTitle = matchedAdmin ? matchedAdmin.school : "School Admin";
+        showNotification(`Welcome ${schoolTitle}! Timetable editing enabled.`, "success");
+      } else {
+        if (errorMsg) {
+          errorMsg.textContent = "Incorrect School Admin Pass Key.";
+          errorMsg.classList.remove("hidden");
+        }
+      }
+    } 
+    else if (role === "superadmin") {
+      // Tier 3: Super Admin Login (Santosh)
+      if (passwordInput === MASTER_SUPER_ADMIN_PASSWORD || emailInput === SUPER_ADMIN_EMAIL || emailInput === SECOND_ADMIN_EMAIL) {
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "admin");
+        document.getElementById("auth-modal").style.display = "none";
+        applyViewOnlyLocks();
+        showNotification("Welcome Super Admin! Full master editorial control enabled.", "success");
       } else {
         if (errorMsg) {
           errorMsg.textContent = "Incorrect Super Admin credentials.";
           errorMsg.classList.remove("hidden");
         }
       }
-    } else {
+    } 
+    else {
+      // Tier 1: Teacher Login via Firebase Authentication
       firebase.auth().signInWithEmailAndPassword(emailInput, passwordInput)
         .then((userCredential) => {
           state.isViewOnly = true;
@@ -5374,85 +5485,124 @@ function runPedagogicalAudit() {
     }
   }
 
-  // Teacher Sign Up with Email/SMS OTP Dispatch
+  // School Admin Registration & Pass Key Generation Handler
+  function handleAdminRegistration() {
+    const name = document.getElementById("admin-su-name").value.trim();
+    const school = document.getElementById("admin-su-school").value.trim().toUpperCase();
+    const email = document.getElementById("admin-su-email").value.trim().toLowerCase();
+    const passKey = document.getElementById("admin-su-passkey").value;
+
+    if (!name || !school || !email || !passKey) {
+      showNotification("Please fill in all required admin registration fields.", "warning");
+      return;
+    }
+
+    if (passKey.length < 6) {
+      showNotification("Pass Key must be at least 6 characters long.", "warning");
+      return;
+    }
+
+    let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+    adminRegistry[email] = {
+      name,
+      school,
+      passKey,
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
+
+    if (typeof rtdb !== 'undefined') {
+      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}`).set({
+        name, school, passKey
+      });
+    }
+
+    showNotification(`School Admin registered successfully for ${school}! You can now log in using your Pass Key.`, "success");
+    switchModal("admin-signup", "auth");
+  }
+
+  // Teacher Sign Up with Email OTP Dispatch
   let pendingSignUpData = null;
 
-  // 1. Handle Sign Up: Send real OTP via EmailJS and switch to OTP Modal
   function handleTeacherSignUp() {
     const name = document.getElementById("su-name").value.trim();
-  const post = document.getElementById("su-post").value;
-  const school = document.getElementById("su-school").value.trim();
-  const region = document.getElementById("su-region").value.trim();
-  const phone = document.getElementById("su-phone").value.trim();
-  const email = document.getElementById("su-email").value.trim();
-  const password = document.getElementById("su-password").value;
+    const post = document.getElementById("su-post").value;
+    const school = document.getElementById("su-school").value.trim();
+    const region = document.getElementById("su-region").value.trim();
+    const phone = document.getElementById("su-phone").value.trim();
+    const email = document.getElementById("su-email").value.trim();
+    const password = document.getElementById("su-password").value;
 
-  if (!name || !school || !phone || !email || !password) {
-    showNotification("Please fill in all required sign-up fields.", "warning");
-    return;
+    if (!name || !school || !phone || !email || !password) {
+      showNotification("Please fill in all required sign-up fields.", "warning");
+      return;
+    }
+
+    if (password.length < 6) {
+      showNotification("Password must be at least 6 characters long.", "warning");
+      return;
+    }
+
+    pendingSignUpData = { name, post, school, region, phone, email, password };
+    
+    const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    sessionStorage.setItem("kvs_verification_otp", generatedOTP);
+
+    const templateParams = {
+      email: email,
+      passcode: generatedOTP,
+      time: "15 minutes"
+    };
+
+    emailjs.send("service_g95dc48", "template_jobk0ho", templateParams)
+      .then(function(response) {
+        console.log("Email sent successfully!", response.status, response.text);
+        showNotification("OTP sent successfully to your Gmail inbox!", "success");
+        switchModal("signup", "otp");
+      }, function(error) {
+        console.error("Email failed...", error);
+        showNotification("Failed to send email. Check your configuration.", "warning");
+      });
   }
 
-  pendingSignUpData = { name, post, school, region, phone, email, password };
-  
-  // Generate secure 6-digit OTP and store as a string for precise comparison
-  const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-  sessionStorage.setItem("kvs_verification_otp", generatedOTP);
+  // Verify OTP and create Firebase Auth Account
+  function verifyTeacherOTP() {
+    const enteredOTP = document.getElementById("otp-input").value.trim();
+    const actualOTP = sessionStorage.getItem("kvs_verification_otp");
 
-  const templateParams = {
-    email: email,           // Maps to {{email}} in your EmailJS To field
-    passcode: generatedOTP, // Maps to {{passcode}} in your email template content
-    time: "15 minutes"      // Maps to {{time}} in your email template content
-  };
+    if (enteredOTP !== actualOTP) {
+      showNotification("Invalid OTP. Please check your Email inbox.", "warning");
+      return;
+    }
 
-  // Dispatch real email via EmailJS
-emailjs.send("service_g95dc48", "template_jobk0ho", templateParams)
-    .then(function(response) {
-      console.log("Email sent successfully!", response.status, response.text);
-      showNotification("OTP sent successfully to your Gmail inbox!", "success");
-      switchModal("signup", "otp");
-    }, function(error) {
-      console.error("Email failed...", error);
-      showNotification("Failed to send email. Check your configuration.", "warning");
-    });
-}
+    const { email, password, name, post, school } = pendingSignUpData;
 
-// 2. Verify OTP and create Firebase Auth Account
-function verifyTeacherOTP() {
-  const enteredOTP = document.getElementById("otp-input").value.trim();
-  const actualOTP = sessionStorage.getItem("kvs_verification_otp");
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+      .then((userCredential) => {
+        const uid = userCredential.user.uid;
+        rtdb.ref(`kvs_teachers_profiles/${uid}`).set({
+          name, post, school, email, createdAt: new Date().toISOString()
+        });
 
-  if (enteredOTP !== actualOTP) {
-    showNotification("Invalid OTP. Please check your Email inbox.", "warning");
-    return;
+        state.teachers.push({
+          id: "t_" + uid.substring(0, 6),
+          name: `${post}. ${name}`,
+          shortName: name.split(" ").pop().substring(0, 3).toUpperCase(),
+          isClassTeacher: false,
+          secondaryBusySlots: {}
+        });
+        commitWorkingStateToRepository();
+        renderSlide1Teachers();
+
+        document.getElementById("otp-modal").style.display = "none";
+        showNotification("Account created and verified successfully! You can now log in.", "success");
+        openAuthModal();
+      })
+      .catch((error) => {
+        showNotification("Sign-up error: " + error.message, "warning");
+      });
   }
 
-  const { email, password, name, post, school } = pendingSignUpData;
-
-  firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      const uid = userCredential.user.uid;
-      rtdb.ref(`kvs_teachers_profiles/${uid}`).set({
-        name, post, school, email, createdAt: new Date().toISOString()
-      });
-
-      state.teachers.push({
-        id: "t_" + uid.substring(0, 6),
-        name: `${post}. ${name}`,
-        shortName: name.split(" ").pop().substring(0, 3).toUpperCase(),
-        isClassTeacher: false,
-        secondaryBusySlots: {}
-      });
-      commitWorkingStateToRepository();
-      renderSlide1Teachers();
-
-      document.getElementById("otp-modal").style.display = "none";
-      showNotification("Account created and verified successfully! You can now log in.", "success");
-      openAuthModal();
-    })
-    .catch((error) => {
-      showNotification("Sign-up error: " + error.message, "warning");
-    });
-}
   // Forgot Password Feature
   function handlePasswordResetRequest() {
     const email = document.getElementById("forgot-email-input").value.trim();
@@ -5470,51 +5620,25 @@ function verifyTeacherOTP() {
         showNotification("Error: " + error.message, "warning");
       });
   }
-    function handleLoginSubmit() {
-      const role = document.getElementById("login-role-select").value;
-      const passInput = document.getElementById("login-password-input").value;
-      const errorMsg = document.getElementById("auth-error-msg");
 
-      if (role === "admin") {
-        if (passInput === ADMIN_PASSWORD) {
-          state.isViewOnly = false;
-          sessionStorage.setItem("kvs_user_role", "admin");
-          const modal = document.getElementById("auth-modal");
-          if (modal) modal.style.display = "none";
-          applyViewOnlyLocks();
-          showNotification("Welcome Admin! Editing and publishing enabled.", "success");
-        } else {
-          if (errorMsg) errorMsg.classList.remove("hidden");
-        }
-      } else {
-        state.isViewOnly = true;
-        sessionStorage.setItem("kvs_user_role", "teacher");
-        const modal = document.getElementById("auth-modal");
-        if (modal) modal.style.display = "none";
-        applyViewOnlyLocks();
-        showNotification("Viewing in Staff mode (View-Only).", "info");
+  function checkUserSession() {
+    const savedRole = sessionStorage.getItem("kvs_user_role");
+    const modal = document.getElementById("auth-modal");
+    if (savedRole === "admin") {
+      state.isViewOnly = false;
+      if (modal) modal.style.display = "none";
+    } else if (savedRole === "teacher") {
+      state.isViewOnly = true;
+      if (modal) modal.style.display = "none";
+    } else {
+      if (modal) {
+        modal.style.display = "flex";
+        const roleSelect = document.getElementById("login-role-select");
+        if (roleSelect) roleSelect.value = "admin";
+        togglePasswordField();
       }
     }
-
-    function checkUserSession() {
-      const savedRole = sessionStorage.getItem("kvs_user_role");
-      const modal = document.getElementById("auth-modal");
-      if (savedRole === "admin") {
-        state.isViewOnly = false;
-        if (modal) modal.style.display = "none";
-      } else if (savedRole === "teacher") {
-        state.isViewOnly = true;
-        if (modal) modal.style.display = "none";
-      } else {
-        if (modal) {
-          modal.style.display = "flex";
-          const roleSelect = document.getElementById("login-role-select");
-          if (roleSelect) roleSelect.value = "admin";
-          togglePasswordField();
-        }
-      }
-    }
-
+  }
     // --- FIREBASE REALTIME CLOUD SYNC ---
     const firebaseConfig = {
       apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",

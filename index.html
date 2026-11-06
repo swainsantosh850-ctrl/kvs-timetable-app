@@ -5362,13 +5362,12 @@ function runPedagogicalAudit() {
     }
   }
 
-  // Teacher Sign Up with Simulated Email/SMS OTP Dispatch
-   pendingSignUpData = null;
+  // Teacher Sign Up with Email/SMS OTP Dispatch
+  let pendingSignUpData = null;
 
-
-// 1. Handle Sign Up: Send real OTP via EmailJS and switch to OTP Modal
-function handleTeacherSignUp() {
-  const name = document.getElementById("su-name").value.trim();
+  // 1. Handle Sign Up: Send real OTP via EmailJS and switch to OTP Modal
+  function handleTeacherSignUp() {
+    const name = document.getElementById("su-name").value.trim();
   const post = document.getElementById("su-post").value;
   const school = document.getElementById("su-school").value.trim();
   const region = document.getElementById("su-region").value.trim();

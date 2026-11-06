@@ -5421,6 +5421,7 @@ function runPedagogicalAudit() {
   }
 
   // 3-Tier Login Handler with School Isolation & Pass Key Support
+// 3-Tier Login Handler with School Isolation & Pass Key Support
   function handleLoginSubmit() {
     const role = document.getElementById("login-role-select").value;
     const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
@@ -5448,19 +5449,29 @@ function runPedagogicalAudit() {
       let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
       let matchedAdmin = Object.values(adminRegistry).find(admin => admin.email === identifier || admin.passKey === passwordInput);
 
-      if (matchedAdmin || passwordInput === "kvs@schooladmin2026") {
+      if (matchedAdmin) {
         state.isViewOnly = false;
         sessionStorage.setItem("kvs_user_role", "admin");
         document.getElementById("auth-modal").style.display = "none";
         
         // Strictly isolate view to this admin's specific school profile
-        if (matchedAdmin) {
-          isolateSchoolWorkspace(matchedAdmin.school);
-        }
+        isolateSchoolWorkspace(matchedAdmin.school);
         
         applyViewOnlyLocks();
-        showNotification("Welcome School Admin! Timetable generation & Teacher Pass Key isolation enabled.", "success");
-      } else {
+        showNotification(`Welcome ${matchedAdmin.name}! Managing timetable for ${matchedAdmin.school}.`, "success");
+      } 
+      else if (passwordInput === "kvs@schooladmin2026") {
+        // Fallback generic admin pass key - isolates to a clean generic workspace
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "admin");
+        document.getElementById("auth-modal").style.display = "none";
+        
+        isolateSchoolWorkspace("MY SCHOOL ADMIN WORKSPACE");
+        
+        applyViewOnlyLocks();
+        showNotification("Welcome School Admin! Independent workspace enabled.", "success");
+      } 
+      else {
         if (errorMsg) {
           errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
           errorMsg.classList.remove("hidden");
@@ -5473,7 +5484,7 @@ function runPedagogicalAudit() {
       let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput);
 
       if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
-        // Accesses the original pre-created default TT (Gill Nagar)
+        // Accesses the original pre-created default TT (PM SHRI KV Gill Nagar, Chennai)
         state.isViewOnly = true;
         sessionStorage.setItem("kvs_user_role", "teacher");
         document.getElementById("auth-modal").style.display = "none";
@@ -5508,7 +5519,6 @@ function runPedagogicalAudit() {
       }
     }
   }
-
   // School Admin Registration & Teacher Pass Key Generation Handler
   function handleAdminRegistration() {
     const name = document.getElementById("admin-su-name").value.trim();
@@ -5542,25 +5552,38 @@ function runPedagogicalAudit() {
     switchModal("admin-signup", "auth");
   }
 
-  // Helper to isolate workspace to a single school
+// Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
   function isolateSchoolWorkspace(schoolName) {
-    const targetSchool = schoolRepository.schools.find(s => s.name.toUpperCase() === schoolName.toUpperCase());
+    const upperName = schoolName.toUpperCase();
+    let targetSchool = schoolRepository.schools.find(s => s.name.toUpperCase() === upperName);
+    
     if (targetSchool) {
       schoolRepository.activeSchoolId = targetSchool.id;
       syncActiveSchoolFromRepository();
     } else {
+      // Create a brand new, clean school profile with empty schedules for this admin
       const newId = "sch_" + Date.now();
-      schoolRepository.schools.push({
+      const newSchool = {
         id: newId,
-        name: schoolName,
+        name: upperName,
         session: "2026-27",
         sectionsCount: "2",
-        teachers: [],
-        subjectLimits: JSON.parse(JSON.stringify(schoolRepository.schools[0]?.subjectLimits || {})),
+        teachers: [
+          { id: "t_init_1", name: "PRT 1", shortName: "P1", isClassTeacher: true, classNum: "1", section: "A", secondaryBusySlots: {} }
+        ],
+        subjectLimits: {
+          "Class 1": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 2": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 3": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 4": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 5": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 }
+        },
         allotments: [],
         schedules: createEmptyClassSchedules(),
         rules: []
-      });
+      };
+      
+      schoolRepository.schools.push(newSchool);
       schoolRepository.activeSchoolId = newId;
       syncActiveSchoolFromRepository();
     }
@@ -5570,6 +5593,44 @@ function runPedagogicalAudit() {
   function unlockAllSchoolsForSuperAdmin() {
     renderSchoolSelectors();
     showNotification("Super Admin Master View Unlocked: All school schedules visible.", "success");
+  }
+
+  // School Admin Registration: Automatically initializes their isolated school profile
+  function handleAdminRegistration() {
+    const name = document.getElementById("admin-su-name").value.trim();
+    const school = document.getElementById("admin-su-school").value.trim().toUpperCase();
+    const email = document.getElementById("admin-su-email").value.trim().toLowerCase();
+    const adminPass = document.getElementById("admin-su-passkey").value;
+    const teacherPassKey = document.getElementById("admin-su-teacher-passkey")?.value || "pass_" + Math.floor(1000 + Math.random() * 9000);
+
+    if (!name || !school || !email || !adminPass) {
+      showNotification("Please fill in all required fields.", "warning");
+      return;
+    }
+
+    // Save admin credentials and pass key to registry
+    let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+    adminRegistry[email] = {
+      name,
+      school,
+      passKey: adminPass,
+      teacherPassKey: teacherPassKey,
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
+
+    // Initialize clean school workspace in repository immediately
+    isolateSchoolWorkspace(school);
+    commitWorkingStateToRepository();
+
+    if (typeof rtdb !== 'undefined') {
+      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}`).set({
+        name, school, passKey: adminPass, teacherPassKey
+      });
+    }
+
+    showNotification(`Admin registered for ${school}! Clean timetable workspace created. Teacher Pass Key: ${teacherPassKey}`, "success");
+    switchModal("admin-signup", "auth");
   }
 
   // Teacher Sign Up with Email OTP Dispatch

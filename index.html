@@ -17,17 +17,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   
-  <!-- PWA Service Worker Registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then((reg) => console.log('PWA ServiceWorker registered:', reg.scope))
-          .catch((err) => console.warn('ServiceWorker error:', err));
-      });
-    }
-  </script>
-
   <!-- EmailJS SDK & Initialization -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script type="text/javascript">
@@ -5376,7 +5365,6 @@ function runPedagogicalAudit() {
   // Teacher Sign Up with Simulated Email/SMS OTP Dispatch
   let pendingSignUpData = null;
 
-  let pendingSignUpData = null;
 
 // 1. Handle Sign Up: Send real OTP via EmailJS and switch to OTP Modal
 function handleTeacherSignUp() {

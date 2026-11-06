@@ -182,11 +182,12 @@
             Forgot Password?
           </button>
         </div>
-        <div class="text-center pt-1 border-t border-slate-100">
-          <button onclick="switchModal('auth', 'admin-signup')" class="text-amber-600 hover:underline font-extrabold">
-            Register as School Admin?
-          </button>
-        </div>
+        <!-- Inside your auth modal navigation links -->
+<div class="text-center pt-1 border-t border-slate-100">
+  <button onclick="openAdminRegistrationModal()" class="text-amber-600 hover:underline font-extrabold">
+    Register as School Admin?
+  </button>
+</div>
       </div>
     </div>
   </div>
@@ -5380,12 +5381,22 @@ function runPedagogicalAudit() {
   const MASTER_SUPER_ADMIN_PASSWORD = "kvs@admin2026";
   const GLOBAL_DEFAULT_TIMETABLE_PASSKEY = "kvsglobal2026"; // Pass key for pre-existing default TT
 
-  // Toggle between modals
+ // Toggle between modals cleanly
   function switchModal(from, to) {
     const fromModal = document.getElementById(`${from}-modal`);
     const toModal = document.getElementById(`${to}-modal`);
     if (fromModal) fromModal.style.display = "none";
     if (toModal) toModal.style.display = "flex";
+  }
+
+  // PASTE THIS FUNCTION RIGHT HERE:
+  function openAdminRegistrationModal() {
+    // Hide auth modal and show admin registration modal explicitly
+    const authModal = document.getElementById("auth-modal");
+    const adminRegModal = document.getElementById("admin-signup-modal");
+    
+    if (authModal) authModal.style.display = "none";
+    if (adminRegModal) adminRegModal.style.display = "flex";
   }
 
   // Dynamic UI update when switching roles in the login dropdown
@@ -5746,16 +5757,21 @@ function runPedagogicalAudit() {
 
   function checkUserSession() {
     const savedRole = sessionStorage.getItem("kvs_user_role");
-    const modal = document.getElementById("auth-modal");
+    const authModal = document.getElementById("auth-modal");
+    const adminRegModal = document.getElementById("admin-signup-modal");
+    
+    // If registration modal is open, don't interfere
+    if (adminRegModal && adminRegModal.style.display === "flex") return;
+
     if (savedRole === "admin" || savedRole === "superadmin") {
       state.isViewOnly = false;
-      if (modal) modal.style.display = "none";
+      if (authModal) authModal.style.display = "none";
     } else if (savedRole === "teacher") {
       state.isViewOnly = true;
-      if (modal) modal.style.display = "none";
+      if (authModal) authModal.style.display = "none";
     } else {
-      if (modal) {
-        modal.style.display = "flex";
+      if (authModal) {
+        authModal.style.display = "flex";
         const roleSelect = document.getElementById("login-role-select");
         if (roleSelect) roleSelect.value = "admin";
         togglePasswordField();

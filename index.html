@@ -184,7 +184,7 @@
         </div>
         <!-- Inside your auth modal navigation links -->
 <div class="text-center pt-1 border-t border-slate-100">
-  <button onclick="openAdminRegistrationModal()" class="text-amber-600 hover:underline font-extrabold">
+  <button type="button" onclick="openAdminRegistrationModal()" class="text-amber-600 hover:underline font-extrabold">
     Register as School Admin?
   </button>
 </div>
@@ -5389,16 +5389,16 @@ function runPedagogicalAudit() {
     if (toModal) toModal.style.display = "flex";
   }
 
-  // PASTE THIS FUNCTION RIGHT HERE:
-  function openAdminRegistrationModal() {
-    // Hide auth modal and show admin registration modal explicitly
+ function openAdminRegistrationModal() {
     const authModal = document.getElementById("auth-modal");
     const adminRegModal = document.getElementById("admin-signup-modal");
     
     if (authModal) authModal.style.display = "none";
-    if (adminRegModal) adminRegModal.style.display = "flex";
+    if (adminRegModal) {
+      adminRegModal.style.display = "flex";
+      adminRegModal.style.zIndex = "99999"; // Ensures it sits cleanly on top
+    }
   }
-
   // Dynamic UI update when switching roles in the login dropdown
   function togglePasswordField() {
     const role = document.getElementById("login-role-select").value;

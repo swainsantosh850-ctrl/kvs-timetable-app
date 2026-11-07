@@ -1466,29 +1466,14 @@
       showNotification(`Switched active school to: ${state.schoolInfo.name}`, "info");
     }
 
- function renderSchoolSelectors() {
-    const selectorContainer = document.getElementById("school-selector-container"); // or your dropdown element ID
+function renderSchoolSelectors() {
+    const selectorContainer = document.getElementById("school-selector-container") || document.getElementById("global-school-selector")?.parentElement;
     if (!selectorContainer) return;
 
     const userRole = sessionStorage.getItem("kvs_user_role");
     const activeSchoolId = schoolRepository.activeSchoolId;
 
-    // If user is a School Admin, restrict them ONLY to their registered school
-    if (userRole === "admin") {
-      const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
-      if (activeSchool) {
-        // Render a fixed badge showing only their school (no dropdown switching allowed)
-        selectorContainer.innerHTML = `
-          <div class="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-extrabold flex items-center gap-2">
-            <i class="ph-bold ph-school text-indigo-600"></i>
-            <span>School Workspace: ${activeSchool.name} (Isolated)</span>
-          </div>
-        `;
-      }
-      return;
-    }
-
-    // If user is Super Admin, show the full multi-school switcher dropdown
+    // 1. If user is Super Admin, ensure they have the full multi-school master dropdown
     if (userRole === "superadmin") {
       let optionsHTML = schoolRepository.schools.map(school => `
         <option value="${school.id}" ${school.id === activeSchoolId ? "selected" : ""}>
@@ -1499,11 +1484,25 @@
       selectorContainer.innerHTML = `
         <div class="flex items-center gap-2">
           <label class="text-xs font-bold text-slate-700">Master School View:</label>
-          <select onchange="switchActiveSchool(this.value)" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-300 bg-white shadow-sm focus:ring-2 focus:ring-indigo-500">
+          <select id="global-school-selector" onchange="switchSchool(this.value)" class="text-xs font-extrabold text-indigo-700 bg-indigo-50/70 border border-indigo-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             ${optionsHTML}
           </select>
         </div>
       `;
+      return;
+    }
+
+    // 2. If user is a School Admin, lock them ONLY to their assigned school workspace
+    if (userRole === "admin") {
+      const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
+      if (activeSchool) {
+        selectorContainer.innerHTML = `
+          <div class="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-extrabold flex items-center gap-2">
+            <i class="ph-bold ph-school text-indigo-600"></i>
+            <span>School Workspace: ${activeSchool.name} (Isolated)</span>
+          </div>
+        `;
+      }
     }
   }
     function openSchoolManagerModal() {
@@ -5708,8 +5707,7 @@ function openAdminRegistrationModal() {
     }
   }
 
-  // Helper to allow Super Admin master visibility over all schools
-  function unlockAllSchoolsForSuperAdmin() {
+function unlockAllSchoolsForSuperAdmin() {
     renderSchoolSelectors();
     showNotification("Super Admin Master View Unlocked: All school schedules visible.", "success");
   }

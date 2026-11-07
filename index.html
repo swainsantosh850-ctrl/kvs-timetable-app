@@ -5812,7 +5812,7 @@ function unlockAllSchoolsForSuperAdmin() {
       });
   }
 
-  function checkUserSession() {
+ function checkUserSession() {
     const savedRole = sessionStorage.getItem("kvs_user_role");
     const authModal = document.getElementById("auth-modal");
     const adminRegModal = document.getElementById("admin-signup-modal");
@@ -5820,12 +5820,19 @@ function unlockAllSchoolsForSuperAdmin() {
     // If registration modal is open, don't interfere
     if (adminRegModal && adminRegModal.style.display === "flex") return;
 
-    if (savedRole === "admin" || savedRole === "superadmin") {
+    if (savedRole === "superadmin") {
       state.isViewOnly = false;
       if (authModal) authModal.style.display = "none";
+      applyViewOnlyLocks();
+      unlockAllSchoolsForSuperAdmin(); // Unlocks master dropdown & global view
+    } else if (savedRole === "admin") {
+      state.isViewOnly = false;
+      if (authModal) authModal.style.display = "none";
+      applyViewOnlyLocks();
     } else if (savedRole === "teacher") {
       state.isViewOnly = true;
       if (authModal) authModal.style.display = "none";
+      applyViewOnlyLocks();
     } else {
       if (authModal) {
         authModal.style.display = "flex";

@@ -5812,7 +5812,7 @@ function unlockAllSchoolsForSuperAdmin() {
       });
   }
 
- function checkUserSession() {
+function checkUserSession() {
     const savedRole = sessionStorage.getItem("kvs_user_role");
     const authModal = document.getElementById("auth-modal");
     const adminRegModal = document.getElementById("admin-signup-modal");
@@ -5824,7 +5824,7 @@ function unlockAllSchoolsForSuperAdmin() {
       state.isViewOnly = false;
       if (authModal) authModal.style.display = "none";
       applyViewOnlyLocks();
-      unlockAllSchoolsForSuperAdmin(); // Unlocks master dropdown & global view
+      unlockAllSchoolsForSuperAdmin(); // Unlocks master dropdown & global multi-school view
     } else if (savedRole === "admin") {
       state.isViewOnly = false;
       if (authModal) authModal.style.display = "none";

@@ -1510,7 +1510,10 @@ function renderSchoolSelectors() {
     const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
     const activeSchoolId = schoolRepository.activeSchoolId;
     const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
-    const schoolDisplayName = activeSchool ? activeSchool.name : (state.schoolInfo?.name || "Assigned School Workspace");
+    
+    // Override/Fallback if activeSchool name is shorthand "KV" or missing
+    let rawName = activeSchool ? activeSchool.name : (state.schoolInfo?.name || "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
+    const schoolDisplayName = (rawName === "KV" || !rawName) ? "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94" : rawName;
 
     // 1. SUPER ADMIN: Full multi-school master dropdown access & management
     if (userRole === "superadmin") {

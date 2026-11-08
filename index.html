@@ -1292,20 +1292,22 @@
 
   <script>
     // History Stack for Undo functionality
-   <script>
-    // History Stack for Undo functionality
     let timetableUndoStack = [];
     const MAX_HISTORY_STEPS = 10;
 
     function pushUndoSnapshot() {
+      // Save a deep clone of the current repository and state before a major action/publish
       const snapshot = JSON.parse(JSON.stringify({
         schoolRepository: schoolRepository,
         state: state
       }));
+      
       timetableUndoStack.push(snapshot);
       if (timetableUndoStack.length > MAX_HISTORY_STEPS) {
-        timetableUndoStack.shift();
+        timetableUndoStack.shift(); // Keep stack size manageable
       }
+      
+      // Update undo button UI state if present
       updateUndoButtonUI();
     }
 
@@ -1314,13 +1316,16 @@
         showNotification("No previous state to undo.", "warning");
         return;
       }
+
       const previousSnapshot = timetableUndoStack.pop();
       try {
         schoolRepository = previousSnapshot.schoolRepository;
         Object.assign(state, previousSnapshot.state);
+        
         syncActiveSchoolFromRepository();
         goToSlide(state.activeSlide || 1);
         updateUndoButtonUI();
+        
         showNotification("Successfully undone to previous entry!", "success");
       } catch (err) {
         showNotification("Failed to restore previous state: " + err.message, "warning");
@@ -1341,7 +1346,6 @@
         }
       }
     }
-
     const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
@@ -1383,7 +1387,16 @@
             "Class 4": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 },
             "Class 5": { "PE": 4, "CLA": 2, "P.ART": 2, "V.ART": 4, "LIB": 2, "GDN": 4, "ENG": 10, "HIN": 10, "MATH": 10, "TWAU": 8 }
           },
-          allotments: [],
+          allotments: [
+            { id: "a1", teacherId: "t1", class: "2", section: "A", subject: "CLA", periods: 1 },
+            { id: "a2", teacherId: "t2", class: "5", section: "B", subject: "CLA", periods: 1 },
+            { id: "a3", teacherId: "t2", class: "5", section: "B", subject: "ENG", periods: 8 },
+            { id: "a4", teacherId: "t2", class: "5", section: "B", subject: "MATH", periods: 8 },
+            { id: "a5", teacherId: "t3", class: "5", section: "A", subject: "MATH", periods: 8 },
+            { id: "a6", teacherId: "t3", class: "5", section: "A", subject: "ENG", periods: 8 },
+            { id: "a7", teacherId: "t4", class: "2", section: "A", subject: "ENG", periods: 8 },
+            { id: "a8", teacherId: "t4", class: "2", section: "A", subject: "HIN", periods: 8 }
+          ],
           schedules: {},
           rules: [
             { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
@@ -1405,7 +1418,7 @@
       subPeriodSlide5: 1,
       selectedTeacherSlide6: "t1",
       schoolInfo: {
-        name: "PM SHRI KV GILL NAGAR, CHENNAI",
+        name: "PM SHRI KV GILL NAGAR,CHENNAI",
         session: "2026-27",
         sectionsCount: "2"
       },
@@ -1456,7 +1469,7 @@
       state.schedules = sch.schedules || createEmptyClassSchedules();
       state.rules = sch.rules || [];
 
-      if (state.teachers.length > 0 && !state.teachers.some(t => t.id === state.selectedTeacherSlide6)) {
+      if (state.teachers.length > 0) {
         state.selectedTeacherSlide6 = state.teachers[0].id;
       }
 
@@ -1499,67 +1512,60 @@
       goToSlide(state.activeSlide);
       showNotification(`Switched active school to: ${state.schoolInfo.name}`, "info");
     }
+function renderSchoolSelectors() {
+    const selectorContainer = document.getElementById("school-selector-container") || document.getElementById("global-school-selector")?.parentElement;
+    if (!selectorContainer) return;
 
-    // Single unified renderSchoolSelectors function with full role isolation & full name fallback
-    function renderSchoolSelectors() {
-      const selectorContainer = document.getElementById("school-selector-container") || document.getElementById("global-school-selector")?.parentElement;
-      if (!selectorContainer) return;
+    const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
+    const activeSchoolId = schoolRepository.activeSchoolId;
+    const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
+    const schoolDisplayName = activeSchool ? activeSchool.name : (state.schoolInfo?.name || "Assigned School Workspace");
 
-      const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
-      const activeSchoolId = schoolRepository.activeSchoolId;
-      
-      const activeSchool = (schoolRepository.schools || []).find(s => s.id === activeSchoolId) || (schoolRepository.schools ? schoolRepository.schools[0] : null);
-      let schoolDisplayName = activeSchool ? activeSchool.name : "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94";
-      if (!schoolDisplayName || schoolDisplayName === "KV" || schoolDisplayName.length < 5) {
-        schoolDisplayName = "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94";
-      }
+    // 1. SUPER ADMIN: Full multi-school master dropdown access & management
+    if (userRole === "superadmin") {
+      let optionsHTML = schoolRepository.schools.map(school => `
+        <option value="${school.id}" ${school.id === activeSchoolId ? "selected" : ""}>
+          ${school.name}
+        </option>
+      `).join("");
 
-      // 1. SUPER ADMIN: Full master dropdown and management controls
-      if (userRole === "superadmin") {
-        let optionsHTML = (schoolRepository.schools || []).map(school => `
-          <option value="${school.id}" ${school.id === activeSchoolId ? "selected" : ""}>
-            ${school.name}
-          </option>
-        `).join("");
-
-        selectorContainer.innerHTML = `
-          <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Master School View:</span>
-          <select id="global-school-selector" onchange="switchSchool(this.value)" class="text-xs font-extrabold text-indigo-700 bg-indigo-50/70 border border-indigo-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            ${optionsHTML}
-          </select>
-          <button type="button" onclick="openEditSchoolModal()" class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
-            <i class="ph-bold ph-pencil-simple text-xs"></i> Edit Details
-          </button>
-          <button type="button" onclick="openSchoolManagerModal()" class="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300">
-            Manage Schools
-          </button>
-        `;
-        return;
-      }
-
-      // 2. SCHOOL ADMIN: Active workspace with edit rights for their specific school
-      if (userRole === "admin") {
-        selectorContainer.innerHTML = `
-          <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">School Workspace:</span>
-          <span class="text-xs font-extrabold text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1">
-            ${schoolDisplayName}
-          </span>
-          <button type="button" onclick="openEditSchoolModal()" class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
-            <i class="ph-bold ph-pencil-simple text-xs"></i> Edit Details
-          </button>
-        `;
-        return;
-      }
-
-      // 3. STAFF / TEACHER: Clean isolated badge showing the correct school name in view-only mode
       selectorContainer.innerHTML = `
-        <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-2">
-          <i class="ph-bold ph-school text-indigo-600"></i>
-          <span>School Workspace: ${schoolDisplayName} (View-Only)</span>
-        </div>
+        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Master School View:</span>
+        <select id="global-school-selector" onchange="switchSchool(this.value)" class="text-xs font-extrabold text-indigo-700 bg-indigo-50/70 border border-indigo-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          ${optionsHTML}
+        </select>
+        <button type="button" onclick="openEditSchoolModal()" class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
+          <i class="ph-bold ph-pencil-simple text-xs"></i> Edit Details
+        </button>
+        <button type="button" onclick="openSchoolManagerModal()" class="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300">
+          Manage Schools
+        </button>
       `;
+      return;
     }
 
+    // 2. SCHOOL ADMIN: Full editing and detail controls for their isolated school workspace
+    if (userRole === "admin") {
+      selectorContainer.innerHTML = `
+        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">School Workspace:</span>
+        <span class="text-xs font-extrabold text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1">
+          ${schoolDisplayName}
+        </span>
+        <button type="button" onclick="openEditSchoolModal()" class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
+          <i class="ph-bold ph-pencil-simple text-xs"></i> Edit Details
+        </button>
+      `;
+      return;
+    }
+
+    // 3. STAFF / TEACHER: View-only static display of their school workspace (No switching, no editing)
+    selectorContainer.innerHTML = `
+      <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-2">
+        <i class="ph-bold ph-school text-indigo-600"></i>
+        <span>School Workspace: ${schoolDisplayName} (View-Only)</span>
+      </div>
+    `;
+  }
     function openSchoolManagerModal() {
       const modal = document.getElementById("school-manager-modal");
       if (modal) {
@@ -1567,8 +1573,7 @@
         renderSchoolManagerList();
       }
     }
-
-    function openEditSchoolModal() {
+function openEditSchoolModal() {
       if (state.isViewOnly) {
         showNotification("View-Only Mode: Cannot edit school details.", "warning");
         return;
@@ -1613,272 +1618,304 @@
       closeEditSchoolModal();
       showNotification("Active school details updated successfully!", "success");
     }
-
     function closeSchoolManagerModal() {
       const modal = document.getElementById("school-manager-modal");
-      if (modal) modal.style.display = "none";
-    }
-
-    // --- SUPER ADMIN PASS-KEY MANAGER ENGINE ---
-    window.openSuperAdminPassKeyManager = function() {
-      const modal = document.getElementById("superadmin-passkey-modal");
       if (modal) {
-        modal.style.display = "flex";
-        modal.style.zIndex = "99999";
-        renderSuperAdminPassKeyTable();
-      } else {
-        showNotification("Modal container missing from DOM.", "warning");
+        modal.style.display = "none";
       }
-    };
+    }
 
-    window.closeSuperAdminPassKeyModal = function() {
-      const modal = document.getElementById("superadmin-passkey-modal");
-      if (modal) modal.style.display = "none";
-    };
+    function renderSchoolManagerList() {
+      const container = document.getElementById("school-manager-list");
+      if (!container) return;
+      container.innerHTML = "";
 
-    function renderSuperAdminPassKeyTable() {
-      const tbody = document.getElementById("superadmin-passkey-tbody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
+      schoolRepository.schools.forEach(s => {
+        const isCurrent = s.id === schoolRepository.activeSchoolId;
+        const totalTeachers = (s.teachers || []).length;
+        const card = document.createElement("div");
+        card.className = `p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${isCurrent ? 'bg-indigo-50/70 border-indigo-300' : 'bg-white border-slate-200 hover:border-slate-300'}`;
 
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let schools = (typeof schoolRepository !== 'undefined' && schoolRepository.schools) ? schoolRepository.schools : [];
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl ${isCurrent ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center font-black text-xs">
+              <i class="ph-bold ph-chalkboard-simple"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="text-xs font-extrabold text-slate-900">${s.name}</h4>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-indigo-700 border border-indigo-200">${s.session}</span>
+                ${isCurrent ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-600 text-white">Active</span>' : ''}
+              </div>
+              <p class="text-[11px] text-slate-500 font-semibold">${totalTeachers} Teachers • Primary Section (${s.sectionsCount || 2} Sections)</p>
+            </div>
+          </div>
 
-      if (schools.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400 font-bold">No schools registered yet.</td></tr>`;
-        return;
-      }
-
-      schools.forEach(sch => {
-        let registryEntry = Object.values(adminRegistry).find(a => a.school === sch.name) || {
-          email: "admin@" + sch.id + ".kvs.gov.in",
-          passKey: sch.adminPassword || "admin2026",
-          teacherPassKey: "teacher_" + sch.id
-        };
-
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50/65 transition";
-        tr.innerHTML = `
-          <td class="py-3 px-3 font-extrabold text-slate-900">${sch.name}</td>
-          <td class="py-3 px-3 text-slate-600 font-medium">${registryEntry.email || 'N/A'}</td>
-          <td class="py-3 px-3 font-mono font-bold text-indigo-700 bg-indigo-50/50 rounded">
-            <input type="text" value="${registryEntry.passKey}" onchange="updateSchoolPassKey('${sch.id}', 'passKey', this.value)" class="bg-transparent border-b border-indigo-200 px-1 py-0.5 w-32 focus:outline-none focus:border-indigo-600">
-          </td>
-          <td class="py-3 px-3 font-mono font-bold text-teal-700 bg-teal-50/50 rounded">
-            <input type="text" value="${registryEntry.teacherPassKey || 'teacher_' + sch.id}" onchange="updateSchoolPassKey('${sch.id}', 'teacherPassKey', this.value)" class="bg-transparent border-b border-teal-200 px-1 py-0.5 w-32 focus:outline-none focus:border-teal-600">
-          </td>
-          <td class="py-3 px-3 text-right space-x-1">
-            <button onclick="superAdminRegeneratePassKey('${sch.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
-              Regenerate
+          <div class="flex items-center gap-1.5">
+            ${!isCurrent ? `
+              <button onclick="switchSchool('${s.id}'); closeSchoolManagerModal();" class="px-3 py-1 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+                Switch
+              </button>
+            ` : ''}
+            <button onclick="cloneSchoolProfile('${s.id}')" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition" title="Duplicate Timetable Profile">
+              <i class="ph-bold ph-copy"></i>
             </button>
-            <button onclick="superAdminSendModificationEmail('${registryEntry.email}', '${sch.name}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition">
-              Notify Mail
-            </button>
-          </td>
+            ${schoolRepository.schools.length > 1 ? `
+              <button onclick="deleteSchoolProfile('${s.id}')" class="px-2 py-1 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 transition" title="Delete Profile">
+                <i class="ph-bold ph-trash"></i>
+              </button>
+            ` : ''}
+          </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(card);
       });
     }
 
-    window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
-      const sch = schoolRepository.schools.find(s => s.id === schoolId);
-      if (!sch) return;
-      if (keyType === 'passKey') sch.adminPassword = newValue;
+    function createNewSchoolProfile() {
+      if (state.isViewOnly) return;
+      const nameInput = document.getElementById("new-school-name");
+      const sessionInput = document.getElementById("new-school-session");
+      const cloneCheckbox = document.getElementById("clone-from-current-checkbox");
 
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let foundKey = Object.keys(adminRegistry).find(k => adminRegistry[k].school === sch.name);
-      
-      if (foundKey) {
-        adminRegistry[foundKey][keyType] = newValue.trim();
+      const schoolName = (nameInput.value || "").trim().toUpperCase();
+      const sessionVal = (sessionInput.value || "2026-27").trim();
+
+      if (!schoolName) {
+        showNotification("Please enter a name for the new school.", "warning");
+        return;
+      }
+
+      commitWorkingStateToRepository();
+      const newId = "sch_" + Date.now();
+
+      let teachersList = [];
+      let subjectLimitsObj = JSON.parse(JSON.stringify(state.subjectLimits));
+      let allotmentsList = [];
+      let schedulesObj = createEmptyClassSchedules();
+      let rulesList = JSON.parse(JSON.stringify(state.rules));
+
+      if (cloneCheckbox && cloneCheckbox.checked) {
+        teachersList = JSON.parse(JSON.stringify(state.teachers));
+        allotmentsList = JSON.parse(JSON.stringify(state.allotments));
+        schedulesObj = JSON.parse(JSON.stringify(state.schedules));
       } else {
-        let dummyEmail = "admin@" + sch.id + ".kvs.gov.in";
-        adminRegistry[dummyEmail] = {
-          name: "Admin",
-          school: sch.name,
-          passKey: keyType === 'passKey' ? newValue.trim() : (sch.adminPassword || "admin2026"),
-          teacherPassKey: keyType === 'teacherPassKey' ? newValue.trim() : ("teacher_" + sch.id)
-        };
+        teachersList = [
+          { id: "t_init_1", name: "PRT 1 (English)", shortName: "PRT1", isClassTeacher: true, classNum: "1", section: "A", isCoClassTeacher: false, coClassNum: "1", coSection: "B", isCommon: false, commonClasses: [], secondaryBusySlots: {} },
+          { id: "t_init_2", name: "PRT 2 (Maths)", shortName: "PRT2", isClassTeacher: true, classNum: "1", section: "B", isCoClassTeacher: false, coClassNum: "", coSection: "", isCommon: false, commonClasses: [], secondaryBusySlots: {} }
+        ];
+        allotmentsList = [
+          { id: "a_init_1", teacherId: "t_init_1", class: "1", section: "A", subject: "ENG", periods: 8 },
+          { id: "a_init_2", teacherId: "t_init_2", class: "1", section: "B", subject: "MATH", periods: 8 }
+        ];
       }
-      localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
-      if (typeof commitWorkingStateToRepository === "function") commitWorkingStateToRepository();
-      showNotification(`Updated ${keyType} for ${sch.name} successfully!`, "success");
-    };
 
-    window.superAdminRegeneratePassKey = function(schoolId) {
-      const sch = schoolRepository.schools.find(s => s.id === schoolId);
-      if (!sch) return;
-      const randomKey = "kvs_" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      updateSchoolPassKey(schoolId, 'passKey', randomKey);
-      renderSuperAdminPassKeyTable();
-      showNotification(`New Admin Pass Key generated for ${sch.name}: ${randomKey}`, "success");
-    };
+      const newSchool = {
+        id: newId,
+        name: schoolName,
+        session: sessionVal,
+        sectionsCount: "2",
+        teachers: teachersList,
+        subjectLimits: subjectLimitsObj,
+        allotments: allotmentsList,
+        schedules: schedulesObj,
+        rules: rulesList
+      };
 
-    window.superAdminSendModificationEmail = function(adminEmail, schoolName) {
-      if (!adminEmail || adminEmail.includes("N/A")) {
-        showNotification("No valid email address registered for this school.", "warning");
+      schoolRepository.schools.push(newSchool);
+      schoolRepository.activeSchoolId = newId;
+      syncActiveSchoolFromRepository();
+      nameInput.value = "";
+      closeSchoolManagerModal();
+      goToSlide(1);
+      showNotification(`Created and switched to: ${schoolName}!`, "success");
+    }
+
+    function cloneSchoolProfile(schoolId) {
+      if (state.isViewOnly) return;
+      commitWorkingStateToRepository();
+      const target = schoolRepository.schools.find(s => s.id === schoolId);
+      if (!target) return;
+
+      const newId = "sch_" + Date.now();
+      const cloned = JSON.parse(JSON.stringify(target));
+      cloned.id = newId;
+      cloned.name = `${target.name} (Copy)`;
+
+      schoolRepository.schools.push(cloned);
+      schoolRepository.activeSchoolId = newId;
+      syncActiveSchoolFromRepository();
+      closeSchoolManagerModal();
+      goToSlide(1);
+      showNotification(`Cloned timetable profile: ${cloned.name}`, "success");
+    }
+
+    function deleteSchoolProfile(schoolId) {
+      if (state.isViewOnly) return;
+      if (schoolRepository.schools.length <= 1) {
+        showNotification("Cannot delete the only remaining school profile.", "warning");
         return;
       }
-      const subject = encodeURIComponent(`URGENT: Timetable Pass-Key Notice - ${schoolName}`);
-      const body = encodeURIComponent(`Dear Administrator,\n\nThis is an official notice from the KVS Super Admin desk regarding your school access pass keys for ${schoolName}.\n\nPlease use your assigned administrative credentials to manage your school timetable workspace.\n\nRegards,\nKVS Central Administration`);
-      window.location.href = `mailto:${adminEmail}?subject=${subject}&body=${body}`;
-      showNotification(`Opening mail client to notify ${adminEmail}...`, "info");
-    };
+      schoolRepository.schools = schoolRepository.schools.filter(s => s.id !== schoolId);
+      if (schoolRepository.activeSchoolId === schoolId) {
+        schoolRepository.activeSchoolId = schoolRepository.schools[0].id;
+      }
+      syncActiveSchoolFromRepository();
+      renderSchoolManagerList();
+      showNotification("School profile deleted.", "info");
+    }
 
-    // 3-Tier Login Handler
-    function handleLoginSubmit() {
-      const role = document.getElementById("login-role-select").value;
-      const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
-      const passwordInput = document.getElementById("login-password-input").value.trim();
-      const errorMsg = document.getElementById("auth-error-msg");
+    function exportAllSchoolsJson() {
+      commitWorkingStateToRepository();
+      const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(schoolRepository, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", jsonStr);
+      downloadAnchor.setAttribute("download", `KVS_Unified_Database_Backup_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showNotification("Downloaded unified database JSON backup file!", "success");
+    }
 
-      if (errorMsg) errorMsg.classList.add("hidden");
+    function importSchoolsJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
 
-      if (role === "superadmin") {
-        const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL);
-        const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD);
-
-        if (isValidSuperAdminEmail && isMasterPasswordValid) {
-          state.isViewOnly = false;
-          sessionStorage.setItem("kvs_user_role", "superadmin");
-          document.getElementById("auth-modal").style.display = "none";
-          applyViewOnlyLocks();
-          unlockAllSchoolsForSuperAdmin();
-          showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
-        } else {
-          if (errorMsg) {
-            errorMsg.textContent = "Incorrect Super Admin master credentials.";
-            errorMsg.classList.remove("hidden");
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && Array.isArray(parsed.schools) && parsed.schools.length > 0) {
+            schoolRepository = parsed;
+            syncActiveSchoolFromRepository();
+            closeSchoolManagerModal();
+            goToSlide(1);
+            showNotification(`Restored ${parsed.schools.length} school profiles successfully!`, "success");
+          } else {
+            showNotification("Invalid JSON backup file structure.", "warning");
           }
+        } catch (err) {
+          showNotification("Failed to parse JSON file.", "warning");
         }
-      } else if (role === "admin") {
-        let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-        let matchedAdmin = Object.values(adminRegistry).find(admin => 
-          (admin.email === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
-        );
+      };
+      reader.readAsText(file);
+    }
 
-        if (matchedAdmin) {
-          state.isViewOnly = false;
-          sessionStorage.setItem("kvs_user_role", "admin");
-          document.getElementById("auth-modal").style.display = "none";
-          isolateSchoolWorkspace(matchedAdmin.school);
-          applyViewOnlyLocks();
-          showNotification(`Welcome ${matchedAdmin.name}! Managing timetable for ${matchedAdmin.school}.`, "success");
-        } else if (passwordInput === "kvs@schooladmin2026") {
-          state.isViewOnly = false;
-          sessionStorage.setItem("kvs_user_role", "admin");
-          document.getElementById("auth-modal").style.display = "none";
-          isolateSchoolWorkspace("MY SCHOOL ADMIN WORKSPACE");
-          applyViewOnlyLocks();
-          showNotification("Welcome School Admin! Independent workspace enabled.", "success");
-        } else {
-          if (errorMsg) {
-            errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
-            errorMsg.classList.remove("hidden");
-          }
-        }
-      } else {
-        let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-        let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput);
-
-        if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
-          state.isViewOnly = true;
-          sessionStorage.setItem("kvs_user_role", "teacher");
-          document.getElementById("auth-modal").style.display = "none";
-          applyViewOnlyLocks();
-          showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
-        } else if (matchedSchoolByPassKey) {
-          state.isViewOnly = true;
-          sessionStorage.setItem("kvs_user_role", "teacher");
-          document.getElementById("auth-modal").style.display = "none";
-          isolateSchoolWorkspace(matchedSchoolByPassKey.school);
-          applyViewOnlyLocks();
-          showNotification(`Welcome Teacher! Viewing timetable generated by ${matchedSchoolByPassKey.school} Admin.`, "success");
-        } else {
-          if (errorMsg) {
-            errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
-            errorMsg.classList.remove("hidden");
-          }
-        }
+    function exportAllToExcel() {
+      try {
+        const wb = XLSX.utils.book_new();
+        CLASSES.forEach(cls => {
+          const sheetData = [["Day", "P1", "P2", "P3", "P4", "Recess", "P5", "P6", "P7", "P8"]];
+          DAYS.forEach(d => {
+            const row = [d];
+            PERIODS.forEach(p => {
+            const slot = state.schedules[cls]?.[d]?.[p];
+            if (slot) {
+                const primaryT = state.teachers.find(t => t.id === slot.teacherId);
+                const coT = state.teachers.find(t => t.id === slot.coTeacherId);
+                let tName = primaryT ? (primaryT.shortName || primaryT.name) : "";
+                if (coT) tName += ` + ${coT.shortName || coT.name}`;
+                
+                row.push(`${slot.subject} (${tName})`);
+            } else {
+                row.push("");
+            }
+        });
+            sheetData.push(row);
+          });
+          const ws = XLSX.utils.aoa_to_sheet(sheetData);
+          XLSX.utils.book_append_sheet(wb, ws, `Class ${cls}`);
+        });
+        XLSX.writeFile(wb, `KVS_Timetable_${state.schoolInfo.name.replace(/\s+/g, '_')}_${Date.now()}.xlsx`);
+        showNotification("Excel workbook exported successfully!", "success");
+      } catch (err) {
+        showNotification("Export error: " + err.message, "warning");
       }
     }
 
-    // Role-Based UI Lock Manager
-    function applyViewOnlyLocks() {
-      const banner = document.getElementById("view-only-banner");
-      const publishBtn = document.getElementById("btn-publish-sync");
-      const roleLabel = document.getElementById("role-switcher-label");
-      const superAdminPasskeysBtn = document.getElementById("btn-superadmin-passkeys");
-      const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
-      
-      const pill1 = document.getElementById("nav-pill-1");
-      const pill2 = document.getElementById("nav-pill-2");
-      const auditContainer = document.getElementById("pedagogical-audit-container");
+  function applyViewOnlyLocks() {
+    const banner = document.getElementById("view-only-banner");
+    const publishBtn = document.getElementById("btn-publish-sync");
+    const roleLabel = document.getElementById("role-switcher-label");
+    const superAdminPasskeysBtn = document.getElementById("btn-superadmin-passkeys");
+    
+    const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
+    
+    const pill1 = document.getElementById("nav-pill-1");
+    const pill2 = document.getElementById("nav-pill-2");
+    const auditContainer = document.getElementById("pedagogical-audit-container");
 
-      if (userRole === "superadmin") {
-        state.isViewOnly = false;
-        if (banner) banner.classList.add("hidden");
-        if (publishBtn) publishBtn.classList.remove("hidden");
-        if (roleLabel) roleLabel.textContent = "Role: Super Admin";
-        if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.remove("hidden");
-        if (pill1) pill1.classList.remove("hidden");
-        if (pill2) pill2.classList.remove("hidden");
-        if (auditContainer) auditContainer.classList.remove("hidden");
-        toggleInputLocks(false);
-        return;
-      }
+    // 1. SUPER ADMIN ROLE
+    if (userRole === "superadmin") {
+      state.isViewOnly = false;
+      if (banner) banner.classList.add("hidden");
+      if (publishBtn) publishBtn.classList.remove("hidden");
+      if (roleLabel) roleLabel.textContent = "Role: Super Admin";
+      if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.remove("hidden"); // Reveal Pass-Key Manager button
 
-      if (userRole === "admin") {
-        state.isViewOnly = false;
-        if (banner) banner.classList.add("hidden");
-        if (publishBtn) publishBtn.classList.remove("hidden");
-        if (roleLabel) roleLabel.textContent = "Role: Admin";
-        if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.add("hidden");
-        if (pill1) pill1.classList.remove("hidden");
-        if (pill2) pill2.classList.remove("hidden");
-        if (auditContainer) auditContainer.classList.remove("hidden");
-        toggleInputLocks(false);
-        return;
-      }
+      if (pill1) pill1.classList.remove("hidden");
+      if (pill2) pill2.classList.remove("hidden");
+      if (auditContainer) auditContainer.classList.remove("hidden");
 
-      state.isViewOnly = true;
-      if (banner) banner.classList.remove("hidden");
-      if (publishBtn) publishBtn.classList.add("hidden");
-      if (roleLabel) roleLabel.textContent = "Role: Staff";
-      if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.add("hidden");
-      if (pill1) pill1.classList.add("hidden");
-      if (pill2) pill2.classList.add("hidden");
-      if (auditContainer) auditContainer.classList.add("hidden");
-
-      if (state.activeSlide === 1 || state.activeSlide === 2) {
-        goToSlide(3);
-      }
-      toggleInputLocks(true);
+      toggleInputLocks(false);
+      return;
     }
 
-    function toggleInputLocks(isViewOnly) {
-      ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = isViewOnly;
-      });
+    // 2. SCHOOL ADMIN ROLE
+    if (userRole === "admin") {
+      state.isViewOnly = false;
+      if (banner) banner.classList.add("hidden");
+      if (publishBtn) publishBtn.classList.remove("hidden");
+      if (roleLabel) roleLabel.textContent = "Role: Admin";
+      if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.add("hidden"); // Hide for standard admin
 
-      ["slide3-regen-btn", "slide3-clear-btn"].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-          btn.disabled = isViewOnly;
-          if (isViewOnly) btn.classList.add("opacity-50", "cursor-not-allowed");
-          else btn.classList.remove("opacity-50", "cursor-not-allowed");
-        }
-      });
+      if (pill1) pill1.classList.remove("hidden");
+      if (pill2) pill2.classList.remove("hidden");
+      if (auditContainer) auditContainer.classList.remove("hidden");
 
-      document.querySelectorAll("button[onclick*='addNewTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
-      document.querySelectorAll("button[onclick*='openManageLimitsModal']").forEach(b => b.classList.toggle("hidden", isViewOnly));
-      document.querySelectorAll("button[onclick*='autoGenerateFullTimetable']").forEach(b => b.classList.toggle("hidden", isViewOnly));
-      document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
-      document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
-      document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.toggle("hidden", isViewOnly));
-      document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+      toggleInputLocks(false);
+      return;
     }
-  </script>
+
+    // 3. STAFF / TEACHER ROLE (View-Only)
+    state.isViewOnly = true;
+    if (banner) banner.classList.remove("hidden");
+    if (publishBtn) publishBtn.classList.add("hidden");
+    if (roleLabel) roleLabel.textContent = "Role: Staff";
+    if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.add("hidden");
+
+    if (pill1) pill1.classList.add("hidden");
+    if (pill2) pill2.classList.add("hidden");
+    if (auditContainer) auditContainer.classList.add("hidden");
+
+    if (state.activeSlide === 1 || state.activeSlide === 2) {
+      goToSlide(3);
+    }
+    toggleInputLocks(true);
+  }
+
+  function toggleInputLocks(isViewOnly) {
+    ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = isViewOnly;
+    });
+
+    ["slide3-regen-btn", "slide3-clear-btn"].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.disabled = isViewOnly;
+        if (isViewOnly) btn.classList.add("opacity-50", "cursor-not-allowed");
+        else btn.classList.remove("opacity-50", "cursor-not-allowed");
+      }
+    });
+
+    document.querySelectorAll("button[onclick*='addNewTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='openManageLimitsModal']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='autoGenerateFullTimetable']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+  }
     function refreshAllScheduleViews() {
       if (state.activeSlide === 3) {
         renderSlide3Grid();

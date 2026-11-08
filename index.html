@@ -5841,17 +5841,36 @@ function runPedagogicalAudit() {
 
   // Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
 function isolateSchoolWorkspace(schoolName) {
-    const upperName = schoolName.toUpperCase();
-    let targetSchool = schoolRepository.schools.find(s => s.name.toUpperCase() === upperName);
+    if (!schoolName || typeof schoolName !== 'string') {
+      console.warn("Invalid school name passed to isolateSchoolWorkspace:", schoolName);
+      return;
+    }
+    
+    if (!schoolRepository || !Array.isArray(schoolRepository.schools)) {
+      console.warn("schoolRepository.schools is not initialized.");
+      return;
+    }
+
+    const upperName = schoolName.trim().toUpperCase();
+    let targetSchool = schoolRepository.schools.find(s => s && s.name && s.name.toUpperCase() === upperName);
     
     if (targetSchool) {
       schoolRepository.activeSchoolId = targetSchool.id;
-      syncActiveSchoolFromRepository();
+      if (typeof syncActiveSchoolFromRepository === "function") {
+        syncActiveSchoolFromRepository();
+      }
     } else {
-      let matchingSchool = schoolRepository.schools.find(s => s.name.toUpperCase().includes(upperName) || upperName.includes(s.name.toUpperCase()));
+      let matchingSchool = schoolRepository.schools.find(s => {
+        if (!s || !s.name) return false;
+        const sUpper = s.name.toUpperCase();
+        return sUpper.includes(upperName) || upperName.includes(sUpper);
+      });
+      
       if (matchingSchool) {
         schoolRepository.activeSchoolId = matchingSchool.id;
-        syncActiveSchoolFromRepository();
+        if (typeof syncActiveSchoolFromRepository === "function") {
+          syncActiveSchoolFromRepository();
+        }
       } else {
         console.warn("School isolation target not found, keeping current workspace.");
       }

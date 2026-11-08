@@ -1517,7 +1517,7 @@ function renderSchoolSelectors() {
     const selectorContainer = document.getElementById("school-selector-container") || document.getElementById("global-school-selector")?.parentElement;
     if (!selectorContainer) return;
 
-    const userRole = sessionStorage.getItem("kvs_user_role");
+    const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
     const activeSchoolId = schoolRepository.activeSchoolId;
 
     // 1. If user is Super Admin, ensure they have the full multi-school master dropdown
@@ -1529,28 +1529,30 @@ function renderSchoolSelectors() {
       `).join("");
 
       selectorContainer.innerHTML = `
-        <div class="flex items-center gap-2">
-          <label class="text-xs font-bold text-slate-700">Master School View:</label>
-          <select id="global-school-selector" onchange="switchSchool(this.value)" class="text-xs font-extrabold text-indigo-700 bg-indigo-50/70 border border-indigo-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
-            ${optionsHTML}
-          </select>
-        </div>
+        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Master School View:</span>
+        <select id="global-school-selector" onchange="switchSchool(this.value)" class="text-xs font-extrabold text-indigo-700 bg-indigo-50/70 border border-indigo-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          ${optionsHTML}
+        </select>
+        <button type="button" onclick="openEditSchoolModal()" class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
+          <i class="ph-bold ph-pencil-simple text-xs"></i> Edit Details
+        </button>
+        <button type="button" onclick="openSchoolManagerModal()" class="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300">
+          Manage Schools
+        </button>
       `;
       return;
     }
 
-    // 2. If user is a School Admin, lock them ONLY to their assigned school workspace
-    if (userRole === "admin") {
-      const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
-      if (activeSchool) {
-        selectorContainer.innerHTML = `
-          <div class="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-extrabold flex items-center gap-2">
-            <i class="ph-bold ph-school text-indigo-600"></i>
-            <span>School Workspace: ${activeSchool.name} (Isolated)</span>
-          </div>
-        `;
-      }
-    }
+    // 2. If user is a School Admin or Staff/Teacher, lock them strictly to their assigned school workspace
+    const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
+    const schoolDisplayName = activeSchool ? activeSchool.name : (state.schoolInfo?.name || "Assigned School Workspace");
+
+    selectorContainer.innerHTML = `
+      <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-2">
+        <i class="ph-bold ph-school text-indigo-600"></i>
+        <span>School Workspace: ${schoolDisplayName} (Isolated)</span>
+      </div>
+    `;
   }
     function openSchoolManagerModal() {
       const modal = document.getElementById("school-manager-modal");

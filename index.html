@@ -5848,13 +5848,11 @@ function isolateSchoolWorkspace(schoolName) {
       schoolRepository.activeSchoolId = targetSchool.id;
       syncActiveSchoolFromRepository();
     } else {
-      // If the school name from the pass-key registry isn't in active memory yet, find or create it safely
       let matchingSchool = schoolRepository.schools.find(s => s.name.toUpperCase().includes(upperName) || upperName.includes(s.name.toUpperCase()));
       if (matchingSchool) {
         schoolRepository.activeSchoolId = matchingSchool.id;
         syncActiveSchoolFromRepository();
       } else {
-        // Fallback: keep active school if mismatch occurs
         console.warn("School isolation target not found, keeping current workspace.");
       }
     }

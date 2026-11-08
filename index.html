@@ -5532,7 +5532,113 @@ function runPedagogicalAudit() {
         if (passwordLabel) passwordLabel.textContent = "School Admin Pass Key";
       }
     }
+// --- SUPER ADMIN PASS-KEY MANAGER ENGINE ---
+  window.openSuperAdminPassKeyManager = function() {
+    const modal = document.getElementById("superadmin-passkey-modal");
+    if (modal) {
+      modal.style.display = "flex";
+      modal.style.zIndex = "99999";
+      renderSuperAdminPassKeyTable();
+    } else {
+      console.error("Error: #superadmin-passkey-modal element is missing from HTML.");
+      showNotification("Modal container missing from DOM.", "warning");
+    }
+  };
 
+  window.closeSuperAdminPassKeyModal = function() {
+    const modal = document.getElementById("superadmin-passkey-modal");
+    if (modal) modal.style.display = "none";
+  };
+
+  function renderSuperAdminPassKeyTable() {
+    const tbody = document.getElementById("superadmin-passkey-tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+    let schools = (typeof schoolRepository !== 'undefined' && schoolRepository.schools) ? schoolRepository.schools : [];
+
+    if (schools.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400 font-bold">No schools registered yet.</td></tr>`;
+      return;
+    }
+
+    schools.forEach(sch => {
+      let registryEntry = Object.values(adminRegistry).find(a => a.school === sch.name) || {
+        email: "admin@" + sch.id + ".kvs.gov.in",
+        passKey: sch.adminPassword || "admin2026",
+        teacherPassKey: "teacher_" + sch.id
+      };
+
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-50/65 transition";
+      tr.innerHTML = `
+        <td class="py-3 px-3 font-extrabold text-slate-900">${sch.name}</td>
+        <td class="py-3 px-3 text-slate-600 font-medium">${registryEntry.email || 'N/A'}</td>
+        <td class="py-3 px-3 font-mono font-bold text-indigo-700 bg-indigo-50/50 rounded">
+          <input type="text" value="${registryEntry.passKey}" onchange="updateSchoolPassKey('${sch.id}', 'passKey', this.value)" class="bg-transparent border-b border-indigo-200 px-1 py-0.5 w-32 focus:outline-none focus:border-indigo-600">
+        </td>
+        <td class="py-3 px-3 font-mono font-bold text-teal-700 bg-teal-50/50 rounded">
+          <input type="text" value="${registryEntry.teacherPassKey || 'teacher_' + sch.id}" onchange="updateSchoolPassKey('${sch.id}', 'teacherPassKey', this.value)" class="bg-transparent border-b border-teal-200 px-1 py-0.5 w-32 focus:outline-none focus:border-teal-600">
+        </td>
+        <td class="py-3 px-3 text-right space-x-1">
+          <button onclick="superAdminRegeneratePassKey('${sch.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
+            Regenerate
+          </button>
+          <button onclick="superAdminSendModificationEmail('${registryEntry.email}', '${sch.name}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition">
+            Notify Mail
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
+    const sch = schoolRepository.schools.find(s => s.id === schoolId);
+    if (!sch) return;
+
+    if (keyType === 'passKey') sch.adminPassword = newValue;
+
+    let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+    let foundKey = Object.keys(adminRegistry).find(k => adminRegistry[k].school === sch.name);
+    
+    if (foundKey) {
+      adminRegistry[foundKey][keyType] = newValue.trim();
+    } else {
+      let dummyEmail = "admin@" + sch.id + ".kvs.gov.in";
+      adminRegistry[dummyEmail] = {
+        name: "Admin",
+        school: sch.name,
+        passKey: keyType === 'passKey' ? newValue.trim() : (sch.adminPassword || "admin2026"),
+        teacherPassKey: keyType === 'teacherPassKey' ? newValue.trim() : ("teacher_" + sch.id)
+      };
+    }
+    localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
+    if (typeof commitWorkingStateToRepository === "function") commitWorkingStateToRepository();
+    showNotification(`Updated ${keyType} for ${sch.name} successfully!`, "success");
+  };
+
+  window.superAdminRegeneratePassKey = function(schoolId) {
+    const sch = schoolRepository.schools.find(s => s.id === schoolId);
+    if (!sch) return;
+
+    const randomKey = "kvs_" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    updateSchoolPassKey(schoolId, 'passKey', randomKey);
+    renderSuperAdminPassKeyTable();
+    showNotification(`New Admin Pass Key generated for ${sch.name}: ${randomKey}`, "success");
+  };
+
+  window.superAdminSendModificationEmail = function(adminEmail, schoolName) {
+    if (!adminEmail || adminEmail.includes("N/A")) {
+      showNotification("No valid email address registered for this school.", "warning");
+      return;
+    }
+    const subject = encodeURIComponent(`URGENT: Timetable Pass-Key Notice - ${schoolName}`);
+    const body = encodeURIComponent(`Dear Administrator,\n\nThis is an official notice from the KVS Super Admin desk regarding your school access pass keys for ${schoolName}.\n\nPlease use your assigned administrative credentials to manage your school timetable workspace.\n\nRegards,\nKVS Central Administration`);
+    window.location.href = `mailto:${adminEmail}?subject=${subject}&body=${body}`;
+    showNotification(`Opening mail client to notify ${adminEmail}...`, "info");
+  };
     // 3-Tier Login Handler with Secure Pass-Key Validation & School Isolation
     function handleLoginSubmit() {
       const role = document.getElementById("login-role-select").value;

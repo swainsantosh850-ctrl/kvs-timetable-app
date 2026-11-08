@@ -346,6 +346,12 @@
 
     <!-- Quick Action Controls -->
     <div class="flex items-center flex-wrap gap-2">
+      <!-- Super Admin Pass-Key Manager Button (Hidden by default until Super Admin logs in) -->
+      <button id="btn-superadmin-passkeys" onclick="openSuperAdminPassKeyManager()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition items-center gap-1.5 shadow-xs">
+        <i class="ph-bold ph-key text-sm"></i>
+        <span>Manage School Pass Keys</span>
+      </button>
+
       <button id="btn-publish-sync" onclick="window.syncToAllTeachers()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition flex items-center gap-1.5">
         <i class="ph-bold ph-broadcast text-sm"></i>
         <span>Publish to Teachers</span>
@@ -406,7 +412,6 @@
     </div>
   </nav>
 </header>
-
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
 
   <div id="global-conflict-banner" class="hidden mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-xs shadow-xs">

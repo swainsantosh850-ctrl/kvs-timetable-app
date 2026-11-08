@@ -1518,12 +1518,14 @@ function renderSchoolSelectors() {
 
     const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
     const activeSchoolId = schoolRepository.activeSchoolId;
-    const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
-    const schoolDisplayName = activeSchool ? activeSchool.name : (state.schoolInfo?.name || "Assigned School Workspace");
+    
+    // Find active school safely with correct syntax
+    const activeSchool = (schoolRepository.schools || []).find(s => s.id === activeSchoolId) || (schoolRepository.schools ? schoolRepository.schools[0] : null);
+    const schoolDisplayName = activeSchool ? activeSchool.name : "PM SHRI KV GILL NAGAR, CHENNAI";
 
-    // 1. SUPER ADMIN: Full multi-school master dropdown access & management
+    // 1. SUPER ADMIN: Full master dropdown and management controls
     if (userRole === "superadmin") {
-      let optionsHTML = schoolRepository.schools.map(school => `
+      let optionsHTML = (schoolRepository.schools || []).map(school => `
         <option value="${school.id}" ${school.id === activeSchoolId ? "selected" : ""}>
           ${school.name}
         </option>
@@ -1544,7 +1546,7 @@ function renderSchoolSelectors() {
       return;
     }
 
-    // 2. SCHOOL ADMIN: Full editing and detail controls for their isolated school workspace
+    // 2. SCHOOL ADMIN: Active workspace with edit rights for their specific school
     if (userRole === "admin") {
       selectorContainer.innerHTML = `
         <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">School Workspace:</span>
@@ -1558,7 +1560,7 @@ function renderSchoolSelectors() {
       return;
     }
 
-    // 3. STAFF / TEACHER: View-only static display of their school workspace (No switching, no editing)
+    // 3. STAFF / TEACHER: Clean isolated badge showing the correct school name in view-only mode
     selectorContainer.innerHTML = `
       <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-2">
         <i class="ph-bold ph-school text-indigo-600"></i>

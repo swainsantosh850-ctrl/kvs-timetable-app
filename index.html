@@ -5831,7 +5831,8 @@ function runPedagogicalAudit() {
   }
 
 // Helper to isolate workspace securely with flexible name matching
- function isolateSchoolWorkspace(schoolName) {
+// Helper to isolate workspace securely with flexible name matching and persistence
+  function isolateSchoolWorkspace(schoolName) {
     if (!schoolName || typeof schoolName !== 'string') {
       console.warn("Invalid school name passed to isolateSchoolWorkspace:", schoolName);
       return;
@@ -5842,8 +5843,10 @@ function runPedagogicalAudit() {
       return;
     }
 
+    // Clean up spaces and punctuation for reliable matching
     const cleanInput = schoolName.trim().toUpperCase().replace(/[\s,.-]+/g, ' ');
     
+    // Look for an exact match or a strong keyword match (e.g., "GILL NAGAR")
     let targetSchool = schoolRepository.schools.find(s => {
       if (!s || !s.name) return false;
       const cleanExisting = s.name.trim().toUpperCase().replace(/[\s,.-]+/g, ' ');
@@ -5852,24 +5855,9 @@ function runPedagogicalAudit() {
     
     if (targetSchool) {
       schoolRepository.activeSchoolId = targetSchool.id;
-      // PERSIST ACROSS REFRESHES:
       sessionStorage.setItem("kvs_active_school", targetSchool.name);
     } else {
-      let mainSchool = schoolRepository.schools.find(s => s.name && s.name.toUpperCase().includes("GILL NAGAR"));
-      if (mainSchool) {
-        schoolRepository.activeSchoolId = mainSchool.id;
-        sessionStorage.setItem("kvs_active_school", mainSchool.name);
-      } else {
-        schoolRepository.activeSchoolId = schoolRepository.schools[0].id;
-        sessionStorage.setItem("kvs_active_school", schoolRepository.schools[0].name);
-      }
-    }
-    
-    if (typeof syncActiveSchoolFromRepository === "function") {
-      syncActiveSchoolFromRepository();
-    }
-  }
-      // Create dedicated workspace if no match exists
+      // If no match exists, create a clean, dedicated workspace profile for this school
       const newId = "sch_" + Date.now();
       const newSchool = {
         id: newId,
@@ -5893,11 +5881,14 @@ function runPedagogicalAudit() {
       
       schoolRepository.schools.push(newSchool);
       schoolRepository.activeSchoolId = newId;
-      if (typeof syncActiveSchoolFromRepository === "function") {
-        syncActiveSchoolFromRepository();
-      }
+      sessionStorage.setItem("kvs_active_school", newSchool.name);
+    }
+    
+    if (typeof syncActiveSchoolFromRepository === "function") {
+      syncActiveSchoolFromRepository();
     }
   }
+
   function unlockAllSchoolsForSuperAdmin() {
     sessionStorage.setItem("kvs_user_role", "superadmin");
     if (typeof applyViewOnlyLocks === "function") {
@@ -5906,6 +5897,7 @@ function runPedagogicalAudit() {
     renderSchoolSelectors();
     showNotification("Super Admin Master View Unlocked: Full control enabled.", "success");
   }
+
   // Teacher Sign Up with Email OTP Dispatch
   let pendingSignUpData = null;
 
@@ -6006,7 +5998,7 @@ function runPedagogicalAudit() {
       });
   }
 
-function checkUserSession() {
+  function checkUserSession() {
     const savedRole = sessionStorage.getItem("kvs_user_role");
     const savedSchool = sessionStorage.getItem("kvs_active_school");
     const authModal = document.getElementById("auth-modal");

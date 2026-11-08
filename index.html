@@ -5514,6 +5514,8 @@ function runPedagogicalAudit() {
 
    // --- ROBUST 3-TIER PASS-KEY LOGIN HANDLER ---
 
+   // --- SECURE MULTI-SCHOOL ROLE & PASS-KEY SCRIPT ---
+
     const SUPER_ADMIN_EMAIL = "santosh.swain@kvs.gov.in";
     const SECOND_ADMIN_EMAIL = "swainsantosh850@gmail.com";
     const MASTER_SUPER_ADMIN_PASSWORD = "kvs@admin2026";
@@ -5572,7 +5574,7 @@ function runPedagogicalAudit() {
       }
     }
 
-    // Main 3-Tier Login Handler with Fail-Safe Checks
+    // 3-Tier Login Handler with Secure Pass-Key Validation & School Isolation
     function handleLoginSubmit() {
       try {
         const roleSelect = document.getElementById("login-role-select");
@@ -5597,7 +5599,7 @@ function runPedagogicalAudit() {
             if (modal) modal.style.display = "none";
             applyViewOnlyLocks();
             if (typeof unlockAllSchoolsForSuperAdmin === "function") unlockAllSchoolsForSuperAdmin();
-            showNotification("Welcome Super Admin! Full master access enabled.", "success");
+            showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
           } else {
             showAuthError("Incorrect Super Admin master credentials.");
           }
@@ -5620,7 +5622,7 @@ function runPedagogicalAudit() {
             
             if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace(matchedAdmin.school);
             applyViewOnlyLocks();
-            showNotification(`Welcome ${matchedAdmin.name}! Managing ${matchedAdmin.school}.`, "success");
+            showNotification(`Welcome ${matchedAdmin.name}! Managing timetable for ${matchedAdmin.school}.`, "success");
           } 
           else if (passwordInput === "kvs@schooladmin2026" || passwordInput === "admin2026") {
             state.isViewOnly = false;
@@ -5630,14 +5632,14 @@ function runPedagogicalAudit() {
             
             if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace("PM SHRI KV GILL NAGAR, CHENNAI");
             applyViewOnlyLocks();
-            showNotification("Welcome School Admin! Workspace enabled.", "success");
+            showNotification("Welcome School Admin! Independent workspace enabled.", "success");
           } 
           else {
             showAuthError("Incorrect School Admin Pass Key or credentials.");
           }
         } 
         else {
-          // TEACHER / STAFF ACCESS: Log in via School Admin Pass Key or Default Passkey
+          // TEACHER / STAFF ACCESS: Log in strictly via School Admin's Pass Key (No Email required)
           let adminRegistry = {};
           try {
             adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
@@ -5680,8 +5682,8 @@ function runPedagogicalAudit() {
           }
         }
       } catch (err) {
-        console.error("Login Error Exception:", err);
-        showAuthError("An error occurred during login. Check console for details.");
+        console.error("Login Exception:", err);
+        showAuthError("Login Error: " + err.message);
       }
     }
 

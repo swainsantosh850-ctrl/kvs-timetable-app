@@ -5830,8 +5830,8 @@ function runPedagogicalAudit() {
     switchModal("admin-otp", "auth");
   }
 
-  // Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
-function isolateSchoolWorkspace(schoolName) {
+// Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
+  function isolateSchoolWorkspace(schoolName) {
     if (!schoolName || typeof schoolName !== 'string') {
       console.warn("Invalid school name passed to isolateSchoolWorkspace:", schoolName);
       return;
@@ -5880,33 +5880,10 @@ function isolateSchoolWorkspace(schoolName) {
       if (typeof syncActiveSchoolFromRepository === "function") {
         syncActiveSchoolFromRepository();
       }
-      // Create a brand new, clean school profile with empty schedules for this admin
-      const newId = "sch_" + Date.now();
-      const newSchool = {
-        id: newId,
-        name: upperName,
-        session: "2026-27",
-        sectionsCount: "2",
-        teachers: [
-          { id: "t_init_1", name: "PRT 1", shortName: "P1", isClassTeacher: true, classNum: "1", section: "A", secondaryBusySlots: {} }
-        ],
-        subjectLimits: {
-          "Class 1": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-          "Class 2": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-          "Class 3": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-          "Class 4": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
-          "Class 5": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 }
-        },
-        allotments: [],
-        schedules: createEmptyClassSchedules(),
-        rules: []
-      };
-      
-      schoolRepository.schools.push(newSchool);
-      schoolRepository.activeSchoolId = newId;
-      syncActiveSchoolFromRepository();
     }
-function unlockAllSchoolsForSuperAdmin() {
+  }
+
+  function unlockAllSchoolsForSuperAdmin() {
     sessionStorage.setItem("kvs_user_role", "superadmin");
     if (typeof applyViewOnlyLocks === "function") {
       applyViewOnlyLocks();
@@ -5914,7 +5891,6 @@ function unlockAllSchoolsForSuperAdmin() {
     renderSchoolSelectors();
     showNotification("Super Admin Master View Unlocked: Full control enabled.", "success");
   }
-
   // Teacher Sign Up with Email OTP Dispatch
   let pendingSignUpData = null;
 

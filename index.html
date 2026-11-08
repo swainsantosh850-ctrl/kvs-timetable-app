@@ -1512,15 +1512,16 @@
       goToSlide(state.activeSlide);
       showNotification(`Switched active school to: ${state.schoolInfo.name}`, "info");
     }
-
 function renderSchoolSelectors() {
     const selectorContainer = document.getElementById("school-selector-container") || document.getElementById("global-school-selector")?.parentElement;
     if (!selectorContainer) return;
 
     const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
     const activeSchoolId = schoolRepository.activeSchoolId;
+    const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
+    const schoolDisplayName = activeSchool ? activeSchool.name : (state.schoolInfo?.name || "Assigned School Workspace");
 
-    // 1. If user is Super Admin, ensure they have the full multi-school master dropdown
+    // 1. SUPER ADMIN: Full multi-school master dropdown access & management
     if (userRole === "superadmin") {
       let optionsHTML = schoolRepository.schools.map(school => `
         <option value="${school.id}" ${school.id === activeSchoolId ? "selected" : ""}>
@@ -1543,14 +1544,25 @@ function renderSchoolSelectors() {
       return;
     }
 
-    // 2. If user is a School Admin or Staff/Teacher, lock them strictly to their assigned school workspace
-    const activeSchool = schoolRepository.schools.find(s => s.id === activeSchoolId);
-    const schoolDisplayName = activeSchool ? activeSchool.name : (state.schoolInfo?.name || "Assigned School Workspace");
+    // 2. SCHOOL ADMIN: Full editing and detail controls for their isolated school workspace
+    if (userRole === "admin") {
+      selectorContainer.innerHTML = `
+        <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">School Workspace:</span>
+        <span class="text-xs font-extrabold text-indigo-900 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1">
+          ${schoolDisplayName}
+        </span>
+        <button type="button" onclick="openEditSchoolModal()" class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
+          <i class="ph-bold ph-pencil-simple text-xs"></i> Edit Details
+        </button>
+      `;
+      return;
+    }
 
+    // 3. STAFF / TEACHER: View-only static display of their school workspace (No switching, no editing)
     selectorContainer.innerHTML = `
       <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-2">
         <i class="ph-bold ph-school text-indigo-600"></i>
-        <span>School Workspace: ${schoolDisplayName} (Isolated)</span>
+        <span>School Workspace: ${schoolDisplayName} (View-Only)</span>
       </div>
     `;
   }

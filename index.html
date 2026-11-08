@@ -1511,7 +1511,6 @@
       syncActiveSchoolFromRepository();
       goToSlide(state.activeSlide);
       showNotification(`Switched active school to: ${state.schoolInfo.name}`, "info");
-    }
 function renderSchoolSelectors() {
     const selectorContainer = document.getElementById("school-selector-container") || document.getElementById("global-school-selector")?.parentElement;
     if (!selectorContainer) return;
@@ -1519,9 +1518,12 @@ function renderSchoolSelectors() {
     const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
     const activeSchoolId = schoolRepository.activeSchoolId;
     
-    // Find active school safely with correct syntax
+    // Find active school safely and force full official name if it's too short
     const activeSchool = (schoolRepository.schools || []).find(s => s.id === activeSchoolId) || (schoolRepository.schools ? schoolRepository.schools[0] : null);
-    const schoolDisplayName = activeSchool ? activeSchool.name : "PM SHRI KV GILL NAGAR, CHENNAI";
+    let schoolDisplayName = activeSchool ? activeSchool.name : "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94";
+    if (!schoolDisplayName || schoolDisplayName === "KV" || schoolDisplayName.length < 5) {
+      schoolDisplayName = "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94";
+    }
 
     // 1. SUPER ADMIN: Full master dropdown and management controls
     if (userRole === "superadmin") {
@@ -1560,7 +1562,7 @@ function renderSchoolSelectors() {
       return;
     }
 
-    // 3. STAFF / TEACHER: Clean isolated badge showing the correct school name in view-only mode
+    // 3. STAFF / TEACHER: Clean isolated badge showing the full school name in view-only mode
     selectorContainer.innerHTML = `
       <div class="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-extrabold flex items-center gap-2">
         <i class="ph-bold ph-school text-indigo-600"></i>

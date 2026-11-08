@@ -135,63 +135,64 @@
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
-<!-- Role Access / Authentication Modal -->
-  <div id="auth-modal" style="display: flex;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-sm shadow-2xl p-6 space-y-4">
-      <div class="text-center space-y-1">
-        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-2xl shadow-sm">
-          <i class="ph-bold ph-lock-key"></i>
-        </div>
-        <h3 class="text-base font-extrabold text-slate-900">KVS Timetable Portal</h3>
-        <p class="text-xs text-slate-500 font-medium">Select your portal access level</p>
+<div id="auth-modal" style="display: flex;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
+  <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-sm shadow-2xl p-6 space-y-4">
+    <div class="text-center space-y-1">
+      <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-2xl shadow-sm">
+        <i class="ph-bold ph-lock-key"></i>
+      </div>
+      <h3 class="text-base font-extrabold text-slate-900">KVS Timetable Portal</h3>
+      <p class="text-xs text-slate-500 font-medium">Select your portal access level</p>
+    </div>
+
+    <div class="space-y-3 pt-2">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Access Role</label>
+        <select id="login-role-select" onchange="togglePasswordField()" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="teacher">1. Teacher / Staff (School View-Only)</option>
+          <option value="admin">2. School Admin (Generate TT & Create Teacher Pass Key)</option>
+          <option value="superadmin">3. Super Admin (Master Global Control & Access Grant)</option>
+        </select>
       </div>
 
-      <div class="space-y-3 pt-2">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Access Role</label>
-          <select id="login-role-select" onchange="togglePasswordField()" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="teacher">1. Teacher / Staff (School View-Only)</option>
-            <option value="admin">2. School Admin (Generate TT & Pass Key)</option>
-            <option value="superadmin">3. Super Admin (Master Global Control)</option>
-          </select>
+      <!-- Email / Identifier Field -->
+      <div id="email-field-container">
+        <label class="block text-xs font-bold text-slate-700 mb-1" id="email-label">Email ID / School Code</label>
+        <input type="text" id="login-email-input" placeholder="teacher@kvs.gov.in or School Name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- Password / Pass Key Field -->
+      <div id="password-field-container">
+        <label class="block text-xs font-bold text-slate-700 mb-1" id="password-label">Password / Pass Key</label>
+        <input type="password" id="login-password-input" placeholder="Enter password or school pass key" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <p id="auth-error-msg" class="text-[11px] text-rose-600 font-bold mt-1 hidden">Incorrect credentials.</p>
+      </div>
+
+      <button onclick="handleLoginSubmit()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm">
+        Enter Timetable Studio
+      </button>
+
+     <!-- Navigation Links -->
+      <div class="flex flex-col gap-2 pt-2 text-xs font-bold">
+        <div class="flex items-center justify-between">
+          <button type="button" onclick="switchModal('auth', 'signup')" class="text-indigo-600 hover:underline">
+            New Teacher? Sign Up
+          </button>
+          <button type="button" onclick="switchModal('auth', 'forgot-password')" class="text-slate-500 hover:text-slate-800">
+            Forgot Password?
+          </button>
         </div>
-
-        <!-- Email / Identifier Field (Hidden for Teachers) -->
-        <div id="email-field-container" class="hidden">
-          <label class="block text-xs font-bold text-slate-700 mb-1" id="email-label">School Name / Admin Email</label>
-          <input type="text" id="login-email-input" placeholder="Enter school name or email" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-
-        <!-- Password / Pass Key Field (Always visible for pass keys) -->
-        <div id="password-field-container">
-          <label class="block text-xs font-bold text-slate-700 mb-1" id="password-label">School Admin Pass Key</label>
-          <input type="password" id="login-password-input" placeholder="Enter school pass key (e.g. admin2026)" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <p id="auth-error-msg" class="text-[11px] text-rose-600 font-bold mt-1 hidden">Incorrect credentials.</p>
-        </div>
-
-        <button onclick="handleLoginSubmit()" class="w-full py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-sm">
-          Enter Timetable Studio
-        </button>
-
-        <!-- Navigation Links -->
-        <div class="flex flex-col gap-2 pt-2 text-xs font-bold">
-          <div class="flex items-center justify-between">
-            <button type="button" onclick="switchModal('auth', 'signup')" class="text-indigo-600 hover:underline">
-              New Teacher? Sign Up
-            </button>
-            <button type="button" onclick="switchModal('auth', 'forgot-password')" class="text-slate-500 hover:text-slate-800">
-              Forgot Password?
-            </button>
-          </div>
-          <div class="text-center pt-1 border-t border-slate-100">
-            <button type="button" onclick="openAdminRegistrationModal()" class="text-amber-600 hover:underline font-extrabold cursor-pointer">
-              Register as School Admin?
-            </button>
-          </div>
+        <!-- School Admin Registration Trigger -->
+        <div class="text-center pt-1 border-t border-slate-100">
+          <button type="button" onclick="openAdminRegistrationModal()" class="text-amber-600 hover:underline font-extrabold cursor-pointer">
+            Register as School Admin?
+          </button>
         </div>
       </div>
     </div>
   </div>
+</div>
+
 <!-- 1. School Admin Registration Form Modal -->
 <div id="admin-signup-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
   <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 space-y-4">
@@ -273,26 +274,19 @@
   </div>
 </div>
 
-<header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs no-print">
-  <div class="w-full px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
-    
+<!-- Header & School Profile Selector Section -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
     <!-- Brand & Active School Profile Selector -->
-    <div class="w-full sm:w-auto flex items-center gap-3">
-      ...
-    </div>
-
-    <!-- Quick Action Controls (PASTE YOUR BUTTON HERE) -->
-    <div class="flex items-center flex-wrap gap-2">
-      
-      <!-- Super Admin Pass-Key Manager Button -->
-      <button id="btn-superadmin-passkeys" onclick="openSuperAdminPassKeyManager()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition items-center gap-1.5 shadow-xs">
-        <i class="ph-bold ph-key text-sm"></i>
-        <span>Manage School Pass Keys</span>
-      </button>
-
-      <button id="btn-publish-sync" onclick="window.syncToAllTeachers()" class="...">
-        ...
-      </button>
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-800 flex items-center justify-center text-white shadow-sm font-black text-lg">
+        <i class="ph-bold ph-calendar-check"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight" id="header-school-name">PM SHRI KV GILL NAGAR, CHENNAI</h1>
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200" id="header-session-badge">2026-27</span>
+        </div>
         <!-- Quick Multi-School Switcher Dropdown -->
         <div class="flex items-center gap-2 mt-0.5">
           <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Active School:</span>
@@ -1777,56 +1771,15 @@ function openEditSchoolModal() {
       }
     }
 
-  function applyViewOnlyLocks() {
+   function applyViewOnlyLocks() {
       const banner = document.getElementById("view-only-banner");
       const publishBtn = document.getElementById("btn-publish-sync");
-      const superAdminBtn = document.getElementById("btn-superadmin-passkeys");
       const roleLabel = document.getElementById("role-switcher-label");
       
       const pill1 = document.getElementById("nav-pill-1");
       const pill2 = document.getElementById("nav-pill-2");
       const auditContainer = document.getElementById("pedagogical-audit-container");
 
-      const userRole = sessionStorage.getItem("kvs_user_role");
-
-      // 1. Super Admin Role Handling
-      if (userRole === "superadmin") {
-        if (banner) banner.classList.add("hidden");
-        if (publishBtn) publishBtn.classList.remove("hidden");
-        if (superAdminBtn) superAdminBtn.classList.remove("hidden"); // Show Super Admin pass-key manager
-        if (roleLabel) roleLabel.textContent = "Role: Super Admin";
-
-        if (pill1) pill1.classList.remove("hidden");
-        if (pill2) pill2.classList.remove("hidden");
-        if (auditContainer) auditContainer.classList.remove("hidden");
-
-        ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.disabled = false;
-        });
-
-        ["slide3-regen-btn", "slide3-clear-btn"].forEach(id => {
-          const btn = document.getElementById(id);
-          if (btn) {
-            btn.disabled = false;
-            btn.classList.remove("opacity-50", "cursor-not-allowed");
-          }
-        });
-
-        document.querySelectorAll("button[onclick*='addNewTeacher']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='openManageLimitsModal']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='autoGenerateFullTimetable']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.remove("hidden"));
-        return;
-      }
-
-      // Hide Super Admin button for normal users
-      if (superAdminBtn) superAdminBtn.classList.add("hidden");
-
-      // 2. School Admin / Editor Role Handling
       if (!state.isViewOnly) {
         if (banner) banner.classList.add("hidden");
         if (publishBtn) publishBtn.classList.remove("hidden");
@@ -1834,7 +1787,7 @@ function openEditSchoolModal() {
 
         if (pill1) pill1.classList.remove("hidden");
         if (pill2) pill2.classList.remove("hidden");
-        if (auditContainer) auditContainer.classList.remove("hidden");
+        if (auditContainer) auditContainer.classList.remove("hidden"); // Show audit for Admin
 
         ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
           const el = document.getElementById(id);
@@ -1859,14 +1812,13 @@ function openEditSchoolModal() {
         return;
       }
 
-      // 3. Teacher / Staff View-Only Role Handling
       if (banner) banner.classList.remove("hidden");
       if (publishBtn) publishBtn.classList.add("hidden");
       if (roleLabel) roleLabel.textContent = "Role: Staff (View-Only)";
 
       if (pill1) pill1.classList.add("hidden");
       if (pill2) pill2.classList.add("hidden");
-      if (auditContainer) auditContainer.classList.add("hidden");
+      if (auditContainer) auditContainer.classList.add("hidden"); // Hide audit for Staff / Teachers
 
       if (state.activeSlide === 1 || state.activeSlide === 2) {
         goToSlide(3);
@@ -5452,50 +5404,6 @@ function runPedagogicalAudit() {
         `).join("");
       }
     }
-    <!-- Super Admin School & Pass-Key Manager Modal -->
-  <div id="superadmin-passkey-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
-    <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-4xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg">
-            <i class="ph-bold ph-shield-star"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-extrabold text-slate-900">Super Admin • School Pass-Key & Registry Control</h3>
-            <p class="text-xs text-slate-500 font-medium">Manage individual school pass keys and dispatch modification email alerts</p>
-          </div>
-        </div>
-        <button onclick="closeSuperAdminPassKeyModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition">
-          <i class="ph-bold ph-x text-base"></i>
-        </button>
-      </div>
-
-      <!-- Schools Pass-Key Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full border-collapse text-left text-xs">
-          <thead>
-            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
-              <th class="py-3 px-3">School Name</th>
-              <th class="py-3 px-3">Admin Email</th>
-              <th class="py-3 px-3">Admin Pass Key</th>
-              <th class="py-3 px-3">Teacher Pass Key</th>
-              <th class="py-3 px-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="superadmin-passkey-tbody" class="divide-y divide-slate-100">
-            <!-- Dynamically populated -->
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-        <span class="text-xs text-slate-500 font-medium">Pass keys are stored securely in local registry & synchronized with Firebase.</span>
-        <button onclick="closeSuperAdminPassKeyModal()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white transition">
-          Close Manager
-        </button>
-      </div>
-    </div>
-  </div>
     // --- PORTAL ROLE AUTHENTICATION ---
     const ADMIN_PASSWORD = "kvs@admin2026";
 
@@ -5511,14 +5419,10 @@ function runPedagogicalAudit() {
 
    // --- SECURE MULTI-SCHOOL ROLE & PASS-KEY SCRIPT ---
 
-   // --- ROBUST 3-TIER PASS-KEY LOGIN HANDLER ---
-
-   // --- SECURE MULTI-SCHOOL ROLE & PASS-KEY SCRIPT ---
-
     const SUPER_ADMIN_EMAIL = "santosh.swain@kvs.gov.in";
     const SECOND_ADMIN_EMAIL = "swainsantosh850@gmail.com";
     const MASTER_SUPER_ADMIN_PASSWORD = "kvs@admin2026";
-    const GLOBAL_DEFAULT_TIMETABLE_PASSKEY = "kvsglobal2026";
+    const GLOBAL_DEFAULT_TIMETABLE_PASSKEY = "kvsglobal2026"; // Pass key for pre-existing default TT
 
     // Toggle between modals cleanly
     function switchModal(from, to) {
@@ -5532,7 +5436,9 @@ function runPedagogicalAudit() {
       const authModal = document.getElementById("auth-modal");
       const adminRegModal = document.getElementById("admin-signup-modal");
       
-      if (authModal) authModal.style.display = "none";
+      if (authModal) {
+        authModal.style.display = "none";
+      }
       if (adminRegModal) {
         adminRegModal.style.display = "flex";
         adminRegModal.style.zIndex = "99999";
@@ -5542,12 +5448,8 @@ function runPedagogicalAudit() {
     }
 
     // Dynamic UI update when switching roles in the login dropdown
-   // Dynamic UI update when switching roles in the login dropdown
     function togglePasswordField() {
-      const roleSelect = document.getElementById("login-role-select");
-      if (!roleSelect) return;
-      const role = roleSelect.value;
-
+      const role = document.getElementById("login-role-select").value;
       const emailContainer = document.getElementById("email-field-container");
       const passwordContainer = document.getElementById("password-field-container");
       const emailLabel = document.getElementById("email-label");
@@ -5571,133 +5473,9 @@ function runPedagogicalAudit() {
         if (emailContainer) emailContainer.classList.add("hidden");
         if (passwordContainer) passwordContainer.classList.remove("hidden");
         if (passwordLabel) passwordLabel.textContent = "School Admin Pass Key";
-        const passInput = document.getElementById("login-password-input");
-        if (passInput) passInput.placeholder = "Enter school pass key (e.g. admin2026)";
       }
     }
 
-    // 3-Tier Login Handler with Fail-Safe Pass-Key Validation
-    function handleLoginSubmit() {
-      try {
-        const roleSelect = document.getElementById("login-role-select");
-        const emailInput = document.getElementById("login-email-input");
-        const passInput = document.getElementById("login-password-input");
-        const errorMsg = document.getElementById("auth-error-msg");
-
-        if (errorMsg) errorMsg.classList.add("hidden");
-
-        const role = roleSelect ? roleSelect.value : "teacher";
-        const identifier = emailInput ? emailInput.value.trim().toLowerCase() : "";
-        const passwordInput = passInput ? passInput.value.trim() : "";
-
-        if (role === "superadmin") {
-          const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL || identifier === "");
-          const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD || passwordInput === "kvs@admin2026");
-
-          if (isValidSuperAdminEmail && isMasterPasswordValid) {
-            state.isViewOnly = false;
-            sessionStorage.setItem("kvs_user_role", "superadmin");
-            const modal = document.getElementById("auth-modal");
-            if (modal) modal.style.display = "none";
-            applyViewOnlyLocks();
-            if (typeof unlockAllSchoolsForSuperAdmin === "function") unlockAllSchoolsForSuperAdmin();
-            showNotification("Welcome Super Admin! Master access enabled.", "success");
-          } else {
-            showAuthError("Incorrect Super Admin master credentials.");
-          }
-        } 
-        else if (role === "admin") {
-          let adminRegistry = {};
-          try {
-            adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-          } catch (e) { adminRegistry = {}; }
-
-          let matchedAdmin = Object.values(adminRegistry).find(admin => 
-            (admin.email && admin.email.toLowerCase() === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
-          );
-
-          if (matchedAdmin) {
-            state.isViewOnly = false;
-            sessionStorage.setItem("kvs_user_role", "admin");
-            const modal = document.getElementById("auth-modal");
-            if (modal) modal.style.display = "none";
-            
-            if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace(matchedAdmin.school);
-            applyViewOnlyLocks();
-            showNotification(`Welcome ${matchedAdmin.name}! Managing ${matchedAdmin.school}.`, "success");
-          } 
-          else if (passwordInput === "kvs@schooladmin2026" || passwordInput === "admin2026") {
-            state.isViewOnly = false;
-            sessionStorage.setItem("kvs_user_role", "admin");
-            const modal = document.getElementById("auth-modal");
-            if (modal) modal.style.display = "none";
-            
-            if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace("PM SHRI KV GILL NAGAR, CHENNAI");
-            applyViewOnlyLocks();
-            showNotification("Welcome School Admin! Workspace enabled.", "success");
-          } 
-          else {
-            showAuthError("Incorrect School Admin Pass Key.");
-          }
-        } 
-        else {
-          // TEACHER / STAFF ACCESS: Log in strictly via School Admin Pass Key
-          let adminRegistry = {};
-          try {
-            adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-          } catch (e) { adminRegistry = {}; }
-
-          let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput || admin.passKey === passwordInput);
-          let matchedSchoolByRepo = (schoolRepository.schools || []).find(s => s.adminPassword === passwordInput);
-
-          if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY || passwordInput === "admin2026") {
-            state.isViewOnly = true;
-            sessionStorage.setItem("kvs_user_role", "teacher");
-            const modal = document.getElementById("auth-modal");
-            if (modal) modal.style.display = "none";
-            applyViewOnlyLocks();
-            showNotification("Logged in as Staff (View-Only Mode)", "info");
-          } 
-          else if (matchedSchoolByPassKey) {
-            state.isViewOnly = true;
-            sessionStorage.setItem("kvs_user_role", "teacher");
-            const modal = document.getElementById("auth-modal");
-            if (modal) modal.style.display = "none";
-            
-            if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace(matchedSchoolByPassKey.school);
-            applyViewOnlyLocks();
-            showNotification(`Welcome Teacher! Viewing timetable for ${matchedSchoolByPassKey.school}.`, "info");
-          } 
-          else if (matchedSchoolByRepo) {
-            schoolRepository.activeSchoolId = matchedSchoolByRepo.id;
-            state.isViewOnly = true;
-            sessionStorage.setItem("kvs_user_role", "teacher");
-            const modal = document.getElementById("auth-modal");
-            if (modal) modal.style.display = "none";
-            
-            if (typeof syncActiveSchoolFromRepository === "function") syncActiveSchoolFromRepository();
-            applyViewOnlyLocks();
-            showNotification(`Welcome Teacher! Viewing ${matchedSchoolByRepo.name}.`, "info");
-          }
-          else {
-            showAuthError("Invalid School Admin Pass Key. Check with your Admin.");
-          }
-        }
-      } catch (err) {
-        console.error("Login Exception:", err);
-        showAuthError("Login Error: " + err.message);
-      }
-    }
-
-    function showAuthError(msg) {
-      const errorMsg = document.getElementById("auth-error-msg");
-      if (errorMsg) {
-        errorMsg.textContent = msg;
-        errorMsg.classList.remove("hidden");
-      } else {
-        showNotification(msg, "warning");
-      }
-    }
     // 3-Tier Login Handler with Secure Pass-Key Validation & School Isolation
     function handleLoginSubmit() {
       const role = document.getElementById("login-role-select").value;
@@ -6055,100 +5833,6 @@ function checkUserSession() {
       }
     }
   }
-    // Trigger to open the Super Admin Pass-Key Dashboard
-    function openSuperAdminPassKeyManager() {
-      const modal = document.getElementById("superadmin-passkey-modal");
-      if (modal) {
-        modal.style.display = "flex";
-        renderSuperAdminPassKeyTable();
-      }
-    }
-
-    function closeSuperAdminPassKeyManager() {
-      const modal = document.getElementById("superadmin-passkey-modal");
-      if (modal) modal.style.display = "none";
-    }
-
-    // Render all schools with their visible pass keys
-    function renderSuperAdminPassKeyTable() {
-      const tbody = document.getElementById("superadmin-passkey-tbody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let schools = schoolRepository.schools || [];
-
-      if (schools.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400 font-bold">No schools registered yet.</td></tr>`;
-        return;
-      }
-
-      schools.forEach(sch => {
-        // Find matching registry entry or create default placeholder
-        let registryEntry = Object.values(adminRegistry).find(a => a.school === sch.name) || {
-          email: "admin@" + sch.id + ".kvs.gov.in",
-          passKey: sch.adminPassword || "admin2026",
-          teacherPassKey: "teacher_" + sch.id
-        };
-
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50/60 transition";
-        tr.innerHTML = `
-          <td class="py-3 px-3 font-extrabold text-slate-900">${sch.name}</td>
-          <td class="py-3 px-3 text-slate-600 font-medium">${registryEntry.email || 'N/A'}</td>
-          <td class="py-3 px-3 font-mono font-bold text-indigo-700 bg-indigo-50/50 rounded">${registryEntry.passKey}</td>
-          <td class="py-3 px-3 font-mono font-bold text-teal-700 bg-teal-50/50 rounded">${registryEntry.teacherPassKey || 'Not Set'}</td>
-          <td class="py-3 px-3 text-right space-x-1">
-            <button onclick="superAdminRegeneratePassKey('${sch.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition" title="Generate New Pass Key">
-              Regenerate Key
-            </button>
-            <button onclick="superAdminSendModificationEmail('${registryEntry.email}', '${sch.name}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition" title="Send Modification Alert Mail">
-              Notify Mail
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // Generate separate pass key for a specific school
-    function superAdminRegeneratePassKey(schoolId) {
-      const sch = schoolRepository.schools.find(s => s.id === schoolId);
-      if (!sch) return;
-
-      const randomKey = "kvs_" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      sch.adminPassword = randomKey;
-
-      // Update local registry
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      Object.keys(adminRegistry).forEach(key => {
-        if (adminRegistry[key].school === sch.name) {
-          adminRegistry[key].passKey = randomKey;
-        }
-      });
-      localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
-
-      commitWorkingStateToRepository();
-      renderSuperAdminPassKeyTable();
-      showNotification(`New Admin Pass Key generated for ${sch.name}: ${randomKey}`, "success");
-    }
-
-    // Send separate notification mail to school admin upon modification
-    function superAdminSendModificationEmail(adminEmail, schoolName) {
-      if (!adminEmail || adminEmail.includes("N/A")) {
-        showNotification("No valid email address registered for this school.", "warning");
-        return;
-      }
-
-      const subject = encodeURIComponent(`URGENT: Timetable Modification Notice - ${schoolName}`);
-      const body = encodeURIComponent(
-        `Dear School Administrator,\n\nThis is an official notification from the KVS Super Admin desk that recent modifications have been made to the master timetable for ${schoolName}.\n\nPlease log in to your portal using your designated School Admin Pass Key to review, verify, and publish the updated schedule for your staff.\n\nRegards,\nKVS Timetable Studio Central Administration`
-      );
-
-      // Opens default mail client pre-filled with recipient, subject, and body
-      window.location.href = `mailto:${adminEmail}?subject=${subject}&body=${body}`;
-      showNotification(`Opening mail client to notify ${adminEmail}...`, "info");
-    }
     // --- FIREBASE REALTIME CLOUD SYNC ---
     const firebaseConfig = {
       apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",

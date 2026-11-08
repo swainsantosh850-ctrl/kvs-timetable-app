@@ -1818,80 +1818,90 @@ function openEditSchoolModal() {
       }
     }
 
-   function applyViewOnlyLocks() {
-      const banner = document.getElementById("view-only-banner");
-      const publishBtn = document.getElementById("btn-publish-sync");
-      const roleLabel = document.getElementById("role-switcher-label");
-      
-      const pill1 = document.getElementById("nav-pill-1");
-      const pill2 = document.getElementById("nav-pill-2");
-      const auditContainer = document.getElementById("pedagogical-audit-container");
+  function applyViewOnlyLocks() {
+    const banner = document.getElementById("view-only-banner");
+    const publishBtn = document.getElementById("btn-publish-sync");
+    const roleLabel = document.getElementById("role-switcher-label");
+    const superAdminPasskeysBtn = document.getElementById("btn-superadmin-passkeys");
+    
+    const userRole = sessionStorage.getItem("kvs_user_role") || "teacher";
+    
+    const pill1 = document.getElementById("nav-pill-1");
+    const pill2 = document.getElementById("nav-pill-2");
+    const auditContainer = document.getElementById("pedagogical-audit-container");
 
-      if (!state.isViewOnly) {
-        if (banner) banner.classList.add("hidden");
-        if (publishBtn) publishBtn.classList.remove("hidden");
-        if (roleLabel) roleLabel.textContent = "Role: Admin";
+    // 1. SUPER ADMIN ROLE
+    if (userRole === "superadmin") {
+      state.isViewOnly = false;
+      if (banner) banner.classList.add("hidden");
+      if (publishBtn) publishBtn.classList.remove("hidden");
+      if (roleLabel) roleLabel.textContent = "Role: Super Admin";
+      if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.remove("hidden"); // Reveal Pass-Key Manager button
 
-        if (pill1) pill1.classList.remove("hidden");
-        if (pill2) pill2.classList.remove("hidden");
-        if (auditContainer) auditContainer.classList.remove("hidden"); // Show audit for Admin
+      if (pill1) pill1.classList.remove("hidden");
+      if (pill2) pill2.classList.remove("hidden");
+      if (auditContainer) auditContainer.classList.remove("hidden");
 
-        ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.disabled = false;
-        });
-
-        ["slide3-regen-btn", "slide3-clear-btn"].forEach(id => {
-          const btn = document.getElementById(id);
-          if (btn) {
-            btn.disabled = false;
-            btn.classList.remove("opacity-50", "cursor-not-allowed");
-          }
-        });
-
-        document.querySelectorAll("button[onclick*='addNewTeacher']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='openManageLimitsModal']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='autoGenerateFullTimetable']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.remove("hidden"));
-        document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.remove("hidden"));
-        return;
-      }
-
-      if (banner) banner.classList.remove("hidden");
-      if (publishBtn) publishBtn.classList.add("hidden");
-      if (roleLabel) roleLabel.textContent = "Role: Staff (View-Only)";
-
-      if (pill1) pill1.classList.add("hidden");
-      if (pill2) pill2.classList.add("hidden");
-      if (auditContainer) auditContainer.classList.add("hidden"); // Hide audit for Staff / Teachers
-
-      if (state.activeSlide === 1 || state.activeSlide === 2) {
-        goToSlide(3);
-      }
-
-      ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = true;
-      });
-
-      ["slide3-regen-btn", "slide3-clear-btn"].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) {
-          btn.disabled = true;
-          btn.classList.add("opacity-50", "cursor-not-allowed");
-        }
-      });
-
-      document.querySelectorAll("button[onclick*='addNewTeacher']").forEach(b => b.classList.add("hidden"));
-      document.querySelectorAll("button[onclick*='openManageLimitsModal']").forEach(b => b.classList.add("hidden"));
-      document.querySelectorAll("button[onclick*='autoGenerateFullTimetable']").forEach(b => b.classList.add("hidden"));
-      document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.add("hidden"));
-      document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.add("hidden"));
-      document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.add("hidden"));
-      document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.add("hidden"));
+      toggleInputLocks(false);
+      return;
     }
+
+    // 2. SCHOOL ADMIN ROLE
+    if (userRole === "admin") {
+      state.isViewOnly = false;
+      if (banner) banner.classList.add("hidden");
+      if (publishBtn) publishBtn.classList.remove("hidden");
+      if (roleLabel) roleLabel.textContent = "Role: Admin";
+      if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.add("hidden"); // Hide for standard admin
+
+      if (pill1) pill1.classList.remove("hidden");
+      if (pill2) pill2.classList.remove("hidden");
+      if (auditContainer) auditContainer.classList.remove("hidden");
+
+      toggleInputLocks(false);
+      return;
+    }
+
+    // 3. STAFF / TEACHER ROLE (View-Only)
+    state.isViewOnly = true;
+    if (banner) banner.classList.remove("hidden");
+    if (publishBtn) publishBtn.classList.add("hidden");
+    if (roleLabel) roleLabel.textContent = "Role: Staff";
+    if (superAdminPasskeysBtn) superAdminPasskeysBtn.classList.add("hidden");
+
+    if (pill1) pill1.classList.add("hidden");
+    if (pill2) pill2.classList.add("hidden");
+    if (auditContainer) auditContainer.classList.add("hidden");
+
+    if (state.activeSlide === 1 || state.activeSlide === 2) {
+      goToSlide(3);
+    }
+    toggleInputLocks(true);
+  }
+
+  function toggleInputLocks(isViewOnly) {
+    ["school-name-input", "school-session-input", "school-sections-select"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = isViewOnly;
+    });
+
+    ["slide3-regen-btn", "slide3-clear-btn"].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.disabled = isViewOnly;
+        if (isViewOnly) btn.classList.add("opacity-50", "cursor-not-allowed");
+        else btn.classList.remove("opacity-50", "cursor-not-allowed");
+      }
+    });
+
+    document.querySelectorAll("button[onclick*='addNewTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='openManageLimitsModal']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='autoGenerateFullTimetable']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='deleteTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='addSubjectToTeacher']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='deleteAllotmentRow']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+    document.querySelectorAll("button[onclick*='openSecondaryBusyModal']").forEach(b => b.classList.toggle("hidden", isViewOnly));
+  }
     function refreshAllScheduleViews() {
       if (state.activeSlide === 3) {
         renderSlide3Grid();

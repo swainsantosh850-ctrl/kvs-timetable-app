@@ -5880,8 +5880,6 @@ function isolateSchoolWorkspace(schoolName) {
       if (typeof syncActiveSchoolFromRepository === "function") {
         syncActiveSchoolFromRepository();
       }
-    }
-  }
       // Create a brand new, clean school profile with empty schedules for this admin
       const newId = "sch_" + Date.now();
       const newSchool = {
@@ -5908,8 +5906,6 @@ function isolateSchoolWorkspace(schoolName) {
       schoolRepository.activeSchoolId = newId;
       syncActiveSchoolFromRepository();
     }
-  
-
 function unlockAllSchoolsForSuperAdmin() {
     sessionStorage.setItem("kvs_user_role", "superadmin");
     if (typeof applyViewOnlyLocks === "function") {

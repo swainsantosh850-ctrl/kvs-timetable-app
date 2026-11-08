@@ -5718,9 +5718,13 @@ function runPedagogicalAudit() {
           state.isViewOnly = true;
           sessionStorage.setItem("kvs_user_role", "teacher");
           document.getElementById("auth-modal").style.display = "none";
+          
+          // Add this line to force-load your school workspace
+          isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
+          
           applyViewOnlyLocks();
           showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
-        } 
+        }
         else if (matchedSchoolByPassKey) {
           state.isViewOnly = true;
           sessionStorage.setItem("kvs_user_role", "teacher");

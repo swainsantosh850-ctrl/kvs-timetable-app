@@ -5852,6 +5852,8 @@ function isolateSchoolWorkspace(schoolName) {
     }
 
     const upperName = schoolName.trim().toUpperCase();
+    
+    // Strictly look for an exact name match (no loose substring guessing)
     let targetSchool = schoolRepository.schools.find(s => s && s.name && s.name.toUpperCase() === upperName);
     
     if (targetSchool) {
@@ -5860,19 +5862,32 @@ function isolateSchoolWorkspace(schoolName) {
         syncActiveSchoolFromRepository();
       }
     } else {
-      let matchingSchool = schoolRepository.schools.find(s => {
-        if (!s || !s.name) return false;
-        const sUpper = s.name.toUpperCase();
-        return sUpper.includes(upperName) || upperName.includes(sUpper);
-      });
+      // If no exact match exists, create a clean, dedicated workspace profile for this exact school name
+      const newId = "sch_" + Date.now();
+      const newSchool = {
+        id: newId,
+        name: upperName,
+        session: "2026-27",
+        sectionsCount: "2",
+        teachers: [
+          { id: "t_init_1", name: "PRT 1", shortName: "P1", isClassTeacher: true, classNum: "1", section: "A", secondaryBusySlots: {} }
+        ],
+        subjectLimits: {
+          "Class 1": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 2": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 3": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 4": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 5": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 }
+        },
+        allotments: [],
+        schedules: createEmptyClassSchedules(),
+        rules: []
+      };
       
-      if (matchingSchool) {
-        schoolRepository.activeSchoolId = matchingSchool.id;
-        if (typeof syncActiveSchoolFromRepository === "function") {
-          syncActiveSchoolFromRepository();
-        }
-      } else {
-        console.warn("School isolation target not found, keeping current workspace.");
+      schoolRepository.schools.push(newSchool);
+      schoolRepository.activeSchoolId = newId;
+      if (typeof syncActiveSchoolFromRepository === "function") {
+        syncActiveSchoolFromRepository();
       }
     }
   }

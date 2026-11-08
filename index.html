@@ -5535,6 +5535,7 @@ function runPedagogicalAudit() {
         if (isValidSuperAdminEmail && isMasterPasswordValid) {
           state.isViewOnly = false;
           sessionStorage.setItem("kvs_user_role", "superadmin");
+          
           document.getElementById("auth-modal").style.display = "none";
           applyViewOnlyLocks();
           unlockAllSchoolsForSuperAdmin();
@@ -5741,8 +5742,12 @@ function runPedagogicalAudit() {
   }
 
 function unlockAllSchoolsForSuperAdmin() {
+    sessionStorage.setItem("kvs_user_role", "superadmin");
+    if (typeof applyViewOnlyLocks === "function") {
+      applyViewOnlyLocks();
+    }
     renderSchoolSelectors();
-    showNotification("Super Admin Master View Unlocked: All school schedules visible.", "success");
+    showNotification("Super Admin Master View Unlocked: Full control enabled.", "success");
   }
 
   // Teacher Sign Up with Email OTP Dispatch

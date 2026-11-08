@@ -5840,7 +5840,7 @@ function runPedagogicalAudit() {
   }
 
   // Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
-  function isolateSchoolWorkspace(schoolName) {
+function isolateSchoolWorkspace(schoolName) {
     const upperName = schoolName.toUpperCase();
     let targetSchool = schoolRepository.schools.find(s => s.name.toUpperCase() === upperName);
     
@@ -5848,6 +5848,17 @@ function runPedagogicalAudit() {
       schoolRepository.activeSchoolId = targetSchool.id;
       syncActiveSchoolFromRepository();
     } else {
+      // If the school name from the pass-key registry isn't in active memory yet, find or create it safely
+      let matchingSchool = schoolRepository.schools.find(s => s.name.toUpperCase().includes(upperName) || upperName.includes(s.name.toUpperCase()));
+      if (matchingSchool) {
+        schoolRepository.activeSchoolId = matchingSchool.id;
+        syncActiveSchoolFromRepository();
+      } else {
+        // Fallback: keep active school if mismatch occurs
+        console.warn("School isolation target not found, keeping current workspace.");
+      }
+    }
+  }
       // Create a brand new, clean school profile with empty schedules for this admin
       const newId = "sch_" + Date.now();
       const newSchool = {

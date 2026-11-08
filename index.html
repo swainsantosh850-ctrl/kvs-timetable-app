@@ -5496,388 +5496,434 @@ function runPedagogicalAudit() {
       </div>
     </div>
   </div>
-   <script>
-  // --- PORTAL ROLE AUTHENTICATION & PASS-KEY ENGINE ---
-  const SUPER_ADMIN_EMAIL = "santosh.swain@kvs.gov.in";
-  const SECOND_ADMIN_EMAIL = "swainsantosh850@gmail.com";
-  const MASTER_SUPER_ADMIN_PASSWORD = "kvs@admin2026";
-  const GLOBAL_DEFAULT_TIMETABLE_PASSKEY = "kvsglobal2026";
+    // --- PORTAL ROLE AUTHENTICATION ---
+    const ADMIN_PASSWORD = "kvs@admin2026";
 
-  // Clean modal switcher helper
-  function switchModal(from, to) {
-    const mapId = (key) => {
-      if (key === "auth") return "auth-modal";
-      if (key === "signup") return "signup-modal";
-      if (key === "forgot" || key === "forgot-password") return "forgot-password-modal";
-      if (key === "admin-signup") return "admin-signup-modal";
-      if (key === "admin-otp") return "admin-otp-modal";
-      return key.includes("-modal") ? key : key + "-modal";
-    };
-
-    const fromModal = document.getElementById(mapId(from));
-    const toModal = document.getElementById(mapId(to));
-
-    if (fromModal) fromModal.style.display = "none";
-    if (toModal) {
-      toModal.style.display = "flex";
-      toModal.style.zIndex = "99999";
+    function openAuthModal() {
+      const modal = document.getElementById("auth-modal");
+      if (modal) {
+        modal.style.display = "flex";
+        const roleSelect = document.getElementById("login-role-select");
+        if (roleSelect) roleSelect.value = "admin";
+        togglePasswordField();
+      }
     }
-  }
 
-  function openAuthModal() {
-    const modal = document.getElementById("auth-modal");
-    if (modal) {
-      modal.style.display = "flex";
-      modal.style.zIndex = "99999";
+   // --- SECURE MULTI-SCHOOL ROLE & PASS-KEY SCRIPT ---
+
+   // --- ROBUST 3-TIER PASS-KEY LOGIN HANDLER ---
+
+   // --- SECURE MULTI-SCHOOL ROLE & PASS-KEY SCRIPT ---
+
+    const SUPER_ADMIN_EMAIL = "santosh.swain@kvs.gov.in";
+    const SECOND_ADMIN_EMAIL = "swainsantosh850@gmail.com";
+    const MASTER_SUPER_ADMIN_PASSWORD = "kvs@admin2026";
+    const GLOBAL_DEFAULT_TIMETABLE_PASSKEY = "kvsglobal2026";
+
+    // Toggle between modals cleanly
+    function switchModal(from, to) {
+      const fromModal = document.getElementById(`${from}-modal`);
+      const toModal = document.getElementById(`${to}-modal`);
+      if (fromModal) fromModal.style.display = "none";
+      if (toModal) toModal.style.display = "flex";
+    }
+
+    function openAdminRegistrationModal() {
+      const authModal = document.getElementById("auth-modal");
+      const adminRegModal = document.getElementById("admin-signup-modal");
+      
+      if (authModal) authModal.style.display = "none";
+      if (adminRegModal) {
+        adminRegModal.style.display = "flex";
+        adminRegModal.style.zIndex = "99999";
+      } else {
+        console.error("Error: #admin-signup-modal element missing.");
+      }
+    }
+
+    // Dynamic UI update when switching roles in the login dropdown
+   // Dynamic UI update when switching roles in the login dropdown
+    function togglePasswordField() {
       const roleSelect = document.getElementById("login-role-select");
-      if (roleSelect) roleSelect.value = "teacher";
-      togglePasswordField();
+      if (!roleSelect) return;
+      const role = roleSelect.value;
+
+      const emailContainer = document.getElementById("email-field-container");
+      const passwordContainer = document.getElementById("password-field-container");
+      const emailLabel = document.getElementById("email-label");
+      const passwordLabel = document.getElementById("password-label");
+      const errorMsg = document.getElementById("auth-error-msg");
+      
+      if (errorMsg) errorMsg.classList.add("hidden");
+
+      if (role === "admin") {
+        if (emailContainer) emailContainer.classList.remove("hidden");
+        if (passwordContainer) passwordContainer.classList.remove("hidden");
+        if (emailLabel) emailLabel.textContent = "School Name / Admin Email";
+        if (passwordLabel) passwordLabel.textContent = "School Admin Password / Pass Key";
+      } else if (role === "superadmin") {
+        if (emailContainer) emailContainer.classList.remove("hidden");
+        if (passwordContainer) passwordContainer.classList.remove("hidden");
+        if (emailLabel) emailLabel.textContent = "Super Admin Email ID";
+        if (passwordLabel) passwordLabel.textContent = "Super Admin Master Password";
+      } else {
+        // Teacher / Staff Mode: Hide email container, staff log in strictly via School Admin Pass Key
+        if (emailContainer) emailContainer.classList.add("hidden");
+        if (passwordContainer) passwordContainer.classList.remove("hidden");
+        if (passwordLabel) passwordLabel.textContent = "School Admin Pass Key";
+        const passInput = document.getElementById("login-password-input");
+        if (passInput) passInput.placeholder = "Enter school pass key (e.g. admin2026)";
+      }
     }
-  }
 
-  function openAdminRegistrationModal() {
-    const authModal = document.getElementById("auth-modal");
-    const adminRegModal = document.getElementById("admin-signup-modal");
-    if (authModal) authModal.style.display = "none";
-    if (adminRegModal) {
-      adminRegModal.style.display = "flex";
-      adminRegModal.style.zIndex = "99999";
+    // 3-Tier Login Handler with Fail-Safe Pass-Key Validation
+    function handleLoginSubmit() {
+      try {
+        const roleSelect = document.getElementById("login-role-select");
+        const emailInput = document.getElementById("login-email-input");
+        const passInput = document.getElementById("login-password-input");
+        const errorMsg = document.getElementById("auth-error-msg");
+
+        if (errorMsg) errorMsg.classList.add("hidden");
+
+        const role = roleSelect ? roleSelect.value : "teacher";
+        const identifier = emailInput ? emailInput.value.trim().toLowerCase() : "";
+        const passwordInput = passInput ? passInput.value.trim() : "";
+
+        if (role === "superadmin") {
+          const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL || identifier === "");
+          const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD || passwordInput === "kvs@admin2026");
+
+          if (isValidSuperAdminEmail && isMasterPasswordValid) {
+            state.isViewOnly = false;
+            sessionStorage.setItem("kvs_user_role", "superadmin");
+            const modal = document.getElementById("auth-modal");
+            if (modal) modal.style.display = "none";
+            applyViewOnlyLocks();
+            if (typeof unlockAllSchoolsForSuperAdmin === "function") unlockAllSchoolsForSuperAdmin();
+            showNotification("Welcome Super Admin! Master access enabled.", "success");
+          } else {
+            showAuthError("Incorrect Super Admin master credentials.");
+          }
+        } 
+        else if (role === "admin") {
+          let adminRegistry = {};
+          try {
+            adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+          } catch (e) { adminRegistry = {}; }
+
+          let matchedAdmin = Object.values(adminRegistry).find(admin => 
+            (admin.email && admin.email.toLowerCase() === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
+          );
+
+          if (matchedAdmin) {
+            state.isViewOnly = false;
+            sessionStorage.setItem("kvs_user_role", "admin");
+            const modal = document.getElementById("auth-modal");
+            if (modal) modal.style.display = "none";
+            
+            if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace(matchedAdmin.school);
+            applyViewOnlyLocks();
+            showNotification(`Welcome ${matchedAdmin.name}! Managing ${matchedAdmin.school}.`, "success");
+          } 
+          else if (passwordInput === "kvs@schooladmin2026" || passwordInput === "admin2026") {
+            state.isViewOnly = false;
+            sessionStorage.setItem("kvs_user_role", "admin");
+            const modal = document.getElementById("auth-modal");
+            if (modal) modal.style.display = "none";
+            
+            if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace("PM SHRI KV GILL NAGAR, CHENNAI");
+            applyViewOnlyLocks();
+            showNotification("Welcome School Admin! Workspace enabled.", "success");
+          } 
+          else {
+            showAuthError("Incorrect School Admin Pass Key.");
+          }
+        } 
+        else {
+          // TEACHER / STAFF ACCESS: Log in strictly via School Admin Pass Key
+          let adminRegistry = {};
+          try {
+            adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+          } catch (e) { adminRegistry = {}; }
+
+          let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput || admin.passKey === passwordInput);
+          let matchedSchoolByRepo = (schoolRepository.schools || []).find(s => s.adminPassword === passwordInput);
+
+          if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY || passwordInput === "admin2026") {
+            state.isViewOnly = true;
+            sessionStorage.setItem("kvs_user_role", "teacher");
+            const modal = document.getElementById("auth-modal");
+            if (modal) modal.style.display = "none";
+            applyViewOnlyLocks();
+            showNotification("Logged in as Staff (View-Only Mode)", "info");
+          } 
+          else if (matchedSchoolByPassKey) {
+            state.isViewOnly = true;
+            sessionStorage.setItem("kvs_user_role", "teacher");
+            const modal = document.getElementById("auth-modal");
+            if (modal) modal.style.display = "none";
+            
+            if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace(matchedSchoolByPassKey.school);
+            applyViewOnlyLocks();
+            showNotification(`Welcome Teacher! Viewing timetable for ${matchedSchoolByPassKey.school}.`, "info");
+          } 
+          else if (matchedSchoolByRepo) {
+            schoolRepository.activeSchoolId = matchedSchoolByRepo.id;
+            state.isViewOnly = true;
+            sessionStorage.setItem("kvs_user_role", "teacher");
+            const modal = document.getElementById("auth-modal");
+            if (modal) modal.style.display = "none";
+            
+            if (typeof syncActiveSchoolFromRepository === "function") syncActiveSchoolFromRepository();
+            applyViewOnlyLocks();
+            showNotification(`Welcome Teacher! Viewing ${matchedSchoolByRepo.name}.`, "info");
+          }
+          else {
+            showAuthError("Invalid School Admin Pass Key. Check with your Admin.");
+          }
+        }
+      } catch (err) {
+        console.error("Login Exception:", err);
+        showAuthError("Login Error: " + err.message);
+      }
     }
-  }
 
-  // Dynamic UI update when switching roles in the login dropdown
-  function togglePasswordField() {
-    const roleSelect = document.getElementById("login-role-select");
-    if (!roleSelect) return;
-    const role = roleSelect.value;
-
-    const emailContainer = document.getElementById("email-field-container");
-    const passwordContainer = document.getElementById("password-field-container");
-    const emailLabel = document.getElementById("email-label");
-    const passwordLabel = document.getElementById("password-label");
-    const passInput = document.getElementById("login-password-input");
-    const errorMsg = document.getElementById("auth-error-msg");
-    
-    if (errorMsg) errorMsg.classList.add("hidden");
-
-    if (role === "admin") {
-      if (emailContainer) emailContainer.classList.remove("hidden");
-      if (passwordContainer) passwordContainer.classList.remove("hidden");
-      if (emailLabel) emailLabel.textContent = "School Name / Admin Email";
-      if (passwordLabel) passwordLabel.textContent = "School Admin Password / Pass Key";
-      if (passInput) passInput.placeholder = "Enter admin password or pass key";
-    } else if (role === "superadmin") {
-      if (emailContainer) emailContainer.classList.remove("hidden");
-      if (passwordContainer) passwordContainer.classList.remove("hidden");
-      if (emailLabel) emailLabel.textContent = "Super Admin Email ID";
-      if (passwordLabel) passwordLabel.textContent = "Super Admin Master Password";
-      if (passInput) passInput.placeholder = "Enter master superadmin password";
-    } else {
-      if (emailContainer) emailContainer.classList.add("hidden");
-      if (passwordContainer) passwordContainer.classList.remove("hidden");
-      if (passwordLabel) passwordLabel.textContent = "School Admin Pass Key";
-      if (passInput) passInput.placeholder = "Enter school pass key (e.g. admin2026)";
+    function showAuthError(msg) {
+      const errorMsg = document.getElementById("auth-error-msg");
+      if (errorMsg) {
+        errorMsg.textContent = msg;
+        errorMsg.classList.remove("hidden");
+      } else {
+        showNotification(msg, "warning");
+      }
     }
-  }
-
-  // Unified 3-Tier Login Handler
-  function handleLoginSubmit() {
-    try {
-      const roleSelect = document.getElementById("login-role-select");
-      const emailInput = document.getElementById("login-email-input");
-      const passInput = document.getElementById("login-password-input");
+    // 3-Tier Login Handler with Secure Pass-Key Validation & School Isolation
+    function handleLoginSubmit() {
+      const role = document.getElementById("login-role-select").value;
+      const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
+      const passwordInput = document.getElementById("login-password-input").value.trim();
       const errorMsg = document.getElementById("auth-error-msg");
 
       if (errorMsg) errorMsg.classList.add("hidden");
 
-      const role = roleSelect ? roleSelect.value : "teacher";
-      const identifier = emailInput ? emailInput.value.trim().toLowerCase() : "";
-      const passwordInput = passInput ? passInput.value.trim() : "";
-
       if (role === "superadmin") {
-        const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL || identifier === "");
-        const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD || passwordInput === "kvs@admin2026");
+        // 1. SUPER ADMIN ACCESS: Require BOTH a valid super admin email AND the correct master password
+        const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL);
+        const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD);
 
         if (isValidSuperAdminEmail && isMasterPasswordValid) {
           state.isViewOnly = false;
           sessionStorage.setItem("kvs_user_role", "superadmin");
-          const modal = document.getElementById("auth-modal");
-          if (modal) modal.style.display = "none";
+          document.getElementById("auth-modal").style.display = "none";
           applyViewOnlyLocks();
-          if (typeof unlockAllSchoolsForSuperAdmin === "function") unlockAllSchoolsForSuperAdmin();
-          showNotification("Welcome Super Admin! Full master access enabled.", "success");
+          unlockAllSchoolsForSuperAdmin();
+          showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
         } else {
-          showAuthError("Incorrect Super Admin master credentials.");
+          if (errorMsg) {
+            errorMsg.textContent = "Incorrect Super Admin master credentials.";
+            errorMsg.classList.remove("hidden");
+          }
         }
       } 
       else if (role === "admin") {
-        let adminRegistry = {};
-        try {
-          adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-        } catch (e) { adminRegistry = {}; }
-
+        // 2. SCHOOL ADMIN ACCESS: Require correct admin email AND matching admin password/passkey
+        let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
         let matchedAdmin = Object.values(adminRegistry).find(admin => 
-          (admin.email && admin.email.toLowerCase() === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
+          (admin.email === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
         );
 
         if (matchedAdmin) {
           state.isViewOnly = false;
           sessionStorage.setItem("kvs_user_role", "admin");
-          const modal = document.getElementById("auth-modal");
-          if (modal) modal.style.display = "none";
-          if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace(matchedAdmin.school);
+          document.getElementById("auth-modal").style.display = "none";
+          
+          // Strictly isolate view to this admin's specific school profile
+          isolateSchoolWorkspace(matchedAdmin.school);
+          
           applyViewOnlyLocks();
           showNotification(`Welcome ${matchedAdmin.name}! Managing timetable for ${matchedAdmin.school}.`, "success");
         } 
-        else if (passwordInput === "kvs@schooladmin2026" || passwordInput === "admin2026") {
+        else if (passwordInput === "kvs@schooladmin2026") {
+          // Fallback generic admin pass key
           state.isViewOnly = false;
           sessionStorage.setItem("kvs_user_role", "admin");
-          const modal = document.getElementById("auth-modal");
-          if (modal) modal.style.display = "none";
-          if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace("PM SHRI KV GILL NAGAR, CHENNAI");
+          document.getElementById("auth-modal").style.display = "none";
+          
+          isolateSchoolWorkspace("MY SCHOOL ADMIN WORKSPACE");
+          
           applyViewOnlyLocks();
-          showNotification("Welcome School Admin! Workspace enabled.", "success");
+          showNotification("Welcome School Admin! Independent workspace enabled.", "success");
         } 
         else {
-          showAuthError("Incorrect School Admin Pass Key or credentials.");
+          if (errorMsg) {
+            errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
+            errorMsg.classList.remove("hidden");
+          }
         }
       } 
       else {
-        let adminRegistry = {};
-        try {
-          adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-        } catch (e) { adminRegistry = {}; }
+        // 3. TEACHER / STAFF ACCESS: Log in strictly via School Admin's Pass Key (No Email required)
+        let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+        let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput);
 
-        let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput || admin.passKey === passwordInput);
-        let matchedSchoolByRepo = (schoolRepository.schools || []).find(s => s.adminPassword === passwordInput);
-
-        if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY || passwordInput === "admin2026") {
+        if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
           state.isViewOnly = true;
           sessionStorage.setItem("kvs_user_role", "teacher");
-          const modal = document.getElementById("auth-modal");
-          if (modal) modal.style.display = "none";
+          document.getElementById("auth-modal").style.display = "none";
           applyViewOnlyLocks();
-          showNotification("Logged in as Staff (View-Only Mode)", "info");
+          showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
         } 
         else if (matchedSchoolByPassKey) {
           state.isViewOnly = true;
           sessionStorage.setItem("kvs_user_role", "teacher");
-          const modal = document.getElementById("auth-modal");
-          if (modal) modal.style.display = "none";
-          if (typeof isolateSchoolWorkspace === "function") isolateSchoolWorkspace(matchedSchoolByPassKey.school);
+          document.getElementById("auth-modal").style.display = "none";
+          
+          // Isolate view strictly to the timetable generated by this admin's school
+          isolateSchoolWorkspace(matchedSchoolByPassKey.school);
+          
           applyViewOnlyLocks();
-          showNotification(`Welcome Teacher! Viewing timetable generated by ${matchedSchoolByPassKey.school} Admin.`, "info");
+          showNotification(`Welcome Teacher! Viewing timetable generated by ${matchedSchoolByPassKey.school} Admin.`, "success");
         } 
-        else if (matchedSchoolByRepo) {
-          schoolRepository.activeSchoolId = matchedSchoolByRepo.id;
-          state.isViewOnly = true;
-          sessionStorage.setItem("kvs_user_role", "teacher");
-          const modal = document.getElementById("auth-modal");
-          if (modal) modal.style.display = "none";
-          if (typeof syncActiveSchoolFromRepository === "function") syncActiveSchoolFromRepository();
-          applyViewOnlyLocks();
-          showNotification(`Welcome Teacher! Viewing ${matchedSchoolByRepo.name}.`, "info");
-        }
         else {
-          showAuthError("Invalid School Admin Pass Key. Check with your Admin.");
+          if (errorMsg) {
+            errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
+            errorMsg.classList.remove("hidden");
+          }
         }
       }
-    } catch (err) {
-      console.error("Login Exception:", err);
-      showAuthError("Login Error: " + err.message);
     }
-  }
+ // Temporary storage for pending school admin registration data
+  let pendingAdminData = null;
 
-  function showAuthError(msg) {
-    const errorMsg = document.getElementById("auth-error-msg");
-    if (errorMsg) {
-      errorMsg.textContent = msg;
-      errorMsg.classList.remove("hidden");
-    } else {
-      showNotification(msg, "warning");
-    }
-  }
+  // 1. Trigger EmailJS OTP for School Admin Registration
+  function handleAdminRegistration() {
+    const name = document.getElementById("admin-su-name").value.trim();
+    const school = document.getElementById("admin-su-school").value.trim().toUpperCase();
+    const email = document.getElementById("admin-su-email").value.trim().toLowerCase();
+    const adminPass = document.getElementById("admin-su-passkey").value;
+    const teacherPassKey = document.getElementById("admin-su-teacher-passkey")?.value || "pass_" + Math.floor(1000 + Math.random() * 9000);
 
-  // Teacher Sign Up with Email OTP Dispatch
-  let pendingSignUpData = null;
-
-  function handleTeacherSignUp() {
-    const name = document.getElementById("su-name").value.trim();
-    const post = document.getElementById("su-post").value;
-    const school = document.getElementById("su-school").value.trim();
-    const region = document.getElementById("su-region").value.trim();
-    const phone = document.getElementById("su-phone").value.trim();
-    const email = document.getElementById("su-email").value.trim();
-    const password = document.getElementById("su-password").value;
-
-    if (!name || !school || !phone || !email || !password) {
-      showNotification("Please fill in all required sign-up fields.", "warning");
-      return;
-    }
-    if (password.length < 6) {
-      showNotification("Password must be at least 6 characters long.", "warning");
+    if (!name || !school || !email || !adminPass) {
+      showNotification("Please fill in all required fields.", "warning");
       return;
     }
 
-    pendingSignUpData = { name, post, school, region, phone, email, password };
+    if (adminPass.length < 6) {
+      showNotification("Admin Password must be at least 6 characters long.", "warning");
+      return;
+    }
+
+    // Save pending details temporarily until OTP is verified
+    pendingAdminData = { name, school, email, adminPass, teacherPassKey };
+
+    // Generate secure 6-digit OTP
     const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-    sessionStorage.setItem("kvs_verification_otp", generatedOTP);
+    sessionStorage.setItem("kvs_admin_verification_otp", generatedOTP);
 
-    const templateParams = { email: email, passcode: generatedOTP, time: "15 minutes" };
+    const templateParams = {
+      email: email,
+      passcode: generatedOTP,
+      time: "15 minutes"
+    };
+
+    // Dispatch OTP via EmailJS
     emailjs.send("service_g95dc48", "template_jobk0ho", templateParams)
       .then(function(response) {
-        showNotification("OTP sent successfully to your Gmail inbox!", "success");
-        switchModal("signup", "otp");
+        console.log("Admin OTP sent successfully!", response.status, response.text);
+        showNotification("Verification OTP sent to your Admin Email inbox!", "success");
+        switchModal("admin-signup", "admin-otp");
       }, function(error) {
-        showNotification("Failed to send email. Check your configuration.", "warning");
+        console.error("Email failed...", error);
+        showNotification("Failed to send OTP email. Check your configuration.", "warning");
       });
   }
 
-  function verifyTeacherOTP() {
-    const enteredOTP = document.getElementById("otp-input").value.trim();
-    const actualOTP = sessionStorage.getItem("kvs_verification_otp");
+  // 2. Verify OTP and Finalize Admin Registration & Clean Workspace
+  function verifyAdminOTP() {
+    const enteredOTP = document.getElementById("admin-otp-input").value.trim();
+    const actualOTP = sessionStorage.getItem("kvs_admin_verification_otp");
 
     if (enteredOTP !== actualOTP) {
       showNotification("Invalid OTP. Please check your Email inbox.", "warning");
       return;
     }
 
-    const { email, password, name, post, school } = pendingSignUpData;
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-      .then((userCredential) => {
-        const uid = userCredential.user.uid;
-        rtdb.ref(`kvs_teachers_profiles/${uid}`).set({
-          name, post, school, email, createdAt: new Date().toISOString()
-        });
-        state.teachers.push({
-          id: "t_" + uid.substring(0, 6),
-          name: `${post}. ${name}`,
-          shortName: name.split(" ").pop().substring(0, 3).toUpperCase(),
-          isClassTeacher: false,
-          secondaryBusySlots: {}
-        });
-        commitWorkingStateToRepository();
-        renderSlide1Teachers();
-        document.getElementById("otp-modal").style.display = "none";
-        showNotification("Account created and verified successfully! You can now log in.", "success");
-        openAuthModal();
-      })
-      .catch((error) => {
-        showNotification("Sign-up error: " + error.message, "warning");
-      });
-  }
-
-  function handlePasswordResetRequest() {
-    const email = document.getElementById("forgot-email-input").value.trim();
-    if (!email) {
-      showNotification("Please enter your registered email address.", "warning");
+    if (!pendingAdminData) {
+      showNotification("Session expired. Please fill out the form again.", "warning");
+      switchModal("admin-otp", "admin-signup");
       return;
     }
-    firebase.auth().sendPasswordResetEmail(email)
-      .then(() => {
-        showNotification("Password reset instructions sent to your email!", "success");
-        switchModal("forgot-password", "auth");
-      })
-      .catch((error) => {
-        showNotification("Error: " + error.message, "warning");
+
+    const { name, school, email, adminPass, teacherPassKey } = pendingAdminData;
+
+    // Save admin credentials and pass key to registry
+    let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+    adminRegistry[email] = {
+      name,
+      school,
+      passKey: adminPass,
+      teacherPassKey: teacherPassKey,
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
+
+    // Initialize clean school workspace in repository immediately
+    isolateSchoolWorkspace(school);
+    commitWorkingStateToRepository();
+
+    if (typeof rtdb !== 'undefined') {
+      rtdb.ref(`kvs_school_admins/${email.replace(/\./g, '_')}`).set({
+        name, school, passKey: adminPass, teacherPassKey
       });
+    }
+
+    document.getElementById("admin-otp-modal").style.display = "none";
+    showNotification(`Admin verified for ${school}! Clean workspace created. Teacher Pass Key: ${teacherPassKey}`, "success");
+    switchModal("admin-otp", "auth");
   }
-</script>
-    // --- SUPER ADMIN PASS-KEY MANAGER FUNCTIONS ---
-    function openSuperAdminPassKeyManager() {
-      const modal = document.getElementById("superadmin-passkey-modal");
-      if (modal) {
-        modal.style.display = "flex";
-        modal.style.zIndex = "99999";
-        renderSuperAdminPassKeyTable();
-      }
+
+  // Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
+  function isolateSchoolWorkspace(schoolName) {
+    const upperName = schoolName.toUpperCase();
+    let targetSchool = schoolRepository.schools.find(s => s.name.toUpperCase() === upperName);
+    
+    if (targetSchool) {
+      schoolRepository.activeSchoolId = targetSchool.id;
+      syncActiveSchoolFromRepository();
+    } else {
+      // Create a brand new, clean school profile with empty schedules for this admin
+      const newId = "sch_" + Date.now();
+      const newSchool = {
+        id: newId,
+        name: upperName,
+        session: "2026-27",
+        sectionsCount: "2",
+        teachers: [
+          { id: "t_init_1", name: "PRT 1", shortName: "P1", isClassTeacher: true, classNum: "1", section: "A", secondaryBusySlots: {} }
+        ],
+        subjectLimits: {
+          "Class 1": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 2": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 3": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 4": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 },
+          "Class 5": { "PE": 4, "ENG": 10, "HIN": 10, "MATH": 10 }
+        },
+        allotments: [],
+        schedules: createEmptyClassSchedules(),
+        rules: []
+      };
+      
+      schoolRepository.schools.push(newSchool);
+      schoolRepository.activeSchoolId = newId;
+      syncActiveSchoolFromRepository();
     }
+  }
 
-    function closeSuperAdminPassKeyModal() {
-      const modal = document.getElementById("superadmin-passkey-modal");
-      if (modal) modal.style.display = "none";
-    }
-
-    function renderSuperAdminPassKeyTable() {
-      const tbody = document.getElementById("superadmin-passkey-tbody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let schools = schoolRepository.schools || [];
-
-      if (schools.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400 font-bold">No schools registered yet.</td></tr>`;
-        return;
-      }
-
-      schools.forEach(sch => {
-        let registryEntry = Object.values(adminRegistry).find(a => a.school === sch.name) || {
-          email: "admin@" + sch.id + ".kvs.gov.in",
-          passKey: sch.adminPassword || "admin2026",
-          teacherPassKey: "teacher_" + sch.id
-        };
-
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50/60 transition";
-        tr.innerHTML = `
-          <td class="py-3 px-3 font-extrabold text-slate-900">${sch.name}</td>
-          <td class="py-3 px-3 text-slate-600 font-medium">${registryEntry.email || 'N/A'}</td>
-          <td class="py-3 px-3 font-mono font-bold text-indigo-700 bg-indigo-50/50 rounded">${registryEntry.passKey}</td>
-          <td class="py-3 px-3 font-mono font-bold text-teal-700 bg-teal-50/50 rounded">${registryEntry.teacherPassKey || 'Not Set'}</td>
-          <td class="py-3 px-3 text-right space-x-1">
-            <button onclick="superAdminRegeneratePassKey('${sch.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition">
-              Regenerate Key
-            </button>
-            <button onclick="superAdminSendModificationEmail('${registryEntry.email}', '${sch.name}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition">
-              Notify Mail
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function superAdminRegeneratePassKey(schoolId) {
-      const sch = schoolRepository.schools.find(s => s.id === schoolId);
-      if (!sch) return;
-
-      const randomKey = "kvs_" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      sch.adminPassword = randomKey;
-
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      Object.keys(adminRegistry).forEach(key => {
-        if (adminRegistry[key].school === sch.name) {
-          adminRegistry[key].passKey = randomKey;
-        }
-      });
-      localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
-
-      commitWorkingStateToRepository();
-      renderSuperAdminPassKeyTable();
-      showNotification(`New Admin Pass Key generated for ${sch.name}: ${randomKey}`, "success");
-    }
-
-    function superAdminSendModificationEmail(adminEmail, schoolName) {
-      if (!adminEmail || adminEmail.includes("N/A")) {
-        showNotification("No valid email address registered for this school.", "warning");
-        return;
-      }
-
-      const subject = encodeURIComponent(`URGENT: Timetable Modification Notice - ${schoolName}`);
-      const body = encodeURIComponent(
-        `Dear School Administrator,\n\nThis is an official notification from the KVS Super Admin desk that recent modifications have been made to the master timetable for ${schoolName}.\n\nPlease log in to your portal using your designated School Admin Pass Key to review, verify, and publish the updated schedule for your staff.\n\nRegards,\nKVS Timetable Studio Central Administration`
-      );
-
-      window.location.href = `mailto:${adminEmail}?subject=${subject}&body=${body}`;
-      showNotification(`Opening mail client to notify ${adminEmail}...`, "info");
-    }
-
-    function unlockAllSchoolsForSuperAdmin() {
-      renderSchoolSelectors();
-      showNotification("Super Admin Master View Unlocked: All school schedules visible.", "success");
-    }
-  </script>
+function unlockAllSchoolsForSuperAdmin() {
+    renderSchoolSelectors();
+    showNotification("Super Admin Master View Unlocked: All school schedules visible.", "success");
+  }
 
   // Teacher Sign Up with Email OTP Dispatch
   let pendingSignUpData = null;

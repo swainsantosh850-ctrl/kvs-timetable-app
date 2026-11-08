@@ -5830,7 +5830,7 @@ function runPedagogicalAudit() {
     switchModal("admin-otp", "auth");
   }
 
-// Helper to isolate workspace strictly to the School Admin's own school (starts with clean schedules)
+// Helper to isolate workspace securely with flexible name matching
   function isolateSchoolWorkspace(schoolName) {
     if (!schoolName || typeof schoolName !== 'string') {
       console.warn("Invalid school name passed to isolateSchoolWorkspace:", schoolName);
@@ -5842,10 +5842,15 @@ function runPedagogicalAudit() {
       return;
     }
 
-    const upperName = schoolName.trim().toUpperCase();
+    // Clean up spaces and punctuation for reliable matching
+    const cleanInput = schoolName.trim().toUpperCase().replace(/[\s,.-]+/g, ' ');
     
-    // Strictly look for an exact name match (no loose substring guessing)
-    let targetSchool = schoolRepository.schools.find(s => s && s.name && s.name.toUpperCase() === upperName);
+    // Look for an exact match or a strong keyword match (e.g., "GILL NAGAR")
+    let targetSchool = schoolRepository.schools.find(s => {
+      if (!s || !s.name) return false;
+      const cleanExisting = s.name.trim().toUpperCase().replace(/[\s,.-]+/g, ' ');
+      return cleanExisting === cleanInput || cleanExisting.includes("GILL NAGAR") && cleanInput.includes("GILL NAGAR");
+    });
     
     if (targetSchool) {
       schoolRepository.activeSchoolId = targetSchool.id;
@@ -5853,11 +5858,11 @@ function runPedagogicalAudit() {
         syncActiveSchoolFromRepository();
       }
     } else {
-      // If no exact match exists, create a clean, dedicated workspace profile for this exact school name
+      // Create dedicated workspace if no match exists
       const newId = "sch_" + Date.now();
       const newSchool = {
         id: newId,
-        name: upperName,
+        name: schoolName.trim().toUpperCase(),
         session: "2026-27",
         sectionsCount: "2",
         teachers: [
@@ -5882,7 +5887,6 @@ function runPedagogicalAudit() {
       }
     }
   }
-
   function unlockAllSchoolsForSuperAdmin() {
     sessionStorage.setItem("kvs_user_role", "superadmin");
     if (typeof applyViewOnlyLocks === "function") {

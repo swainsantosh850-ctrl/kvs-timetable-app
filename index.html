@@ -5682,7 +5682,7 @@ function runPedagogicalAudit() {
     });
   }
 
-  window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
+window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
     const sch = schoolRepository.schools.find(s => s.id === schoolId);
     if (!sch) return;
 
@@ -5691,135 +5691,194 @@ function runPedagogicalAudit() {
     let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
     let foundKey = Object.keys(adminRegistry).find(k => adminRegistry[k].school === sch.name);
     
-    if (foundKey) {
-      adminRegistry[foundKey][keyType] = newValue.trim();
-    } else {
-      let dummyEmail = "admin@" + sch.id + ".kvs.gov.in";
-      adminRegistry[dummyEmail] = {
+    let registryKey = foundKey || "admin@" + sch.id + ".kvs.gov.in";
+    
+    if (!adminRegistry[registryKey]) {
+      adminRegistry[registryKey] = {
         name: "Admin",
         school: sch.name,
         passKey: keyType === 'passKey' ? newValue.trim() : (sch.adminPassword || "admin2026"),
-        teacherPassKey: keyType === 'teacherPassKey' ? newValue.trim() : ("teacher_" + sch.id)
+        teacherPassKey: keyType === 'teacherPassKey' ? newValue.trim() : ("teacher_" + sch.id),
+        email: registryKey
       };
+    } else {
+      adminRegistry[registryKey][keyType] = newValue.trim();
     }
+    
+    // 1. Save to local browser storage
     localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
-    if (typeof commitWorkingStateToRepository === "function") commitWorkingStateToRepository();
-    showNotification(`Updated ${keyType} for ${sch.name} successfully!`, "success");
-  };
 
-  window.superAdminRegeneratePassKey = function(schoolId) {
-    const sch = schoolRepository.schools.find(s => s.id === schoolId);
-    if (!sch) return;
-
-    const randomKey = "kvs_" + Math.random().toString(36).substring(2, 8).toUpperCase();
-    updateSchoolPassKey(schoolId, 'passKey', randomKey);
-    renderSuperAdminPassKeyTable();
-    showNotification(`New Admin Pass Key generated for ${sch.name}: ${randomKey}`, "success");
-  };
-
-  window.superAdminSendModificationEmail = function(adminEmail, schoolName) {
-    if (!adminEmail || adminEmail.includes("N/A")) {
-      showNotification("No valid email address registered for this school.", "warning");
-      return;
+    // 2. Push updated passkey to Firebase RTDB instantly for cross-device sync
+    if (typeof rtdb !== 'undefined') {
+      let cleanRefKey = registryKey.replace(/\./g, '_');
+      rtdb.ref(`kvs_school_admins/${cleanRefKey}`).set(adminRegistry[registryKey])
+        .then(() => console.log("Passkey synced to cloud successfully!"))
+        .catch(err => console.error("Cloud passkey sync failed:", err));
     }
-    const subject = encodeURIComponent(`URGENT: Timetable Pass-Key Notice - ${schoolName}`);
-    const body = encodeURIComponent(`Dear Administrator,\n\nThis is an official notice from the KVS Super Admin desk regarding your school access pass keys for ${schoolName}.\n\nPlease use your assigned administrative credentials to manage your school timetable workspace.\n\nRegards,\nKVS Central Administration`);
-    window.location.href = `mailto:${adminEmail}?subject=${subject}&body=${body}`;
-    showNotification(`Opening mail client to notify ${adminEmail}...`, "info");
+
+    if (typeof commitWorkingStateToRepository === "function") commitWorkingStateToRepository();
+    showNotification(`Updated ${keyType} for ${sch.name} and synced to cloud!`, "success");
   };
-    // 3-Tier Login Handler with Secure Pass-Key Validation & School Isolation
-   function handleLoginSubmit() {
-      const role = document.getElementById("login-role-select").value;
-      const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
-      const passwordInput = document.getElementById("login-password-input").value.trim();
-      const errorMsg = document.getElementById("auth-error-msg");
 
-      if (errorMsg) errorMsg.classList.add("hidden");
+  // 3-Tier Login Handler with Real-Time Cloud Fallback for Cross-Device Access
+  async function handleLoginSubmit() {
+    const role = document.getElementById("login-role-select").value;
+    const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
+    const passwordInput = document.getElementById("login-password-input").value.trim();
+    const errorMsg = document.getElementById("auth-error-msg");
 
-      if (role === "superadmin") {
-        const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL);
-        const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD);
+    if (errorMsg) errorMsg.classList.add("hidden");
 
-        if (isValidSuperAdminEmail && isMasterPasswordValid) {
-          state.isViewOnly = false;
-          sessionStorage.setItem("kvs_user_role", "superadmin");
-          document.getElementById("auth-modal").style.display = "none";
-          applyViewOnlyLocks();
-          unlockAllSchoolsForSuperAdmin();
-          showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
-          return;
-        } else {
-          if (errorMsg) {
-            errorMsg.textContent = "Incorrect Super Admin master credentials.";
-            errorMsg.classList.remove("hidden");
-          }
-          return; // Strictly block access on failure
+    if (role === "superadmin") {
+      const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL);
+      const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD);
+
+      if (isValidSuperAdminEmail && isMasterPasswordValid) {
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "superadmin");
+        document.getElementById("auth-modal").style.display = "none";
+        applyViewOnlyLocks();
+        unlockAllSchoolsForSuperAdmin();
+        showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
+        return;
+      } else {
+        if (errorMsg) {
+          errorMsg.textContent = "Incorrect Super Admin master credentials.";
+          errorMsg.classList.remove("hidden");
         }
+        return;
+      }
+    } 
+    else if (role === "admin") {
+      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+      let matchedAdmin = Object.values(adminRegistry).find(admin => 
+        (admin.email === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
+      );
+
+      if (matchedAdmin) {
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "admin");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace(matchedAdmin.school);
+        applyViewOnlyLocks();
+        showNotification(`Welcome ${matchedAdmin.name}! Managing timetable for ${matchedAdmin.school}.`, "success");
+        return;
       } 
-      else if (role === "admin") {
-        let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-        let matchedAdmin = Object.values(adminRegistry).find(admin => 
-          (admin.email === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
-        );
-
-        if (matchedAdmin) {
-          state.isViewOnly = false;
-          sessionStorage.setItem("kvs_user_role", "admin");
-          document.getElementById("auth-modal").style.display = "none";
-          isolateSchoolWorkspace(matchedAdmin.school);
-          applyViewOnlyLocks();
-          showNotification(`Welcome ${matchedAdmin.name}! Managing timetable for ${matchedAdmin.school}.`, "success");
-          return;
-        } 
-        else if (passwordInput === "kvs@schooladmin2026") {
-          state.isViewOnly = false;
-          sessionStorage.setItem("kvs_user_role", "admin");
-          document.getElementById("auth-modal").style.display = "none";
-          isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
-          applyViewOnlyLocks();
-          showNotification("Welcome School Admin! Independent workspace enabled.", "success");
-          return;
-        } 
-        else {
-          if (errorMsg) {
-            errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
-            errorMsg.classList.remove("hidden");
-          }
-          return; // Strictly block access on failure
-        }
+      else if (passwordInput === "kvs@schooladmin2026") {
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "admin");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
+        applyViewOnlyLocks();
+        showNotification("Welcome School Admin! Independent workspace enabled.", "success");
+        return;
       } 
       else {
-        // 3. TEACHER / STAFF ACCESS: Log in strictly via valid Pass Key
-        let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-        let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput);
+        // Real-time cloud lookup fallback if local storage misses
+        if (typeof rtdb !== 'undefined') {
+          try {
+            const snapshot = await rtdb.ref("kvs_school_admins").once("value");
+            const cloudAdmins = snapshot.val();
+            let foundCloudAdmin = null;
+            if (cloudAdmins) {
+              Object.values(cloudAdmins).forEach(admin => {
+                if (admin && (admin.passKey === passwordInput || (identifier && admin.email === identifier && admin.passKey === passwordInput))) {
+                  foundCloudAdmin = admin;
+                }
+              });
+            }
 
-        if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
-          state.isViewOnly = true;
-          sessionStorage.setItem("kvs_user_role", "teacher");
-          document.getElementById("auth-modal").style.display = "none";
-          isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
-          applyViewOnlyLocks();
-          showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
-          return;
-        }
-        else if (matchedSchoolByPassKey) {
-          state.isViewOnly = true;
-          sessionStorage.setItem("kvs_user_role", "teacher");
-          document.getElementById("auth-modal").style.display = "none";
-          isolateSchoolWorkspace(matchedSchoolByPassKey.school);
-          applyViewOnlyLocks();
-          showNotification(`Welcome Teacher! Viewing timetable generated by ${matchedSchoolByPassKey.school} Admin.`, "success");
-          return;
-        } 
-        else {
-          if (errorMsg) {
-            errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
-            errorMsg.classList.remove("hidden");
+            if (foundCloudAdmin) {
+              let localReg = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+              let regKey = foundCloudAdmin.email || "admin@school.kvs.gov.in";
+              localReg[regKey] = foundCloudAdmin;
+              localStorage.setItem("kvs_admin_registry", JSON.stringify(localReg));
+
+              state.isViewOnly = false;
+              sessionStorage.setItem("kvs_user_role", "admin");
+              document.getElementById("auth-modal").style.display = "none";
+              isolateSchoolWorkspace(foundCloudAdmin.school);
+              applyViewOnlyLocks();
+              showNotification(`Welcome ${foundCloudAdmin.name}! Managing timetable for ${foundCloudAdmin.school}.`, "success");
+              return;
+            }
+          } catch (e) {
+            console.error("Cloud admin lookup error:", e);
           }
-          return; // Strictly block access on failure
         }
+
+        if (errorMsg) {
+          errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
+          errorMsg.classList.remove("hidden");
+        }
+        return;
+      }
+    } 
+    else {
+      // 3. TEACHER / STAFF ACCESS
+      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+      let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput);
+
+      if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
+        state.isViewOnly = true;
+        sessionStorage.setItem("kvs_user_role", "teacher");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
+        applyViewOnlyLocks();
+        showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
+        return;
+      }
+      else if (matchedSchoolByPassKey) {
+        state.isViewOnly = true;
+        sessionStorage.setItem("kvs_user_role", "teacher");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace(matchedSchoolByPassKey.school);
+        applyViewOnlyLocks();
+        showNotification(`Welcome Teacher! Viewing timetable generated by ${matchedSchoolByPassKey.school} Admin.`, "success");
+        return;
+      } 
+      else {
+        // Real-time cloud lookup fallback for Teacher Pass Key across devices
+        if (typeof rtdb !== 'undefined') {
+          try {
+            const snapshot = await rtdb.ref("kvs_school_admins").once("value");
+            const cloudAdmins = snapshot.val();
+            let foundCloudTeacher = null;
+            if (cloudAdmins) {
+              Object.values(cloudAdmins).forEach(admin => {
+                if (admin && admin.teacherPassKey === passwordInput) {
+                  foundCloudTeacher = admin;
+                }
+              });
+            }
+
+            if (foundCloudTeacher) {
+              let localReg = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+              let regKey = foundCloudTeacher.email || "teacher@school.kvs.gov.in";
+              localReg[regKey] = foundCloudTeacher;
+              localStorage.setItem("kvs_admin_registry", JSON.stringify(localReg));
+
+              state.isViewOnly = true;
+              sessionStorage.setItem("kvs_user_role", "teacher");
+              document.getElementById("auth-modal").style.display = "none";
+              isolateSchoolWorkspace(foundCloudTeacher.school);
+              applyViewOnlyLocks();
+              showNotification(`Welcome Teacher! Viewing timetable generated by ${foundCloudTeacher.school} Admin.`, "success");
+              return;
+            }
+          } catch (e) {
+            console.error("Cloud teacher lookup error:", e);
+          }
+        }
+
+        if (errorMsg) {
+          errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
+          errorMsg.classList.remove("hidden");
+        }
+        return;
       }
     }
+  }
  // Temporary storage for pending school admin registration data
   let pendingAdminData = null;
 

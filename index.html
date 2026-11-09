@@ -6050,7 +6050,7 @@ function runPedagogicalAudit() {
     const rtdb = firebase.database();
     const timetableCloudRef = rtdb.ref("kvs_live_timetable");
 
-    function applyCloudMasterData(cloudData) {
+   function applyCloudMasterData(cloudData) {
       if (!cloudData || !cloudData.compressed) return false;
       try {
         const decompressed = LZString.decompressFromEncodedURIComponent(cloudData.compressed);
@@ -6064,6 +6064,12 @@ function runPedagogicalAudit() {
           Object.assign(state, parsed);
           commitWorkingStateToRepository();
           syncActiveSchoolFromRepository();
+        }
+
+        // CRITICAL FIX: Re-enforce local session active school so cloud sync doesn't overwrite it
+        const savedSchool = sessionStorage.getItem("kvs_active_school");
+        if (savedSchool && typeof isolateSchoolWorkspace === "function") {
+          isolateSchoolWorkspace(savedSchool);
         }
 
         goToSlide(state.activeSlide || 1);

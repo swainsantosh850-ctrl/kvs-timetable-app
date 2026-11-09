@@ -5721,6 +5721,7 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
   };
 
   // 3-Tier Login Handler with Real-Time Cloud Fallback for Cross-Device Access
+ // 3-Tier Login Handler with Universal Pass-Key Flexibility & Real-Time Cloud Fallback
   async function handleLoginSubmit() {
     const role = document.getElementById("login-role-select").value;
     const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
@@ -5752,7 +5753,10 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
     else if (role === "admin") {
       let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
       let matchedAdmin = Object.values(adminRegistry).find(admin => 
-        (admin.email === identifier && admin.passKey === passwordInput) || admin.passKey === passwordInput
+        (admin.email === identifier && (admin.passKey === passwordInput || admin.adminPass === passwordInput)) || 
+        admin.passKey === passwordInput || 
+        admin.adminPass === passwordInput ||
+        admin.adminPassword === passwordInput
       );
 
       if (matchedAdmin) {
@@ -5761,7 +5765,7 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
         document.getElementById("auth-modal").style.display = "none";
         isolateSchoolWorkspace(matchedAdmin.school);
         applyViewOnlyLocks();
-        showNotification(`Welcome ${matchedAdmin.name}! Managing timetable for ${matchedAdmin.school}.`, "success");
+        showNotification(`Welcome ${matchedAdmin.name || "Admin"}! Managing timetable for ${matchedAdmin.school}.`, "success");
         return;
       } 
       else if (passwordInput === "kvs@schooladmin2026") {
@@ -5782,7 +5786,12 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
             let foundCloudAdmin = null;
             if (cloudAdmins) {
               Object.values(cloudAdmins).forEach(admin => {
-                if (admin && (admin.passKey === passwordInput || (identifier && admin.email === identifier && admin.passKey === passwordInput))) {
+                if (admin && (
+                  admin.passKey === passwordInput || 
+                  admin.adminPass === passwordInput || 
+                  admin.adminPassword === passwordInput ||
+                  (identifier && admin.email === identifier && (admin.passKey === passwordInput || admin.adminPass === passwordInput))
+                )) {
                   foundCloudAdmin = admin;
                 }
               });
@@ -5799,7 +5808,7 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
               document.getElementById("auth-modal").style.display = "none";
               isolateSchoolWorkspace(foundCloudAdmin.school);
               applyViewOnlyLocks();
-              showNotification(`Welcome ${foundCloudAdmin.name}! Managing timetable for ${foundCloudAdmin.school}.`, "success");
+              showNotification(`Welcome ${foundCloudAdmin.name || "Admin"}! Managing timetable for ${foundCloudAdmin.school}.`, "success");
               return;
             }
           } catch (e) {
@@ -5815,9 +5824,14 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
       }
     } 
     else {
-      // 3. TEACHER / STAFF ACCESS
+      // 3. TEACHER / STAFF ACCESS (Accepts any passkey variant for maximum flexibility)
       let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => admin.teacherPassKey === passwordInput);
+      let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => 
+        admin.teacherPassKey === passwordInput || 
+        admin.passKey === passwordInput || 
+        admin.adminPass === passwordInput ||
+        admin.adminPassword === passwordInput
+      );
 
       if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
         state.isViewOnly = true;
@@ -5838,7 +5852,7 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
         return;
       } 
       else {
-        // Real-time cloud lookup fallback for Teacher Pass Key across devices
+        // Real-time cloud lookup fallback for any valid Pass Key variant across devices
         if (typeof rtdb !== 'undefined') {
           try {
             const snapshot = await rtdb.ref("kvs_school_admins").once("value");
@@ -5846,7 +5860,12 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
             let foundCloudTeacher = null;
             if (cloudAdmins) {
               Object.values(cloudAdmins).forEach(admin => {
-                if (admin && admin.teacherPassKey === passwordInput) {
+                if (admin && (
+                  admin.teacherPassKey === passwordInput || 
+                  admin.passKey === passwordInput || 
+                  admin.adminPass === passwordInput ||
+                  admin.adminPassword === passwordInput
+                )) {
                   foundCloudTeacher = admin;
                 }
               });

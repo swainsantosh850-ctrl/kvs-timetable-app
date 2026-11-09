@@ -4576,7 +4576,7 @@ function renderSlide6TeacherGrid() {
       `;
     }
 // Sync admin registry from Firebase RTDB to local storage on any device
- function syncAdminRegistryFromCloud() {
+function syncAdminRegistryFromCloud() {
     if (typeof rtdb === 'undefined') {
       console.warn("RTDB is not initialized.");
       return;
@@ -4584,32 +4584,33 @@ function renderSlide6TeacherGrid() {
     
     rtdb.ref("kvs_school_admins").once("value").then((snapshot) => {
       const cloudAdmins = snapshot.val();
-      if (cloudAdmins) {
-        let localRegistry = {};
-        
-        Object.keys(cloudAdmins).forEach(key => {
-          let admin = cloudAdmins[key];
-          if (admin && admin.teacherPassKey) {
-            // Reconstruct the registry entry using school name or email key
-            let registryKey = admin.email || key.replace(/_/g, '.');
-            localRegistry[registryKey] = {
-              name: admin.name || "School Admin",
-              school: admin.school || "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94",
-              passKey: admin.passKey || admin.adminPass,
-              teacherPassKey: admin.teacherPassKey,
-              email: registryKey
-            };
-          }
-        });
-        
-        // Save into mobile/browser localStorage
-        localStorage.setItem("kvs_admin_registry", JSON.stringify(localRegistry));
-        console.log("Admin registry successfully synced to device storage:", localRegistry);
-      } else {
-        console.warn("No cloud admin registry records found in Firebase.");
-      }
+      
+     // 1. Pull existing local registry first so we don't lose local passkeys
+    let localRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+    
+    if (cloudAdmins) {
+      Object.keys(cloudAdmins).forEach(key => {
+        let admin = cloudAdmins[key];
+        if (admin && admin.teacherPassKey) {
+          let registryKey = admin.email || key.replace(/_/g, '.');
+
+          // Merge or add cloud records into local registry map
+          localRegistry[registryKey] = {
+            name: admin.name || "School Admin",
+            school: admin.school || "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94",
+            passKey: admin.passKey || admin.adminPass,
+            teacherPassKey: admin.teacherPassKey,
+            email: registryKey
+          };
+        }
+      });
+    }
+      
+      // 2. Save the fully combined registry back to device storage
+      localStorage.setItem("kvs_admin_registry", JSON.stringify(localRegistry));
+      console.log("Admin registry merged and synced successfully:", localRegistry);
     }).catch(err => {
-      console.error("Cloud sync failed (Check Firebase Rules):", err);
+      console.error("Cloud sync failed:", err);
     });
   }
     function renderOfficialFooter(showClassTeacher = true) {

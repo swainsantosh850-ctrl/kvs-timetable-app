@@ -370,8 +370,11 @@
         <i class="ph-bold ph-sliders text-sm"></i>
         <span>Rules ?</span>
       </button>
+      <button type="button" onclick="logoutPortal()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1.5 shadow-xs">
+        <i class="ph-bold ph-sign-out text-sm"></i>
+        <span>Logout</span>
+      </button>
     </div>
-
   </div>
 
   <nav class="bg-slate-50 border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-1.5 overflow-x-auto">
@@ -4516,7 +4519,47 @@ function renderSlide6TeacherGrid() {
       renderLimitsGrid();
       showNotification(`Added ${subjName} (Max: ${limitVal}) to ${targets.join(", ")}`, "success");
     }
+// Fully functional logout handler
+  function logoutPortal() {
+    // 1. Clear session storage records
+    sessionStorage.removeItem("kvs_user_role");
+    sessionStorage.removeItem("kvs_active_school");
+    
+    // 2. Reset view-only state flag
+    state.isViewOnly = true;
+    
+    // 3. Close any open secondary modals
+    if (typeof closeSecondaryBusyModal === "function") closeSecondaryBusyModal();
+    if (typeof closeSlotModal === "function") closeSlotModal();
+    if (typeof closeTeacherSlotModal === "function") closeTeacherSlotModal();
+    if (typeof closeSchoolManagerModal === "function") closeSchoolManagerModal();
+    if (typeof closeSuperAdminPassKeyModal === "function") closeSuperAdminPassKeyModal();
+    if (typeof closePrintPreviewModal === "function") closePrintPreviewModal();
 
+    // 4. Open and reset the Authentication Portal Modal
+    const authModal = document.getElementById("auth-modal");
+    if (authModal) {
+      authModal.style.display = "flex";
+      const roleSelect = document.getElementById("login-role-select");
+      if (roleSelect) roleSelect.value = "admin";
+      if (typeof togglePasswordField === "function") togglePasswordField();
+      
+      const passInput = document.getElementById("login-password-input");
+      const emailInput = document.getElementById("login-email-input");
+      const errorMsg = document.getElementById("auth-error-msg");
+      
+      if (passInput) passInput.value = "";
+      if (emailInput) emailInput.value = "";
+      if (errorMsg) errorMsg.classList.add("hidden");
+    }
+
+    // 5. Re-apply strict view locks
+    if (typeof applyViewOnlyLocks === "function") {
+      applyViewOnlyLocks();
+    }
+
+    showNotification("Logged out successfully. Please sign in to continue.", "info");
+  }
     // --- PRINTING ENGINES ---
     let activePrintHtml = "";
 

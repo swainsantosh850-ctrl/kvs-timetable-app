@@ -4576,29 +4576,40 @@ function renderSlide6TeacherGrid() {
       `;
     }
 // Sync admin registry from Firebase RTDB to local storage on any device
-  function syncAdminRegistryFromCloud() {
-    if (typeof rtdb === 'undefined') return;
+ function syncAdminRegistryFromCloud() {
+    if (typeof rtdb === 'undefined') {
+      console.warn("RTDB is not initialized.");
+      return;
+    }
     
     rtdb.ref("kvs_school_admins").once("value").then((snapshot) => {
       const cloudAdmins = snapshot.val();
       if (cloudAdmins) {
         let localRegistry = {};
-        // Convert cloud flat structure back to registry format if needed
+        
         Object.keys(cloudAdmins).forEach(key => {
           let admin = cloudAdmins[key];
-          if (admin && admin.email) {
-            localRegistry[admin.email] = admin;
-          } else if (admin && admin.school) {
-            localRegistry[admin.school] = admin;
+          if (admin && admin.teacherPassKey) {
+            // Reconstruct the registry entry using school name or email key
+            let registryKey = admin.email || key.replace(/_/g, '.');
+            localRegistry[registryKey] = {
+              name: admin.name || "School Admin",
+              school: admin.school || "PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94",
+              passKey: admin.passKey || admin.adminPass,
+              teacherPassKey: admin.teacherPassKey,
+              email: registryKey
+            };
           }
         });
         
         // Save into mobile/browser localStorage
         localStorage.setItem("kvs_admin_registry", JSON.stringify(localRegistry));
-        console.log("Admin registry synced from cloud successfully!");
+        console.log("Admin registry successfully synced to device storage:", localRegistry);
+      } else {
+        console.warn("No cloud admin registry records found in Firebase.");
       }
     }).catch(err => {
-      console.warn("Could not sync admin registry from cloud:", err);
+      console.error("Cloud sync failed (Check Firebase Rules):", err);
     });
   }
     function renderOfficialFooter(showClassTeacher = true) {

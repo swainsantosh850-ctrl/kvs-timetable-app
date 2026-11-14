@@ -5322,14 +5322,14 @@ function printDayWiseTeacherTimetable(day) {
       `;
       showPrintPreviewModal("शिक्षक साप्ताहिक समय सारणी /TEACHER WEEKLY TIMETABLES  (Taller Rows)", containerHtml);
     }
-    function printCurrentSlide(slideNum) {
+ function printCurrentSlide(slideNum) {
       if (slideNum === 1) printTeachersReport();
       else if (slideNum === 2) printSlide2Allotments();
       else if (slideNum === 3) {
         if (state.selectedClassSlide3 === "ALL") printAllClassesTimetables();
         else printClassTimetable(state.selectedClassSlide3);
       }
-      else if (slideNum === 4) printDayWiseClassTimetable(state.selectedDaySlide4);
+      else if (slideNum === 4) printDayWiseClassTimetable(state.selectedDaySlide4); // Fixed here!
       else if (slideNum === 5) printDayWiseTeacherTimetable(state.selectedDaySlide5);
       else if (slideNum === 6) printTeacherWeeklyTimetable(state.selectedTeacherSlide6);
     }

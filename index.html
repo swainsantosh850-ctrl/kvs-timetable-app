@@ -913,9 +913,9 @@
       </div>
 
       <input type="hidden" id="slot-modal-teacher-id">
-<!-- Optional Co-Teacher Selector -->
+<!-- Optional सह-कक्षा अध्यापक / Co-Class Teacher Selector -->
     <div class="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
-      <label class="block text-xs font-extrabold text-slate-700">Optional Co-Teacher / Accompanying Teacher (e.g., Tamil Teacher)</label>
+      <label class="block text-xs font-extrabold text-slate-700">Optional सह-कक्षा अध्यापक / Co-Class Teacher / Accompanying Teacher (e.g., Tamil Teacher)</label>
       <select id="slot-coteacher-input" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white transition">
         <option value="">-- None (Single Teacher) --</option>
       </select>
@@ -995,9 +995,9 @@
         <input type="hidden" id="teacher-slot-subject-input">
       </div>
 
-      <!-- Optional Co-Teacher Selector -->
+      <!-- Optional सह-कक्षा अध्यापक / Co-Class Teacher Selector -->
       <div class="space-y-1.5 pt-1">
-        <label class="block text-xs font-extrabold text-slate-700">Optional Co-Teacher / Accompanying Teacher (e.g., Tamil Teacher)</label>
+        <label class="block text-xs font-extrabold text-slate-700">Optional सह-कक्षा अध्यापक / Co-Class Teacher / Accompanying Teacher (e.g., Tamil Teacher)</label>
         <select id="teacher-slot-coteacher-input" class="w-full px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-800 focus:bg-white transition">
           <option value="">-- None (Single Teacher) --</option>
         </select>
@@ -1396,7 +1396,7 @@
             { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
             { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
             { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 3, active: true },
-            { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
+            { id: "r4", title: "कक्षा अध्यापक / Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
             { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
           ]
         }
@@ -2073,7 +2073,7 @@ function auditGlobalCollisions() {
             </div>
 
             <div class="md:col-span-2">
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">Class Teacher?</label>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">कक्षा अध्यापक / Class Teacher?</label>
               <select onchange="updateTeacherField('${t.id}', 'isClassTeacher', this.value === 'true')" class="w-full px-2.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="false" ${!t.isClassTeacher ? "selected" : ""}>No</option>
                 <option value="true" ${t.isClassTeacher ? "selected" : ""}>Yes</option>
@@ -2113,11 +2113,11 @@ function auditGlobalCollisions() {
             </div>
           </div>
 
-          <!-- Co-Class Teacher Row -->
+          <!-- सह-कक्षा अध्यापक / Co-Class Teacher Row -->
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-wrap items-center gap-3">
             <div class="flex items-center gap-2">
               <input type="checkbox" id="co_ct_chk_${t.id}" ${t.isCoClassTeacher ? 'checked' : ''} onchange="updateTeacherField('${t.id}', 'isCoClassTeacher', this.checked)" class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500">
-              <label for="co_ct_chk_${t.id}" class="text-xs font-extrabold text-slate-700 cursor-pointer">Co-Class Teacher</label>
+              <label for="co_ct_chk_${t.id}" class="text-xs font-extrabold text-slate-700 cursor-pointer">सह-कक्षा अध्यापक / Co-Class Teacher</label>
             </div>
 
             <div class="flex items-center gap-2 ${t.isCoClassTeacher ? '' : 'opacity-40 pointer-events-none'}">
@@ -3026,7 +3026,7 @@ function autoGenerateSingleClass(cls) {
           let teachingSlots = [];
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[day]?.[p];
-            // Updated to check both primary and co-teacher IDs
+            // Updated to check both primary and सह-कक्षा अध्यापक / Co-Class Teacher IDs
             if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
               teachingSlots.push({ class: c, subject: slot.subject });
             }
@@ -3148,13 +3148,13 @@ function autoGenerateSingleClass(cls) {
 
       let teacherBadges = "";
       if (ct) {
-        teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
+        teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">कक्षा अध्यापक / Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
       }
       if (coCt) {
-        teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
+        teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
       }
       if (!ct && !coCt) {
-        teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">Class Teacher: Not Assigned</span>`;
+        teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">कक्षा अध्यापक / Class Teacher: Not Assigned</span>`;
       }
 
       let filledCount = 0;
@@ -4260,7 +4260,7 @@ function renderSlide6TeacherGrid() {
           
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[d]?.[p];
-            // CORRECTED: Checks both primary teacher ID and co-teacher ID
+            // CORRECTED: Checks both primary teacher ID and सह-कक्षा अध्यापक / Co-Class Teacher ID
             if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
               assignedSlots.push({ class: c, subject: slot.subject });
             }
@@ -4388,7 +4388,7 @@ function renderSlide6TeacherGrid() {
         { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
         { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
         { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 3, active: true },
-        { id: "r4", title: "Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
+        { id: "r4", title: "कक्षा अध्यापक / Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
         { id: "r5", title: "Teacher Workload Cap (39 P/W)", type: "MAX_TEACHER_LOAD", subjects: [], threshold: 39, active: true }
       ];
       renderRulesList();
@@ -4630,7 +4630,7 @@ function syncAdminRegistryFromCloud() {
         const tAllots = state.allotments.filter(a => a.teacherId === t.id);
         const totalPeriods = tAllots.reduce((sum, a) => sum + parseInt(a.periods || 0), 0);
         const subjectsSummary = tAllots.map(a => `${a.class}-${a.section} (${a.subject}: ${a.periods}P)`).join(", ") || "None";
-        let role = t.isClassTeacher ? `Class Teacher (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT';
+        let role = t.isClassTeacher ? `कक्षा अध्यापक / Class Teacher (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT';
 
         rowsHtml += `
           <tr style="border-bottom: 1px solid #cbd5e1; text-align: left;">
@@ -4660,9 +4660,9 @@ function syncAdminRegistryFromCloud() {
       const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
       const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
       
-      let teacherSub = `Class Teacher: ${ct ? ct.name + ' (' + ct.shortName + ')' : 'Not Assigned'}`;
+      let teacherSub = `कक्षा अध्यापक / Class Teacher: ${ct ? ct.name + ' (' + ct.shortName + ')' : 'Not Assigned'}`;
       if (coCt) {
-        teacherSub += ` | Co-Class Teacher: ${coCt.name} (${coCt.shortName})`;
+        teacherSub += ` | सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName})`;
       }
 
       let gridRows = "";
@@ -4723,7 +4723,7 @@ function printAllClassesTimetables() {
         const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
         const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
         
-        const ctText = ct ? `Class Teacher: ${ct.name} [${ct.shortName || ct.name}]` : `Class Teacher: Not Assigned`;
+        const ctText = ct ? `कक्षा अध्यापक / Class Teacher: ${ct.name} [${ct.shortName || ct.name}]` : `कक्षा अध्यापक / Class Teacher: Not Assigned`;
         const coTText = coCt ? ` | Co-Teacher: ${coCt.name} [${coCt.shortName || coCt.name}]` : ``;
 
         let gridRows = "";

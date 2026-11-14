@@ -5021,12 +5021,11 @@ function printDayWiseClassTimetable(day) {
       showPrintPreviewModal("दैनिक समय सारणी / DAY TIME TABLE • All 6 Days", fullHtml);
     }
  
- function printDayWiseTeacherTimetable(day) {
+function printDayWiseTeacherTimetable(day) {
     let gridRows = "";
     state.teachers.forEach((t, index) => {
       let rowHtml = `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 11px;">${t.name} <span style="color: #475569; font-weight: 800;">[${t.shortName}]</span></td>`;
-      let primaryCount = 0;
-      let coTeacherCount = 0;
+      let dailyCount = 0;
       
       PERIODS.forEach(p => {
         let assigned = [];
@@ -5035,16 +5034,15 @@ function printDayWiseClassTimetable(day) {
           if (slot) {
             if (slot.teacherId === t.id) {
               assigned.push(`${c}: ${slot.subject}`);
-              primaryCount++;
             }
             if (slot.coTeacherId === t.id) {
               assigned.push(`${c}: ${slot.subject} [Co-T]`);
-              coTeacherCount++;
             }
           }
         });
         
         if (assigned.length > 0) {
+          dailyCount += assigned.length;
           rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px; line-height: 1.25;">${assigned.join("<br>")}</td>`;
         } else {
           rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 10.5px;">-</td>`;
@@ -5060,13 +5058,7 @@ function printDayWiseClassTimetable(day) {
         }
       });
 
-      const totalDaily = primaryCount + coTeacherCount;
-      rowHtml += `
-        <td style="padding: 8px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: right; font-size: 10.5px;">
-          <div>${totalDaily} P</div>
-          <div style="font-size: 8.5px; color: #475569; font-weight: normal;">Main:${primaryCount} | Co:${coTeacherCount}</div>
-        </td>
-      `;
+      rowHtml += `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 11px;">${dailyCount} P</td>`;
       gridRows += `<tr>${rowHtml}</tr>`;
     });
 

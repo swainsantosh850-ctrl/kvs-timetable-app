@@ -4569,7 +4569,7 @@ function renderSlide6TeacherGrid() {
       return `
         <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px; font-family: 'Times New Roman', Times, serif;">
           <div style="font-size: 18px; font-weight: 900; color: #0f172a; text-transform: uppercase;">${schoolName}</div>
-          <div style="font-size: 12px; font-weight: 700; color: #475569; margin-top: 2px;">PRIMARY SECTION • ACADEMIC SESSION ${session}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #475569; margin-top: 2px;">प्राथमिक बिभाग / PRIMARY SECTION • सैक्षणिक सत्र  ACADEMIC SESSION ${session}</div>
           <div style="margin-top: 8px; display: inline-block; padding: 3px 12px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-size: 13px; font-weight: 800; text-transform: uppercase;">${title}</div>
           ${subtitle ? `<div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
         </div>
@@ -4616,10 +4616,10 @@ function syncAdminRegistryFromCloud() {
     function renderOfficialFooter(showClassTeacher = true) {
       return `
         <div style="margin-top: 24px; padding-top: 16px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #1e293b;">
-          ${showClassTeacher ? '<div>________________________<br>Class Teacher Signature</div>' : '<div>________________________<br>Prepared By (PRT)</div>'}
-          <div style="text-align: center;">________________________<br>Timetable In-Charge</div>
-          <div style="text-align: center;">________________________<br>HM / Vice-Principal</div>
-          <div style="text-align: right;">________________________<br>Principal Signature</div>
+          ${showClassTeacher ? '<div>________________________<br>कक्षा अध्यापक / Class Teacher</div>' : '<div>________________________<br>Prepared By (PRT)</div>'}
+          <div style="text-align: center;">________________________<br>समय सारणी प्रभारी / Timetable In-Charge</div>
+          <div style="text-align: center;">________________________<br>प्रधानाचार्य / HM</div>
+          <div style="text-align: right;">________________________<br>प्राचार्य / Principal</div>
         </div>
       `;
     }
@@ -4689,7 +4689,7 @@ function syncAdminRegistryFromCloud() {
 
       const html = `
         <div class="print-page">
-          ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${cls}`, teacherSub)}
+          ${renderOfficialHeader(`कक्षा समय सारणी / CLASS TIMETABLE • कक्षा / CLASS ${cls}`, teacherSub)}
           <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
             <thead>
               <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
@@ -4753,7 +4753,7 @@ function printAllClassesTimetables() {
         // Add each class card with its own official header
         classCardsChunk += `
           <div class="multi-class-print-card" style="margin-bottom: 16px; padding-bottom: 10px; break-inside: avoid; page-break-inside: avoid;">
-            ${renderOfficialHeader(`CLASS TIMETABLE • CLASS ${c}`, `${ctText}${coTText}`)}
+            ${renderOfficialHeader(`कक्षा समय सारणी / CLASS TIMETABLE • कक्षा / CLASS ${c}`, `${ctText}${coTText}`)}
             <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; text-align: center;">
               <thead>
                 <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
@@ -6499,7 +6499,7 @@ syncAdminRegistryFromCloud();
           <input type="text" id="modal-edit-school-name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Academic Session</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">सैक्षणिक सत्र / Academic Session</label>
           <input type="text" id="modal-edit-school-session" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>

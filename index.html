@@ -4569,7 +4569,7 @@ function renderSlide6TeacherGrid() {
       return `
         <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px; font-family: 'Times New Roman', Times, serif;">
           <div style="font-size: 18px; font-weight: 900; color: #0f172a; text-transform: uppercase;">${schoolName}</div>
-          <div style="font-size: 12px; font-weight: 700; color: #475569; margin-top: 2px;">प्राथमिक बिभाग / PRIMARY SECTION • सैक्षणिक सत्र  ACADEMIC SESSION ${session}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #475569; margin-top: 2px;">प्राथमिक बिभाग / PRIMARY SECTION • शैक्षणिक सत्र  ACADEMIC SESSION ${session}</div>
           <div style="margin-top: 8px; display: inline-block; padding: 3px 12px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-size: 13px; font-weight: 800; text-transform: uppercase;">${title}</div>
           ${subtitle ? `<div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
         </div>
@@ -5082,7 +5082,7 @@ function printDayWiseClassTimetable(day) {
 
       const html = `
         <div class="print-page">
-          ${renderOfficialHeader(`TEACHER WEEKLY TIMETABLE • ${t.name} <span style="font-weight:800;">[${t.shortName}]</span>`, `Total Workload: ${totalWeekly} Periods/Week`)}
+          ${renderOfficialHeader(`शिक्षक साप्ताहिक समय सारणी /  TEACHER WEEKLY TIMETABLE • ${t.name} <span style="font-weight:800;">[${t.shortName}]</span>`, `Total Workload: ${totalWeekly} Periods/Week`)}
           <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9.5px; text-align: center;">
             <thead>
               <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
@@ -6499,7 +6499,7 @@ syncAdminRegistryFromCloud();
           <input type="text" id="modal-edit-school-name" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">सैक्षणिक सत्र / Academic Session</label>
+          <label class="block text-xs font-bold text-slate-700 mb-1">शैक्षणिक सत्र / Academic Session</label>
           <input type="text" id="modal-edit-school-session" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         </div>
         <div>

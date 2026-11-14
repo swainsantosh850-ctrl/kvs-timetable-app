@@ -5217,11 +5217,11 @@ function printDayWiseClassTimetable(day) {
 
       const containerHtml = `
         <div class="print-page">
-          ${renderOfficialHeader(`ALL TEACHERS WEEKLY TIMETABLES MASTER BOOK`, `Consolidated Portrait Edition (4 Teachers per Page - Expanded Height)`)}
+          ${renderOfficialHeader(` शिक्षक साप्ताहिक समय सारणी /TEACHER WEEKLY TIMETABLES `)}
           ${fullHtml}
         </div>
       `;
-      showPrintPreviewModal("All Teachers Weekly Timetables Master Book (Taller Rows)", containerHtml);
+      showPrintPreviewModal("शिक्षक साप्ताहिक समय सारणी /TEACHER WEEKLY TIMETABLES  (Taller Rows)", containerHtml);
     }
     function printCurrentSlide(slideNum) {
       if (slideNum === 1) printTeachersReport();

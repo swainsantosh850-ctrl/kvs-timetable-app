@@ -720,7 +720,7 @@
       <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto">
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
           <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase" id="slide5-current-day-label">Mon</span>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase" id="slide5-current-day-label">सोमवार / MONDAY</span>
             <h3 class="text-sm font-extrabold text-slate-900">Master Staff Assignment Sheet (Click any cell or [+] to edit)</h3>
           </div>
           <button onclick="printDayWiseTeacherTimetable(state.selectedDaySlide5)" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
@@ -881,7 +881,7 @@
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
         <div>
           <h3 class="text-sm font-extrabold text-slate-900" id="slot-modal-title">Edit Period Slot</h3>
-          <p class="text-xs text-slate-500 font-medium" id="slot-modal-subtitle">Class 1-A • Mon • Period 1</p>
+          <p class="text-xs text-slate-500 font-medium" id="slot-modal-subtitle">Class 1-A • सोमवार / MONDAY • Period 1</p>
         </div>
         <button onclick="closeSlotModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
           <i class="ph-bold ph-x text-base"></i>
@@ -1340,7 +1340,7 @@
         }
       }
     }
-    const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const DAYS = ["सोमवार / MONDAY", "मंगलवार / TUESDAY", "बुधवार / WEDNESDAY", "गुरुवार / THURSDAY", "शुक्रवार / FRIDAY", "शनिवार / SATURDAY"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     let CLASSES = [];
@@ -1393,7 +1393,7 @@
           ],
           schedules: {},
           rules: [
-            { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
+            { id: "r1", title: "Daily Core Cognitive Presence (सोमवार / MONDAY-शुक्रवार / FRIDAY)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
             { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
             { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 3, active: true },
             { id: "r4", title: "कक्षा अध्यापक / Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
@@ -1407,8 +1407,8 @@
       isViewOnly: true,
       activeSlide: 1,
       selectedClassSlide3: "1-A",
-      selectedDaySlide4: "Mon",
-      selectedDaySlide5: "Mon",
+      selectedDaySlide4: "सोमवार / MONDAY",
+      selectedDaySlide5: "सोमवार / MONDAY",
       subPeriodSlide5: 1,
       selectedTeacherSlide6: "t1",
       schoolInfo: {
@@ -3345,7 +3345,7 @@ function autoGenerateSingleClass(cls) {
     return count > 1;
 }
 
-    let currentSlotContext = { class: "1-A", day: "Mon", period: 1 };
+    let currentSlotContext = { class: "1-A", day: "सोमवार / MONDAY", period: 1 };
 
     function openSlotModal(cls, day, period) {
       if (state.isViewOnly) {
@@ -3613,7 +3613,7 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
     }
 
     // Teacher-Centric Slot Modal (Slides 5 & 6)
-    let currentTeacherSlotContext = { teacherId: null, day: "Mon", period: 1 };
+    let currentTeacherSlotContext = { teacherId: null, day: "सोमवार / MONDAY", period: 1 };
 
  function openTeacherSlotModal(teacherId, day, period) {
       if (state.isViewOnly) {
@@ -4385,7 +4385,7 @@ function renderSlide6TeacherGrid() {
 
     function resetRulesToKVSDefaults() {
       state.rules = [
-        { id: "r1", title: "Daily Core Cognitive Presence (Mon-Fri)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
+        { id: "r1", title: "Daily Core Cognitive Presence (सोमवार / MONDAY-शुक्रवार / FRIDAY)", type: "MIN_DAILY_PRESENCE", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 1, active: true },
         { id: "r2", title: "No Duplicate Activity Periods on Same Day", type: "MAX_DAILY_ACTIVITY", subjects: ["PE", "K.GAMES", "K.YOGA", "DL", "V.ART", "P.ART", "LIB"], threshold: 1, active: true },
         { id: "r3", title: "Max 3 Continuous Core Periods", type: "MAX_CONTINUOUS_PERIODS", subjects: ["HIN", "ENG", "MATH", "TWAU"], threshold: 3, active: true },
         { id: "r4", title: "कक्षा अध्यापक / Class Teacher Minimum 6 Periods", type: "MIN_CT_PERIODS", subjects: [], threshold: 6, active: true },
@@ -4942,7 +4942,7 @@ function printDayWiseClassTimetable(day) {
           </div>
         `;
       });
-      showPrintPreviewModal("Daily Master Schedule • All 6 Days", fullHtml);
+      showPrintPreviewModal("दैनिक समय सारणी / DAY TIME TABLE • All 6 Days", fullHtml);
     }
  function printDayWiseTeacherTimetable(day) {
       let gridRows = "";
@@ -5413,7 +5413,7 @@ function runPedagogicalAudit() {
       // Rule 1: Every weekday must have required core subjects
       let missingCoreDetails = [];
       DAYS.forEach(d => {
-        if (d === "Sat") return; // Saturday exempt
+        if (d === "शनिवार / SATURDAY") return; // Saturday exempt
         const daySlots = PERIODS.map(p => classSched[d]?.[p]?.subject).filter(Boolean);
         
         if (classNum >= 3) {

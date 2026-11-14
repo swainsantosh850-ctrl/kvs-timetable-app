@@ -3520,90 +3520,104 @@ const coTeacherSelect = document.getElementById("slot-coteacher-input");
       });
     }
 
-   function saveSlotModal() {
-      const { class: cls, day, period } = currentSlotContext;
-      const subject = document.getElementById("slot-modal-subject-input").value.trim();
-      const teacherId = document.getElementById("slot-modal-teacher-id").value;
-      const duration = parseInt(document.getElementById("slot-modal-duration-select").value) || 1;
+  function saveSlotModal() {
+    const { class: cls, day, period } = currentSlotContext;
+    const subject = document.getElementById("slot-modal-subject-input").value.trim().toUpperCase();
+    const teacherId = document.getElementById("slot-modal-teacher-id").value;
+    const duration = parseInt(document.getElementById("slot-modal-duration-select").value) || 1;
 
-      if (!subject || !teacherId) {
-        showNotification("Please select both Subject and Teacher.", "warning");
-        return;
-      }
+    if (!subject || !teacherId) {
+      showNotification("Please select both Subject and Teacher.", "warning");
+      return;
+    }
 
-      const [cNum, cSec] = cls.split("-");
-      const classKey = `Class ${cNum}`;
-      const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
-      
-      let allowedLimit = classLimits[subject];
-      if (allowedLimit === undefined) {
-        const allot = state.allotments.find(a => a.class === cNum && a.section === cSec && a.subject === subject);
-        allowedLimit = allot ? parseInt(allot.periods) : 10;
-      }
+    const [cNum, cSec] = cls.split("-");
+    const classKey = `Class ${cNum}`;
+    const classLimits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+    
+    // Find limit case-insensitively
+    let allowedLimit = classLimits[subject];
+    if (allowedLimit === undefined) {
+      const matchedLimitKey = Object.keys(classLimits).find(k => k.trim().toUpperCase() === subject);
+      allowedLimit = matchedLimitKey ? classLimits[matchedLimitKey] : undefined;
+    }
+    if (allowedLimit === undefined) {
+      const allot = state.allotments.find(a => String(a.class) === String(cNum) && String(a.section).toUpperCase() === String(cSec).toUpperCase() && String(a.subject).trim().toUpperCase() === subject);
+      allowedLimit = allot ? parseInt(allot.periods) : 10;
+    }
 
-      let currentCount = 0;
-      DAYS.forEach(d => {
-        PERIODS.forEach(p => {
-          if (d === day && p === period) return;
-          if (duration === 2 && d === day && p === period + 1) return;
-          if (state.schedules[cls]?.[d]?.[p]?.subject === subject) {
-            currentCount++;
-          }
-        });
-      });
-
-      if (currentCount + duration > allowedLimit) {
-        showNotification(`Cannot assign: Limit for ${subject} in Class ${cls} is ${allowedLimit} periods (Already used: ${currentCount}).`, "warning");
-        return;
-      }
-
-      const assignedT = state.teachers.find(t => t.id === teacherId);
-      if (assignedT?.secondaryBusySlots?.[day]?.includes(period)) {
-        showNotification("Cannot assign: Teacher is booked in Secondary School during this period!", "warning");
-        return;
-      }
-
-      if (isTeacherConflicted(teacherId, day, period)) {
-        showNotification("Warning: This teacher is already booked during this period!", "warning");
-      }
-
-      const coTeacherId = document.getElementById("slot-coteacher-input") ? document.getElementById("slot-coteacher-input").value : null;
-      
-      // Clear old slot if it existed before replacing
-      const oldSlot = state.schedules[cls]?.[day]?.[period];
-      if (oldSlot && oldSlot.teacherId && oldSlot.subject) {
-        decrementAllotmentCount(oldSlot.teacherId, cNum, cSec, oldSlot.subject);
-        if (oldSlot.coTeacherId) {
-          decrementAllotmentCount(oldSlot.coTeacherId, cNum, cSec, oldSlot.subject);
+    let currentCount = 0;
+    DAYS.forEach(d => {
+      PERIODS.forEach(p => {
+        if (d === day && p === period) return;
+        if (duration === 2 && d === day && p === period + 1) return;
+        const slotItem = state.schedules[cls]?.[d]?.[p];
+        if (slotItem && slotItem.subject && slotItem.subject.trim().toUpperCase() === subject) {
+          currentCount++;
         }
-      }
+      });
+    });
 
-      state.schedules[cls][day][period] = {
+    if (currentCount + duration > allowedLimit) {
+      showNotification(`Cannot assign: Limit for ${subject} in Class ${cls} is ${allowedLimit} periods (Already used: ${currentCount}).`, "warning");
+      return;
+    }
+
+    const assignedT = state.teachers.find(t => t.id === teacherId);
+    if (assignedT?.secondaryBusySlots?.[day]?.includes(period)) {
+      showNotification("Cannot assign: Teacher is booked in Secondary School during this period!", "warning");
+      return;
+    }
+
+    if (isTeacherConflicted(teacherId, day, period)) {
+      showNotification("Warning: This teacher is already booked during this period!", "warning");
+    }
+
+    const coTeacherInput = document.getElementById("slot-coteacher-input");
+    const coTeacherId = coTeacherInput ? coTeacherInput.value.trim() : "";
+    
+    // Clear old slot if it existed before replacing
+    const oldSlot = state.schedules[cls]?.[day]?.[period];
+    if (oldSlot && oldSlot.teacherId && oldSlot.subject) {
+      decrementAllotmentCount(oldSlot.teacherId, cNum, cSec, oldSlot.subject);
+      if (oldSlot.coTeacherId) {
+        decrementAllotmentCount(oldSlot.coTeacherId, cNum, cSec, oldSlot.subject);
+      }
+    }
+
+    // Ensure target schedule branch is fully initialized
+    if (!state.schedules[cls]) state.schedules[cls] = {};
+    if (!state.schedules[cls][day]) state.schedules[cls][day] = {};
+
+    state.schedules[cls][day][period] = {
+      subject: subject,
+      teacherId: teacherId,
+      coTeacherId: coTeacherId || null,
+      isBlock: duration === 2
+    };
+
+    if (duration === 2 && period < 8) {
+      if (!state.schedules[cls][day][period + 1]) {
+        state.schedules[cls][day][period + 1] = {};
+      }
+      state.schedules[cls][day][period + 1] = {
         subject: subject,
         teacherId: teacherId,
         coTeacherId: coTeacherId || null,
-        isBlock: duration === 2
+        isBlock: true
       };
-
-      if (duration === 2 && period < 8) {
-        state.schedules[cls][day][period + 1] = {
-          subject: subject,
-          teacherId: teacherId,
-          coTeacherId: coTeacherId || null,
-          isBlock: true
-        };
-      }
-
-      // Auto-assign or increment in Slide 2 allotments
-      ensureAllotmentExists(teacherId, cNum, cSec, subject);
-      if (coTeacherId) {
-        ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
-      }
-
-      closeSlotModal();
-      refreshAllScheduleViews();
-      showNotification(`Period slot saved: ${subject} in Class ${cls}!`, "success");
     }
+
+    // Auto-assign or increment in Slide 2 allotments
+    ensureAllotmentExists(teacherId, cNum, cSec, subject);
+    if (coTeacherId) {
+      ensureAllotmentExists(coTeacherId, cNum, cSec, subject);
+    }
+
+    closeSlotModal();
+    refreshAllScheduleViews();
+    showNotification(`Period slot saved: ${subject} in Class ${cls}!`, "success");
+  }
     function clearCurrentSlot() {
       const { class: cls, day, period } = currentSlotContext;
       state.schedules[cls][day][period] = null;

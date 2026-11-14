@@ -4971,7 +4971,7 @@ function printDayWiseClassTimetable(day) {
 
       const html = `
         <div class="print-page landscape-page" style="width: 100%; max-width: none; font-family: 'Times New Roman', Times, serif;">
-          ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
+          ${renderOfficialHeader(`सिक्षक आवंटन / TEACHER ALLOTMENT • ${day.toUpperCase()}`)}
           <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
             <thead>
               <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
@@ -5024,7 +5024,7 @@ function printDayWiseClassTimetable(day) {
 
         fullHtml += `
           <div class="print-page landscape-page" style="margin-bottom: 24px; width: 100%; max-width: none;">
-            ${renderOfficialHeader(`STAFF DEPLOYMENT • ${day.toUpperCase()}`)}
+            ${renderOfficialHeader(`सिक्षक आवंटन / TEACHER ALLOTMENT • ${day.toUpperCase()}`)}
             <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
               <thead>
                 <tr style="background: #e2e8f0; border: 1.5px solid #0f172a;">
@@ -5046,7 +5046,7 @@ function printDayWiseClassTimetable(day) {
           </div>
         `;
       });
-      showPrintPreviewModal("Staff Deployment • All 6 Days", fullHtml);
+      showPrintPreviewModal("सिक्षक आवंटन / TEACHER ALLOTMENT • All 6 Days", fullHtml);
     }
   function printTeacherWeeklyTimetable(teacherId) {
       const t = state.teachers.find(item => item.id === teacherId);

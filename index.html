@@ -426,6 +426,10 @@
         <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">6</span>
         <span>Teacher Weekly TT</span>
       </button>
+      <button type="button" onclick="goToSlide(7)" id="nav-pill-7" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+  <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">7</span>
+  <span>Single-Day Staff TT</span>
+</button>
     </div>
   </nav>
 </header>
@@ -849,7 +853,7 @@
         </table>
       </div>
     </div>
-  <!-- Slide 7: Single-Day Teacher Timetable (Official KVS Format) -->
+ <!-- Slide 7: Single-Day Teacher Timetable (Official KVS Format) -->
   <div id="slide-panel-7" class="hidden space-y-6">
     <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
@@ -890,7 +894,7 @@
 
     <!-- Live Preview Card matching the exact KVS requested format -->
     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6 max-w-4xl mx-auto" id="slide7-preview-container">
-      <!-- Dynamically populated by renderSlide7Content() -->
+      <!-- Dynamically populated -->
     </div>
   </div>
   </main>
@@ -2141,41 +2145,34 @@ function auditGlobalCollisions() {
         }
       }
     }
-    function goToSlide(slideNum) {
-      state.activeSlide = slideNum;
-      for (let i = 1; i <= 6; i++) {
-        const panel = document.getElementById(`slide-panel-${i}`);
-        const pill = document.getElementById(`nav-pill-${i}`);
-        if (panel) panel.classList.toggle("hidden", i !== slideNum);
-        if (pill) {
-          if (i === slideNum) {
-            pill.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-indigo-600 text-white shadow-xs";
-            pill.querySelector("span:first-child").className = "w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[10px]";
-          } else {
-            pill.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200";
-            pill.querySelector("span:first-child").className = "w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]";
-          }
+   function goToSlide(slideNum) {
+    state.activeSlide = slideNum;
+    for (let i = 1; i <= 7; i++) { // <-- Updated to 7
+      const panel = document.getElementById(`slide-panel-${i}`);
+      const pill = document.getElementById(`nav-pill-${i}`);
+      if (panel) panel.classList.toggle("hidden", i !== slideNum);
+      if (pill) {
+        if (i === slideNum) {
+          pill.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-indigo-600 text-white shadow-xs";
+          pill.querySelector("span:first-child").className = "w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[10px]";
+        } else {
+          pill.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200";
+          pill.querySelector("span:first-child").className = "w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]";
         }
       }
-
-      if (slideNum === 1) renderSlide1Teachers();
-      if (slideNum === 2) { renderSlide2Allotments(); renderSlide2WorkloadStatus(); }
-      if (slideNum === 3) { renderSlide3ClassPills(); renderSlide3Grid(); runPedagogicalAudit(); }
-      if (slideNum === 4) { renderSlide4DayPills(); renderSlide4DayWiseClasses(); }
-      if (slideNum === 5) { 
-        renderSlide5DayPills(); 
-        renderSlide5SubPeriodPills(); 
-        renderSlide5DayWiseTeachers(); 
-        renderSubstitutionAssistant(); 
-        const dayLbl = document.getElementById("slide5-current-day-label");
-        if (dayLbl) dayLbl.textContent = state.selectedDaySlide5;
-      }
-      if (slideNum === 6) { renderSlide6TeacherSelect(); renderSlide6TeacherGrid(); }
-if (slideNum === 7) { renderSlide7TeacherSelect(); renderSlide7Content(); }
-      auditGlobalCollisions();
-      applyViewOnlyLocks();
     }
 
+    if (slideNum === 1) renderSlide1Teachers();
+    if (slideNum === 2) { renderSlide2Allotments(); renderSlide2WorkloadStatus(); }
+    if (slideNum === 3) { renderSlide3ClassPills(); renderSlide3Grid(); runPedagogicalAudit(); }
+    if (slideNum === 4) { renderSlide4DayPills(); renderSlide4DayWiseClasses(); }
+    if (slideNum === 5) { renderSlide5DayPills(); renderSlide5SubPeriodPills(); renderSlide5DayWiseTeachers(); renderSubstitutionAssistant(); }
+    if (slideNum === 6) { renderSlide6TeacherSelect(); renderSlide6TeacherGrid(); }
+    if (slideNum === 7) { renderSlide7TeacherSelect(); renderSlide7Content(); } // <-- Added for Slide 7
+
+    auditGlobalCollisions();
+    applyViewOnlyLocks();
+  }
     function updateSchoolInfo() {
       state.schoolInfo.name = document.getElementById("school-name-input").value;
       state.schoolInfo.session = document.getElementById("school-session-input").value;
@@ -4090,7 +4087,7 @@ function saveTeacherSlotModal() {
     state.teachers.forEach(t => {
       const opt = document.createElement("option");
       opt.value = t.id;
-      opt.textContent = `${t.name} (${t.shortName})`;
+      opt.textContent = `${t.name} (${t.shortName || ""})`;
       if (t.id === (state.selectedTeacherSlide7 || state.teachers[0]?.id)) opt.selected = true;
       select.appendChild(opt);
     });
@@ -4114,12 +4111,10 @@ function saveTeacherSlotModal() {
       return;
     }
 
-    // Build the 8-period row data matching your exact requested layout format
     let classRowCells = "";
     let subjectRowCells = "";
 
     PERIODS.forEach(p => {
-      // Check if lunch break should be noted or if it's normal period
       let assignedClass = "-";
       let assignedSubject = "-";
 
@@ -4145,7 +4140,7 @@ function saveTeacherSlotModal() {
         ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
         
         <div style="margin-bottom: 14px; font-size: 12px; font-weight: 800; color: #0f172a;">
-          NAME OF THE TEACHER: <span style="text-decoration: underline; font-weight: 900;">${t.name} (${t.shortName})</span>
+          NAME OF THE TEACHER: <span style="text-decoration: underline; font-weight: 900;">${t.name} (${t.shortName || ""})</span>
         </div>
 
         <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11px; text-align: center; margin-bottom: 20px;">

@@ -4184,7 +4184,7 @@ function saveTeacherSlotModal() {
     if (!container) return;
     showPrintPreviewModal("Single-Day Teacher Timetable", container.innerHTML);
   }
-    function printAllSlide7Teachers() {
+  function printAllSlide7Teachers() {
     const daySelect = document.getElementById("slide7-day-select");
     const selectedDay = daySelect ? daySelect.value : "सोमवार / MONDAY";
 
@@ -4217,10 +4217,13 @@ function saveTeacherSlotModal() {
       });
 
       pageChunk += `
-        <div style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1.5px solid #94a3b8; page-break-inside: avoid; break-inside: avoid;">
-          <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
+        <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1.5px solid #94a3b8; page-break-inside: avoid; break-inside: avoid;">
+          ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
+          
+          <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">
             NAME OF THE TEACHER: <span style="text-decoration: underline; font-weight: 900;">${t.name} (${t.shortName || ""})</span>
           </div>
+
           <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 10px; text-align: center;">
             <thead>
               <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
@@ -4253,7 +4256,6 @@ function saveTeacherSlotModal() {
       if ((index + 1) % 3 === 0 || index === state.teachers.length - 1) {
         allTeachersChunk += `
           <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 8mm; page-break-after: always; break-after: page;">
-            ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
             ${pageChunk}
             ${renderOfficialFooter(false)}
           </div>

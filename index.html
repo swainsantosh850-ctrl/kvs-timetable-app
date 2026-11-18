@@ -1820,35 +1820,148 @@ function openEditSchoolModal() {
       reader.readAsText(file);
     }
 
-    function exportAllToExcel() {
+   function exportAllToExcel() {
       try {
         const wb = XLSX.utils.book_new();
+
+        // 1. SHEET: School Staff Master List (Slide 1)
+        const staffData = [["#", "Teacher Name", "Code", "Role / Designation", "Primary Class", "Co-Teacher Class"]];
+        state.teachers.forEach((t, i) => {
+          let role = t.isClassTeacher ? `Class Teacher (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT';
+          if (t.isCoClassTeacher) role += ` / Co-CT (${t.coClassNum}-${t.coSection})`;
+          staffData.push([
+            i + 1,
+            t.name,
+            t.shortName || "",
+            role,
+            t.isClassTeacher ? `${t.classNum}-${t.section}` : "-",
+            t.isCoClassTeacher ? `${t.coClassNum}-${t.coSection}` : "-"
+          ]);
+        });
+        const wsStaff = XLSX.utils.aoa_to_sheet(staffData);
+        XLSX.utils.book_append_sheet(wb, wsStaff, "Staff Master");
+
+        // 2. SHEET: Class Timetables Grid (Slide 3)
         CLASSES.forEach(cls => {
           const sheetData = [["Day", "P1", "P2", "P3", "P4", "Recess", "P5", "P6", "P7", "P8"]];
           DAYS.forEach(d => {
             const row = [d];
             PERIODS.forEach(p => {
-            const slot = state.schedules[cls]?.[d]?.[p];
-            if (slot) {
+              const slot = state.schedules[cls]?.[d]?.[p];
+              if (slot) {
                 const primaryT = state.teachers.find(t => t.id === slot.teacherId);
                 const coT = state.teachers.find(t => t.id === slot.coTeacherId);
                 let tName = primaryT ? (primaryT.shortName || primaryT.name) : "";
                 if (coT) tName += ` + ${coT.shortName || coT.name}`;
-                
-                row.push(`${slot.subject} (${tName})`);
-            } else {
-                row.push("");
-            }
-        });
+                row.push(`${slot.subject} [${tName}]`);
+              } else {
+                row.push("-");
+              }
+            });
+            // Insert Lunch Break placeholder in the middle column
+            row.splice(5, 0, "LUNCH BREAK");
             sheetData.push(row);
           });
-          const ws = XLSX.utils.aoa_to_sheet(sheetData);
-          XLSX.utils.book_append_sheet(wb, ws, `Class ${cls}`);
+          const wsClass = XLSX.utils.aoa_to_sheet(sheetData);
+          XLSX.utils.book_append_sheet(wb, wsClass, `Class ${cls}`);
         });
-        XLSX.writeFile(wb, `KVS_Timetable_${state.schoolInfo.name.replace(/\s+/g, '_')}_${Date.now()}.xlsx`);
-        showNotification("Excel workbook exported successfully!", "success");
+
+        // 3. SHEET: Day-Wise Class Master Schedules (Slide 4)
+        DAYS.forEach(d => {
+          const sheetData = [["Class", "P1", "P2", "P3", "P4", "Recess", "P5", "P6", "P7", "P8"]];
+          CLASSES.forEach(cls => {
+            const row = [`Class ${cls}`];
+            PERIODS.forEach(p => {
+              const slot = state.schedules[cls]?.[d]?.[p];
+              if (slot) {
+                const primaryT = state.teachers.find(t => t.id === slot.teacherId);
+                const coT = state.teachers.find(t => t.id === slot.coTeacherId);
+                let tName = primaryT ? (primaryT.shortName || primaryT.name) : "";
+                if (coT) tName += ` + ${coT.shortName || coT.name}`;
+                row.push(`${slot.subject} [${tName}]`);
+              } else {
+                row.push("-");
+              }
+            });
+            row.splice(5, 0, "LUNCH BREAK");
+            sheetData.push(row);
+          });
+          const wsDayClass = XLSX.utils.aoa_to_sheet(sheetData);
+          // Truncate sheet name to 31 chars max due to Excel sheet name limits
+          XLSX.utils.book_append_sheet(wb, wsDayClass, `Day-Class ${d.split(" ")[0]}`);
+        });
+
+        // 4. SHEET: Day-Wise Staff Deployment (Slide 5)
+        DAYS.forEach(d => {
+          const sheetData = [["Teacher", "P1", "P2", "P3", "P4", "Recess", "P5", "P6", "P7", "P8", "Daily Load"]];
+          state.teachers.forEach(t => {
+            const row = [`${t.name} [${t.shortName}]`];
+            let primaryCount = 0;
+            let coTeacherCount = 0;
+
+            PERIODS.forEach(p => {
+              let assigned = [];
+              CLASSES.forEach(c => {
+                const slot = state.schedules[c]?.[d]?.[p];
+                if (slot) {
+                  if (slot.teacherId === t.id) {
+                    assigned.push(`${c}:${slot.subject}`);
+                    primaryCount++;
+                  }
+                  if (slot.coTeacherId === t.id) {
+                    assigned.push(`${c}:${slot.subject}[Co-T]`);
+                    coTeacherCount++;
+                  }
+                }
+              });
+              row.push(assigned.length > 0 ? assigned.join(", ") : "-");
+            });
+
+            row.splice(5, 0, "LUNCH BREAK");
+            const totalDaily = primaryCount + coTeacherCount;
+            row.push(`${totalDaily} P (Main:${primaryCount}, Co:${coTeacherCount})`);
+            sheetData.push(row);
+          });
+          const wsDayStaff = XLSX.utils.aoa_to_sheet(sheetData);
+          XLSX.utils.book_append_sheet(wb, wsDayStaff, `Staff ${d.split(" ")[0]}`);
+        });
+
+        // 5. SHEET: Teacher Weekly Timetable Book (Slide 6)
+        const weeklyMasterData = [["Teacher Name", "Day", "P1", "P2", "P3", "P4", "Recess", "P5", "P6", "P7", "P8", "Day Total"]];
+        state.teachers.forEach(t => {
+          DAYS.forEach(d => {
+            const row = [`${t.name} [${t.shortName}]`, d];
+            let dayTotal = 0;
+            PERIODS.forEach(p => {
+              let assigned = [];
+              CLASSES.forEach(c => {
+                const slot = state.schedules[c]?.[d]?.[p];
+                if (slot) {
+                  if (slot.teacherId === t.id) {
+                    assigned.push(`${c}:${slot.subject}`);
+                    dayTotal++;
+                  }
+                  if (slot.coTeacherId === t.id) {
+                    assigned.push(`${c}:${slot.subject}[Co-T]`);
+                    dayTotal++;
+                  }
+                }
+              });
+              row.push(assigned.length > 0 ? assigned.join(", ") : "-");
+            });
+            row.splice(6, 0, "LUNCH BREAK");
+            row.push(`${dayTotal} P`);
+            weeklyMasterData.push(row);
+          });
+        });
+        const wsWeekly = XLSX.utils.aoa_to_sheet(weeklyMasterData);
+        XLSX.utils.book_append_sheet(wb, wsWeekly, "Teacher Weekly Book");
+
+        // Write and download the complete Excel file
+        XLSX.writeFile(wb, `KVS_Timetable_Studio_${state.schoolInfo.name.replace(/\s+/g, '_')}_${Date.now()}.xlsx`);
+        showNotification("All 6 slides exported successfully into a multi-sheet Excel workbook!", "success");
       } catch (err) {
-        showNotification("Export error: " + err.message, "warning");
+        showNotification("Excel export error: " + err.message, "warning");
       }
     }
 

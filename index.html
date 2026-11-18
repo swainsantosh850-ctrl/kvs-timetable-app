@@ -849,6 +849,50 @@
         </table>
       </div>
     </div>
+  <!-- Slide 7: Single-Day Teacher Timetable (Official KVS Format) -->
+  <div id="slide-panel-7" class="hidden space-y-6">
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg font-black">
+          <i class="ph-bold ph-file-arrow-down"></i>
+        </div>
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900">Single-Day Teacher Timetable Generator (Slide 7)</h2>
+          <p class="text-xs text-slate-500 font-medium">Generate and print individual teacher schedules for any specific day in official format</p>
+        </div>
+      </div>
+
+      <div class="flex items-center flex-wrap gap-2">
+        <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+          <label class="text-[11px] font-black uppercase tracking-wider text-slate-600">Teacher:</label>
+          <select id="slide7-teacher-select" onchange="renderSlide7Content()" class="px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </select>
+        </div>
+
+        <div class="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+          <label class="text-[11px] font-black uppercase tracking-wider text-slate-600">Day:</label>
+          <select id="slide7-day-select" onchange="renderSlide7Content()" class="px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="सोमवार / MONDAY">सोमवार / MONDAY</option>
+            <option value="मंगलवार / TUESDAY">मंगलवार / TUESDAY</option>
+            <option value="बुधवार / WEDNESDAY">बुधवार / WEDNESDAY</option>
+            <option value="गुरुवार / THURSDAY">गुरुवार / THURSDAY</option>
+            <option value="शुक्रवार / FRIDAY">शुक्रवार / FRIDAY</option>
+            <option value="शनिवार / SATURDAY">शनिवार / SATURDAY</option>
+          </select>
+        </div>
+
+        <button onclick="printSlide7Timetable()" class="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
+          <i class="ph-bold ph-printer text-sm"></i>
+          <span>Print This Day's TT</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Preview Card matching the exact KVS requested format -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6 max-w-4xl mx-auto" id="slide7-preview-container">
+      <!-- Dynamically populated by renderSlide7Content() -->
+    </div>
+  </div>
   </main>
 
   <!-- Secondary Wing Busy Slots Modal -->
@@ -990,7 +1034,10 @@
           </div>
         </div>
       </div>
-
+<button type="button" onclick="goToSlide(7)" id="nav-pill-7" class="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+  <span class="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px]">7</span>
+  <span>Single-Day Staff TT</span>
+</button>
       <!-- 2nd Box: Subjects Assigned to This Teacher with Color Badges -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
@@ -2124,7 +2171,7 @@ function auditGlobalCollisions() {
         if (dayLbl) dayLbl.textContent = state.selectedDaySlide5;
       }
       if (slideNum === 6) { renderSlide6TeacherSelect(); renderSlide6TeacherGrid(); }
-
+if (slideNum === 7) { renderSlide7TeacherSelect(); renderSlide7Content(); }
       auditGlobalCollisions();
       applyViewOnlyLocks();
     }
@@ -4034,7 +4081,109 @@ function saveTeacherSlotModal() {
       refreshAllScheduleViews();
       showNotification("Cleared period for this teacher.", "info");
     }
+// --- SLIDE 7: SINGLE-DAY TEACHER TIMETABLE STUDIO ---
+  
+  function renderSlide7TeacherSelect() {
+    const select = document.getElementById("slide7-teacher-select");
+    if (!select) return;
+    select.innerHTML = "";
+    state.teachers.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = `${t.name} (${t.shortName})`;
+      if (t.id === (state.selectedTeacherSlide7 || state.teachers[0]?.id)) opt.selected = true;
+      select.appendChild(opt);
+    });
+    if (!state.selectedTeacherSlide7 && state.teachers[0]) {
+      state.selectedTeacherSlide7 = state.teachers[0].id;
+    }
+  }
 
+  function renderSlide7Content() {
+    const teacherSelect = document.getElementById("slide7-teacher-select");
+    const daySelect = document.getElementById("slide7-day-select");
+    const container = document.getElementById("slide7-preview-container");
+    if (!container) return;
+
+    if (teacherSelect && teacherSelect.value) state.selectedTeacherSlide7 = teacherSelect.value;
+    const selectedDay = daySelect ? daySelect.value : "सोमवार / MONDAY";
+
+    const t = state.teachers.find(item => item.id === state.selectedTeacherSlide7);
+    if (!t) {
+      container.innerHTML = `<div class="text-center text-slate-400 font-bold py-8">No teacher selected or available.</div>`;
+      return;
+    }
+
+    // Build the 8-period row data matching your exact requested layout format
+    let classRowCells = "";
+    let subjectRowCells = "";
+
+    PERIODS.forEach(p => {
+      // Check if lunch break should be noted or if it's normal period
+      let assignedClass = "-";
+      let assignedSubject = "-";
+
+      CLASSES.forEach(c => {
+        const slot = state.schedules[c]?.[selectedDay]?.[p];
+        if (slot) {
+          if (slot.teacherId === t.id) {
+            assignedClass = c;
+            assignedSubject = slot.subject;
+          } else if (slot.coTeacherId === t.id) {
+            assignedClass = `${c} [Co-T]`;
+            assignedSubject = slot.subject;
+          }
+        }
+      });
+
+      classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 8px 4px; text-align: center; font-weight: 800; font-size: 11px; width: 11%;">${assignedClass}</td>`;
+      subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 8px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 11%;">${assignedSubject}</td>`;
+    });
+
+    container.innerHTML = `
+      <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 10px;">
+        ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
+        
+        <div style="margin-bottom: 14px; font-size: 12px; font-weight: 800; color: #0f172a;">
+          NAME OF THE TEACHER: <span style="text-decoration: underline; font-weight: 900;">${t.name} (${t.shortName})</span>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11px; text-align: center; margin-bottom: 20px;">
+          <thead>
+            <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
+              <th style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 900; width: 12%;">DAY</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">1</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">2</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">3</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">4</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">5</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">6</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">7</th>
+              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">8</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 800; background: #f8fafc;">CLASS</td>
+              ${classRowCells}
+            </tr>
+            <tr>
+              <td style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 800; background: #f8fafc;">SUBJECT</td>
+              ${subjectRowCells}
+            </tr>
+          </tbody>
+        </table>
+
+        ${renderOfficialFooter(false)}
+      </div>
+    `;
+  }
+
+  function printSlide7Timetable() {
+    const container = document.getElementById("slide7-preview-container");
+    if (!container) return;
+    showPrintPreviewModal("Single-Day Teacher Timetable", container.innerHTML);
+  }
     // ==========================================
     // --- SLIDE 4: DAY-WISE CLASS TT ---
     // ==========================================
@@ -5608,6 +5757,8 @@ function printCurrentSlide(slideNum) {
     } else if (activeNum === 6) {
       const targetTeacher = state.selectedTeacherSlide6 || (state.teachers && state.teachers[0] ? state.teachers[0].id : null);
       if (targetTeacher) printTeacherWeeklyTimetable(targetTeacher);
+    } else if (activeNum === 7) {
+      printSlide7Timetable();
     }
   }
 

@@ -69,9 +69,10 @@
       background: white !important;
     }
 
-    @media print {
+   @media print {
       * {
         -webkit-print-color-adjust: exact !important;
+        print-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
       body { background: white !important; padding: 0 !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
@@ -5948,39 +5949,72 @@ function printCurrentSlide(slideNum) {
         printableArea.classList.add("monochrome-print");
       }
 
-      // Automatically detects 'landscape-page' class for both Slide 4 and Slide 5
+      // Automatically detects 'landscape-page' class for Slide 4 and Slide 5
       const isLandscape = activePrintHtml.includes('landscape-page') || 
                           (printableArea && printableArea.querySelector('.landscape-page'));
 
-      if (isLandscape) {
-        const printWin = window.open("", "_blank", "width=1100,height=800");
-        if (!printWin) {
-          showNotification("Please allow popups to print in landscape mode.", "warning");
-          return;
-        }
-        
-        // Include monochrome styles in the popup if B&W is selected
-        const bwStyle = isBw ? `
-          .monochrome-print, .monochrome-print * {
-            background: white !important;
-            background-color: white !important;
-            color: black !important;
-            border-color: black !important;
-            box-shadow: none !important;
-          }
-          .monochrome-print div[style*="background"] { background: white !important; }
-        ` : '';
-
-        const htmlContent = isBw ? `<div class="monochrome-print">${activePrintHtml}</div>` : activePrintHtml;
-
-        printWin.document.write(`<!DOCTYPE html><html><head><title>Print Preview</title><style>@page { size: landscape; margin: 8mm; } body { font-family: 'Times New Roman', Times, serif; padding: 0; margin: 0; background: white; color: black; } table { width: 100%; border-collapse: collapse; } th, td { border: 1.5px solid #0f172a; padding: 6px; } .print-page { page-break-after: always; margin-bottom: 20px; } ${bwStyle}</style></head><body>${htmlContent}<script>window.onload = function() { setTimeout(() => window.print(), 300); };<\/script></body></html>`);
-        printWin.document.close();
-      } else {
-        window.focus();
-        setTimeout(() => {
-          try { window.print(); } catch (err) { openPrintInNewWindow(); }
-        }, 150);
+      const printWin = window.open("", "_blank", "width=1100,height=800");
+      if (!printWin) {
+        showNotification("Please allow popups to open the print view.", "warning");
+        return;
       }
+      
+      // Include monochrome styles in the popup if B&W is selected
+      const bwStyle = isBw ? `
+        .monochrome-print, .monochrome-print * {
+          background: white !important;
+          background-color: white !important;
+          color: black !important;
+          border-color: black !important;
+          box-shadow: none !important;
+        }
+        .monochrome-print div[style*="background"] { background: white !important; }
+      ` : '';
+
+      const htmlContent = isBw ? `<div class="monochrome-print">${activePrintHtml}</div>` : activePrintHtml;
+      const pageSizeRule = isLandscape ? 'size: landscape;' : 'size: portrait;';
+
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>KVS Timetable Print Preview</title>
+            <style>
+              @page { ${pageSizeRule} margin: 8mm; } 
+              body { 
+                font-family: 'Times New Roman', Times, serif; 
+                padding: 0; 
+                margin: 0; 
+                background: white; 
+                color: black; 
+              } 
+              table { 
+                width: 100%; 
+                border-collapse: collapse !important; 
+              } 
+              th, td { 
+                border: 1.5px solid #0f172a !important; 
+                padding: 6px !important; 
+              } 
+              .print-page { 
+                page-break-after: always; 
+                break-after: page; 
+                margin-bottom: 20px; 
+              } 
+              ${bwStyle}
+            </style>
+          </head>
+          <body>
+            ${htmlContent}
+            <script>
+              window.onload = function() { 
+                setTimeout(() => window.print(), 300); 
+              };
+            <\/script>
+          </body>
+        </html>
+      `);
+      printWin.document.close();
     }
 
     function openPrintInNewWindow() {

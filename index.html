@@ -889,6 +889,11 @@
           <i class="ph-bold ph-printer text-sm"></i>
           <span>Print This Day's TT</span>
         </button>
+        <!-- 👉 PASTE THE 3-UP BATCH PRINT BUTTON RIGHT HERE -->
+        <button onclick="printAllSlide7Teachers()" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition flex items-center gap-1.5">
+          <i class="ph-bold ph-printer text-sm"></i>
+          <span>Review & Print All Teachers (3-Up)</span>
+        </button>
       </div>
     </div>
 
@@ -4179,6 +4184,86 @@ function saveTeacherSlotModal() {
     if (!container) return;
     showPrintPreviewModal("Single-Day Teacher Timetable", container.innerHTML);
   }
+    function printAllSlide7Teachers() {
+    const daySelect = document.getElementById("slide7-day-select");
+    const selectedDay = daySelect ? daySelect.value : "सोमवार / MONDAY";
+
+    let allTeachersChunk = "";
+    let pageChunk = "";
+
+    state.teachers.forEach((t, index) => {
+      let classRowCells = "";
+      let subjectRowCells = "";
+
+      PERIODS.forEach(p => {
+        let assignedClass = "-";
+        let assignedSubject = "-";
+
+        CLASSES.forEach(c => {
+          const slot = state.schedules[c]?.[selectedDay]?.[p];
+          if (slot) {
+            if (slot.teacherId === t.id) {
+              assignedClass = c;
+              assignedSubject = slot.subject;
+            } else if (slot.coTeacherId === t.id) {
+              assignedClass = `${c} [Co-T]`;
+              assignedSubject = slot.subject;
+            }
+          }
+        });
+
+        classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 6px 3px; text-align: center; font-weight: 800; font-size: 10px; width: 11%;">${assignedClass}</td>`;
+        subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 6px 3px; text-align: center; font-weight: 700; font-size: 10px; width: 11%;">${assignedSubject}</td>`;
+      });
+
+      pageChunk += `
+        <div style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1.5px solid #94a3b8; page-break-inside: avoid; break-inside: avoid;">
+          <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
+            NAME OF THE TEACHER: <span style="text-decoration: underline; font-weight: 900;">${t.name} (${t.shortName || ""})</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 10px; text-align: center;">
+            <thead>
+              <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
+                <th style="border: 1.5px solid #0f172a; padding: 5px 4px; font-weight: 900; width: 12%;">DAY</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">1</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">2</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">3</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">4</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">5</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">6</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">7</th>
+                <th style="border: 1.5px solid #0f172a; padding: 5px 3px; font-weight: 900;">8</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="border: 1.5px solid #0f172a; padding: 6px 4px; font-weight: 800; background: #f8fafc;">CLASS</td>
+                ${classRowCells}
+              </tr>
+              <tr>
+                <td style="border: 1.5px solid #0f172a; padding: 6px 4px; font-weight: 800; background: #f8fafc;">SUBJECT</td>
+                ${subjectRowCells}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Group exactly 3 teachers per page container
+      if ((index + 1) % 3 === 0 || index === state.teachers.length - 1) {
+        allTeachersChunk += `
+          <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 8mm; page-break-after: always; break-after: page;">
+            ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
+            ${pageChunk}
+            ${renderOfficialFooter(false)}
+          </div>
+        `;
+        pageChunk = "";
+      }
+    });
+
+    showPrintPreviewModal(`All Teachers Time Table (3-Up) - ${selectedDay}`, allTeachersChunk);
+  }
     // ==========================================
     // --- SLIDE 4: DAY-WISE CLASS TT ---
     // ==========================================
@@ -5753,7 +5838,7 @@ function printCurrentSlide(slideNum) {
       const targetTeacher = state.selectedTeacherSlide6 || (state.teachers && state.teachers[0] ? state.teachers[0].id : null);
       if (targetTeacher) printTeacherWeeklyTimetable(targetTeacher);
     } else if (activeNum === 7) {
-      printSlide7Timetable();
+      printAllSlide7Teachers(); // Or call printSlide7Timetable() if you prefer single view
     }
   }
 

@@ -4135,39 +4135,40 @@ function renderSlide7Content() {
         }
       });
 
-      classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 8px 4px; text-align: center; font-weight: 800; font-size: 11px; width: 11%;">${assignedClass}</td>`;
-      subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 8px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 11%;">${assignedSubject}</td>`;
+      // Increased padding and font size for wider, more readable cells
+      classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 10px 6px; text-align: center; font-weight: 800; font-size: 12.5px; width: 11%;">${assignedClass}</td>`;
+      subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 10px 6px; text-align: center; font-weight: 700; font-size: 12.5px; width: 11%;">${assignedSubject}</td>`;
     });
 
     container.innerHTML = `
-      <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 14px; max-width: 980px; margin: 0 auto;">
+      <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 16px; max-width: 1040px; margin: 0 auto;">
         ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
         
-        <div style="margin-bottom: 14px; font-size: 12px; font-weight: 800; color: #0f172a;">
+        <div style="margin-bottom: 16px; font-size: 13.5px; font-weight: 800; color: #0f172a;">
           NAME OF THE TEACHER: <span style="font-weight: 900;">${t.name} (${t.shortName || ""})</span>
         </div>
 
-        <table style="width: 100%; max-width: 960px; margin: 0 auto; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11.5px; text-align: center; margin-bottom: 20px;">
+        <table style="width: 100%; max-width: 1000px; margin: 0 auto; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 13px; text-align: center; margin-bottom: 24px;">
           <thead>
             <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-              <th style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 900; width: 14%;">PERIOD</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">1</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">2</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">3</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">4</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">5</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">6</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">7</th>
-              <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">8</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 8px; font-weight: 900; width: 14%;">PERIOD</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">1</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">2</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">3</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">4</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">5</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">6</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">7</th>
+              <th style="border: 1.5px solid #0f172a; padding: 10px 6px; font-weight: 900;">8</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 800; background: #f8fafc;">CLASS</td>
+              <td style="border: 1.5px solid #0f172a; padding: 10px 8px; font-weight: 800; background: #f8fafc;">CLASS</td>
               ${classRowCells}
             </tr>
             <tr>
-              <td style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 800; background: #f8fafc;">SUBJECT</td>
+              <td style="border: 1.5px solid #0f172a; padding: 10px 8px; font-weight: 800; background: #f8fafc;">SUBJECT</td>
               ${subjectRowCells}
             </tr>
           </tbody>
@@ -4210,39 +4211,39 @@ function printAllSlide7Teachers() {
           }
         });
 
-        classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 6px 3px; text-align: center; font-weight: 800; font-size: 10px; width: 10.7%;">${assignedClass}</td>`;
-        subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 6px 3px; text-align: center; font-weight: 700; font-size: 10px; width: 10.7%;">${assignedSubject}</td>`;
+        classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 8px 4px; text-align: center; font-weight: 800; font-size: 11px; width: 11%;">${assignedClass}</td>`;
+        subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 8px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 11%;">${assignedSubject}</td>`;
       });
 
       pageChunk += `
         <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1.5px solid #94a3b8; page-break-inside: avoid; break-inside: avoid;">
           ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
           
-          <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">
+          <div style="margin-bottom: 10px; font-size: 12px; font-weight: 800; color: #0f172a;">
             NAME OF THE TEACHER: <span style="font-weight: 900;">${t.name} (${t.shortName || ""})</span>
           </div>
 
-          <table style="width: 100%; max-width: 960px; margin: 0 auto; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 10.5px; text-align: center;">
+          <table style="width: 100%; max-width: 960px; margin: 0 auto; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11px; text-align: center;">
             <thead>
               <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                <th style="border: 1.5px solid #0f172a; padding: 6px 4px; font-weight: 900; width: 14%;">PERIOD</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">1</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">2</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">3</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">4</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">5</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">6</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">7</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px 3px; font-weight: 900;">8</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 900; width: 14%;">PERIOD</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">1</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">2</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">3</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">4</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">5</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">6</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">7</th>
+                <th style="border: 1.5px solid #0f172a; padding: 8px 4px; font-weight: 900;">8</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td style="border: 1.5px solid #0f172a; padding: 6px 4px; font-weight: 800; background: #f8fafc;">CLASS</td>
+                <td style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 800; background: #f8fafc;">CLASS</td>
                 ${classRowCells}
               </tr>
               <tr>
-                <td style="border: 1.5px solid #0f172a; padding: 6px 4px; font-weight: 800; background: #f8fafc;">SUBJECT</td>
+                <td style="border: 1.5px solid #0f172a; padding: 8px 6px; font-weight: 800; background: #f8fafc;">SUBJECT</td>
                 ${subjectRowCells}
               </tr>
             </tbody>
@@ -4253,7 +4254,7 @@ function printAllSlide7Teachers() {
       // Group exactly 3 teachers per page container
       if ((index + 1) % 3 === 0 || index === state.teachers.length - 1) {
         allTeachersChunk += `
-          <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 8mm; max-width: 980px; margin: 0 auto; page-break-after: always; break-after: page;">
+          <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 10mm; max-width: 980px; margin: 0 auto; page-break-after: always; break-after: page;">
             ${pageChunk}
             ${renderOfficialFooter(false)}
           </div>

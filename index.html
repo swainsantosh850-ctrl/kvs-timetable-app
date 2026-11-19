@@ -4175,11 +4175,9 @@ function renderSlide7Content() {
         </table>
 
         <div style="display: flex; justify-content: space-between; align-items: flex-end; max-width: 1000px; margin: 18px auto 12px auto; font-size: 12px; font-weight: 800; color: #0f172a;">
-          <div>HM SIGN: ______________________</div>
-          <div>PRINCIPAL SIGN: ______________________</div>
+          <div>प्रधानाध्यापिका/HM SIGN: ______________________</div>
+          <div>प्राचार्य / Principal SIGN: ______________________</div>
         </div>
-
-        ${renderOfficialFooter(false)}
       </div>
     `;
   }
@@ -4255,8 +4253,8 @@ function printAllSlide7Teachers() {
           </table>
 
           <div style="display: flex; justify-content: space-between; align-items: flex-end; max-width: 960px; margin: 14px auto 4px auto; font-size: 11px; font-weight: 800; color: #0f172a;">
-            <div>HM SIGN: ______________________</div>
-            <div>PRINCIPAL SIGN: ______________________</div>
+            <div>प्रधानाध्यापिका/HM SIGN: ______________________</div>
+            <div>प्राचार्य / Principal SIGN: ______________________</div>
           </div>
         </div>
       `;
@@ -4266,7 +4264,6 @@ function printAllSlide7Teachers() {
         allTeachersChunk += `
           <div class="print-page" style="font-family: 'Times New Roman', Times, serif; padding: 8mm; max-width: 980px; margin: 0 auto; page-break-after: always; break-after: page;">
             ${pageChunk}
-            ${renderOfficialFooter(false)}
           </div>
         `;
         pageChunk = "";
@@ -5047,7 +5044,7 @@ function syncAdminRegistryFromCloud() {
         <div style="margin-top: 24px; padding-top: 16px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #1e293b;">
           ${showClassTeacher ? '<div>________________________<br>कक्षा अध्यापक / Class Teacher</div>' : '<div>________________________<br>Prepared By (PRT)</div>'}
           <div style="text-align: center;">________________________<br>समय सारणी प्रभारी / Timetable In-Charge</div>
-          <div style="text-align: center;">________________________<br>प्रधानाचार्य / HM</div>
+          <div style="text-align: center;">________________________<br>प्रधानाचार्य /प्रधानाध्यापिका /HM</div>
           <div style="text-align: right;">________________________<br>प्राचार्य / Principal</div>
         </div>
       `;

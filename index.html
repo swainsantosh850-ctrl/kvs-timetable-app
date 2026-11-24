@@ -25,29 +25,7 @@
       emailjs.init("Ss5dR4prtDbkBJG0Y");
     })();
   </script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* Black & White Print Mode Styles */
-    .monochrome-print,
-    .monochrome-print * {
-      background: white !important;
-      background-color: white !important;
-      color: black !important;
-      border-color: black !important;
-      box-shadow: none !important;
-    }
-    .monochrome-print div[style*="background"] {
-      background: white !important;
-    }
-
-<style>
+ <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
@@ -1456,35 +1434,35 @@
     }
     const DAYS = ["सोमवार / MONDAY", "मंगलवार / TUESDAY", "बुधवार / WEDNESDAY", "गुरुवार / THURSDAY", "शुक्रवार / FRIDAY", "शनिवार / SATURDAY"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
-  // Auto-Unlimited Unique Color Engine (Zero Duplicate Colors)
-const UNIQUE_COLOR_REGISTRY = {};
-let uniqueColorIndex = 0;
+ // 3-in-1 Auto-Unlimited Unique Color Engine (Subjects, Teachers & Classes)
+const COLOR_REGISTRIES = {
+  subject: { map: {}, index: 0, offset: 0 },
+  teacher: { map: {}, index: 0, offset: 45 },
+  class:   { map: {}, index: 0, offset: 90 }
+};
 
-function getSubjectColor(keyName) {
+function getUniqueColor(type, keyName) {
+  const reg = COLOR_REGISTRIES[type] || COLOR_REGISTRIES.subject;
   const key = String(keyName || "").trim().toUpperCase();
   if (!key) return { bg: "#f8fafc", border: "#cbd5e1", text: "#334155", sub: "#64748b" };
+  if (reg.map[key]) return reg.map[key];
 
-  // Return already-assigned color so the same subject stays consistent across all 7 slides
-  if (UNIQUE_COLOR_REGISTRY[key]) {
-    return UNIQUE_COLOR_REGISTRY[key];
-  }
+  const hue = Math.round((reg.offset + reg.index * 137.508) % 360);
+  const bgLightness = 92 - (Math.floor(reg.index / 18) % 3) * 4;
 
-  // Golden Angle (137.508°) guarantees maximum visual separation & never repeats
-  const hue = Math.round((uniqueColorIndex * 137.508) % 360);
-  // Subtle lightness variation after every 18 items keeps even 50+ items distinct
-  const bgLightness = 92 - (Math.floor(uniqueColorIndex / 18) % 3) * 4;
-
-  const colorObj = {
+  reg.map[key] = {
     bg:     `hsl(${hue}, 85%, ${bgLightness}%)`,
     border: `hsl(${hue}, 75%, 52%)`,
     text:   `hsl(${hue}, 80%, 22%)`,
     sub:    `hsl(${hue}, 75%, 35%)`
   };
-
-  UNIQUE_COLOR_REGISTRY[key] = colorObj;
-  uniqueColorIndex++;
-  return colorObj;
+  reg.index++;
+  return reg.map[key];
 }
+
+function getSubjectColor(subject) { return getUniqueColor("subject", subject); }
+function getTeacherColor(teacherId) { return getUniqueColor("teacher", teacherId); }
+function getClassColor(className) { return getUniqueColor("class", className); }
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     let CLASSES = [];
 
@@ -3079,26 +3057,26 @@ function autoGenerateSingleClass(cls) {
         tbodyRows += rowHtml;
       });
 
-      card.innerHTML = `
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+     card.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-orange-100 gap-2">
           <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
-            <h3 class="text-sm font-extrabold text-slate-900">Master Section Schedule for ${day}</h3>
+            <span class="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-orange-500 to-amber-500 text-white uppercase shadow-2xs">${day}</span>
+            <h3 class="text-sm font-extrabold text-indigo-950">Master Section Schedule for ${day}</h3>
           </div>
-          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
             <i class="ph-bold ph-printer text-xs"></i>
             <span>Print ${day} Schedule</span>
           </button>
         </div>
         <table class="w-full border-collapse text-center text-xs">
           <thead>
-            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+            <tr class="font-extrabold border-b border-slate-200">
               <th class="py-2.5 px-3 text-left w-24">Class</th>
               <th class="py-2.5 px-2">P1</th>
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="${CLASSES.length}"></th>
+              <th class="py-2.5 px-1 bg-amber-100 text-amber-900 w-6" rowspan="${CLASSES.length}"></th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>
@@ -3110,7 +3088,6 @@ function autoGenerateSingleClass(cls) {
       `;
       return card;
     }
-
     function renderSlide4DayWiseClasses() {
       const container = document.getElementById("slide4-tables-container");
       if (!container) return;
@@ -3389,6 +3366,7 @@ function autoGenerateSingleClass(cls) {
       showNotification("Cleared all slots for selected teacher.", "info");
     }
    function createClassTimetableCard(cls) {
+      const cc = getClassColor(cls);
       const card = document.createElement("div");
       card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
 
@@ -3459,63 +3437,7 @@ function autoGenerateSingleClass(cls) {
 
           <div class="flex flex-wrap items-center gap-1.5">
             ${completedList.map(item => `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
-                <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
-                <span>${item.subject}: ${item.count}/${item.total} (Done)</span>
-              </span>
-            `).join("")}
-
-            ${pendingList.map(item => `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
-                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span>${item.subject}:${item.assigned}/${item.total} (${item.left} left)</span>
-              </span>
-            `).join("")}
-
-            ${unassignedList.map(item => `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
-                <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
-                <span>${item.subject}: Unassigned (${item.left} left)</span>
-              </span>
-            `).join("")}
-          </div>
-        </div>
-      `;
-
-      let tbodyRows = "";
-      DAYS.forEach((d, index) => {
-        let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
-
-        PERIODS.forEach(p => {
-          const slot = state.schedules[cls]?.[d]?.[p];
-          if (slot) {
-            const teacher = state.teachers.find(t => t.id === slot.teacherId);
-            const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
-
-            let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
-            if (coTeacher) {
-              teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
-            }
-            const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
-
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
-                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-80
           // Insert Lunch Break column after P4 (p === 4) spanning all 6 rows on Monday (index === 0)
           if (p === 4 && index === 0) {
             rowHtml += `

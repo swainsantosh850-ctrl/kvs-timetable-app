@@ -3389,6 +3389,7 @@ function autoGenerateSingleClass(cls) {
       showNotification("Cleared all slots for selected teacher.", "info");
     }
    function createClassTimetableCard(cls) {
+      const cc = getClassColor(cls);
       const card = document.createElement("div");
       card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
 
@@ -3497,12 +3498,16 @@ function autoGenerateSingleClass(cls) {
               teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
             }
             const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
+            const tc = getTeacherColor(slot.teacherId);
+            const cellStyle = hasConflict
+              ? `background:#ffe4e6; border-color:#e11d48; color:#881337;`
+              : `background:${tc.bg}; border-color:${tc.border}; color:${tc.text};`;
 
             rowHtml += `
               <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
-                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
+                <button onclick="openSlotModal('${cls}', '${d}', ${p})" style="${cellStyle}" class="w-full p-1.5 rounded-xl border-2 ${hasConflict ? 'animate-pulse' : ''} hover:brightness-95 transition text-center group shadow-2xs">
+                  <div class="font-black text-[11px]">${slot.subject}</div>
+                  <div style="color:${hasConflict ? '#9f1239' : tc.sub};" class="text-[10px] font-bold truncate">${teacherName}</div>
                 </button>
               </td>
             `;
@@ -3516,7 +3521,6 @@ function autoGenerateSingleClass(cls) {
             `;
           }
 
-          // Insert Lunch Break column after P4 (p === 4) spanning all 6 rows on Monday (index === 0)
           if (p === 4 && index === 0) {
             rowHtml += `
               <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
@@ -3524,16 +3528,17 @@ function autoGenerateSingleClass(cls) {
               </td>
             `;
           }
-        }); // <--- Closing brace for PERIODS.forEach(p => {
+        });
 
         rowHtml += `</tr>`;
         tbodyRows += rowHtml;
-      }); // <--- Closing brace for DAYS.forEach((d, index) => {
+      });
+
       card.innerHTML = `
         <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
           <div>
             <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-sm font-extrabold text-slate-900">Class ${cls} Timetable</h3>
+              <h3 style="background:${cc.bg}; color:${cc.text}; border: 1.5px solid ${cc.border};" class="text-sm font-extrabold px-2.5 py-1 rounded-lg">Class ${cls} Timetable</h3>
               ${teacherBadges}
             </div>
             <p class="text-[11px] text-slate-400">Click any period slot to assign, edit, or swap subjects with live collision detection</p>
@@ -3572,10 +3577,6 @@ function autoGenerateSingleClass(cls) {
 
       return card;
     }
-    function renderSlide3Grid() {
-      const container = document.getElementById("slide3-tables-container");
-      if (!container) return;
-      container.innerHTML = "";
 
       const targetClasses = state.selectedClassSlide3 === "ALL" ? CLASSES : [state.selectedClassSlide3];
       targetClasses.forEach(cls => {

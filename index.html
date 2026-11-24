@@ -3365,7 +3365,195 @@ function autoGenerateSingleClass(cls) {
       refreshAllScheduleViews();
       showNotification("Cleared all slots for selected teacher.", "info");
     }
- function createClassTimetableCard(cls) {
+ function function createClassTimetableCard(cls) {
+  const cc = getClassColor(cls);
+  const card = document.createElement("div");
+  card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
+
+  const [cNum, cSec] = cls.split("-");
+  const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+  const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
+
+  let teacherBadges = "";
+  if (ct) {
+    teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">कक्षा अध्यापक / Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
+  }
+  if (coCt) {
+    teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
+  }
+  if (!ct && !coCt) {
+    teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">कक्षा अध्यापक / Class Teacher: Not Assigned</span>`;
+  }
+
+  let filledCount = 0;
+  const scheduledCounts = {};
+  DAYS.forEach(d => {
+    PERIODS.forEach(p => {
+      const slot = state.schedules[cls]?.[d]?.[p];
+      if (slot) {
+        filledCount++;
+        scheduledCounts[slot.subject] = (scheduledCounts[slot.subject] || 0) + 1;
+      }
+    });
+  });
+
+  const classKey = `Class ${cNum}`;
+  const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+
+  const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+  const allottedTotals = {};
+  classAllots.forEach(a => {
+    allottedTotals[a.subject] = (allottedTotals[a.subject] || 0) + parseInt(a.periods || 0);
+  });
+
+  const completedList = [];
+  const pendingList = [];
+  const unassignedList = [];
+
+  const allSubjects = Array.from(new Set([...Object.keys(limits), ...Object.keys(allottedTotals)]));
+
+  allSubjects.forEach(subj => {
+    const required = limits[subj] !== undefined ? limits[subj] : (allottedTotals[subj] || 0);
+    const assigned = scheduledCounts[subj] || 0;
+    const hasAllotment = allottedTotals[subj] > 0;
+
+    if (assigned >= required && required > 0) {
+      completedList.push({ subject: subj, count: assigned, total: required });
+    } else if (hasAllotment) {
+      pendingList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
+    } else {
+      unassignedList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
+    }
+  });
+
+  let statusSummaryHtml = `
+    <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <i class="ph-bold ph-chart-pie text-indigo-600 text-sm"></i> Class Subjects Allocation Status:
+        </span>
+        <span class="text-[10px] font-bold text-slate-400">Total Periods: ${filledCount}/48</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5">
+        ${completedList.map(item => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+            <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
+            <span>${item.subject}: ${item.count}/${item.total} (Done)</span>
+          </span>
+        `).join("")}
+
+        ${pendingList.map(item => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>${item.subject}:${item.assigned}/${item.total} (${item.left} left)</span>
+          </span>
+        `).join("")}
+
+        ${unassignedList.map(item => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
+            <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
+            <span>${item.subject}: Unassigned (${item.left} left)</span>
+          </span>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  let tbodyRows = "";
+  DAYS.forEach((d, index) => {
+    let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
+
+    PERIODS.forEach(p => {
+      const slot = state.schedules[cls]?.[d]?.[p];
+      if (slot) {
+        const teacher = state.teachers.find(t => t.id === slot.teacherId);
+        const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
+
+        let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
+        if (coTeacher) {
+          teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
+        }
+        const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
+        const tc = getTeacherColor(slot.teacherId);
+        const cellStyle = hasConflict
+          ? `background:#ffe4e6; border-color:#e11d48; color:#881337;`
+          : `background:${tc.bg}; border-color:${tc.border}; color:${tc.text};`;
+
+        rowHtml += `
+          <td class="p-1">
+            <button onclick="openSlotModal('${cls}', '${d}', ${p})" style="${cellStyle}" class="w-full p-1.5 rounded-xl border-2 ${hasConflict ? 'animate-pulse' : ''} hover:brightness-95 transition text-center group shadow-2xs">
+              <div class="font-black text-[11px]">${slot.subject}</div>
+              <div style="color:${hasConflict ? '#9f1239' : tc.sub};" class="text-[10px] font-bold truncate">${teacherName}</div>
+            </button>
+          </td>
+        `;
+      } else {
+        rowHtml += `
+          <td class="p-1">
+            <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
+              <i class="ph-bold ph-plus text-xs"></i>
+            </button>
+          </td>
+        `;
+      }
+
+      if (p === 4 && index === 0) {
+        rowHtml += `
+          <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+            LUNCH BREAK
+          </td>
+        `;
+      }
+    });
+
+    rowHtml += `</tr>`;
+    tbodyRows += rowHtml;
+  });
+
+  card.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 style="background:${cc.bg}; color:${cc.text}; border: 1.5px solid ${cc.border};" class="text-sm font-extrabold px-2.5 py-1 rounded-lg">Class ${cls} Timetable</h3>
+          ${teacherBadges}
+        </div>
+        <p class="text-[11px] text-slate-400">Click any period slot to assign, edit, or swap subjects with live collision detection</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="printClassTimetable('${cls}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+          <i class="ph-bold ph-printer text-xs"></i>
+          <span>Print This Class</span>
+        </button>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${filledCount === 48 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${filledCount}/48</span>
+      </div>
+    </div>
+
+    ${statusSummaryHtml}
+
+    <table class="w-full border-collapse text-center text-xs">
+      <thead>
+        <tr class="font-extrabold border-b border-slate-200">
+          <th class="py-2.5 px-3 text-left w-20">Day</th>
+          <th class="py-2.5 px-2">P1</th>
+          <th class="py-2.5 px-2">P2</th>
+          <th class="py-2.5 px-2">P3</th>
+          <th class="py-2.5 px-2">P4</th>
+          <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6"></th>
+          <th class="py-2.5 px-2">P5</th>
+          <th class="py-2.5 px-2">P6</th>
+          <th class="py-2.5 px-2">P7</th>
+          <th class="py-2.5 px-2">P8</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        ${tbodyRows}
+      </tbody>
+    </table>
+  `;
+
+  return card;
+} {
     function renderSlide3Grid() {
       const container = document.getElementById("slide3-tables-container");
       if (!container) return;

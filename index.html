@@ -6410,184 +6410,194 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
     showNotification(`Updated ${keyType} for ${sch.name} and synced to cloud!`, "success");
   };
 
-  // 3-Tier Login Handler with Real-Time Cloud Fallback for Cross-Device Access
- // 3-Tier Login Handler with Universal Pass-Key Flexibility & Real-Time Cloud Fallback
-  async function handleLoginSubmit() {
-    const role = document.getElementById("login-role-select").value;
-    const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
-    const passwordInput = document.getElementById("login-password-input").value.trim();
-    const errorMsg = document.getElementById("auth-error-msg");
+ 
+ // --- FIREBASE REALTIME CLOUD SYNC ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",
+      authDomain: "kvs-timetable-sync.firebaseapp.com",
+      databaseURL: "https://kvs-timetable-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "kvs-timetable-sync",
+      storageBucket: "kvs-timetable-sync.firebasestorage.app",
+      messagingSenderId: "545842654239",
+      appId: "1:545842654239:web:7ce5564d0924f0efc3792a"
+    };
 
-    if (errorMsg) errorMsg.classList.add("hidden");
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const rtdb = firebase.database();
+    const timetableCloudRef = rtdb.ref("kvs_live_timetable");
+   async function handleLoginSubmit() {
+  const roleSelect = document.getElementById("login-role-select");
+  const emailInput = document.getElementById("login-email-input");
+  const passwordInputEl = document.getElementById("login-password-input");
+  const errorMsg = document.getElementById("auth-error-msg");
+  const authModal = document.getElementById("auth-modal");
 
-    if (role === "superadmin") {
-      const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL);
-      const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD);
+  const role = roleSelect ? roleSelect.value : "teacher";
+  const identifier = emailInput ? emailInput.value.trim().toLowerCase() : "";
+  const passwordInput = passwordInputEl ? passwordInputEl.value.trim() : "";
 
-      if (isValidSuperAdminEmail && isMasterPasswordValid) {
-        state.isViewOnly = false;
-        sessionStorage.setItem("kvs_user_role", "superadmin");
-        document.getElementById("auth-modal").style.display = "none";
-        applyViewOnlyLocks();
-        unlockAllSchoolsForSuperAdmin();
-        showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
-        return;
-      } else {
-        if (errorMsg) {
-          errorMsg.textContent = "Incorrect Super Admin master credentials.";
-          errorMsg.classList.remove("hidden");
-        }
-        return;
-      }
-    } 
-    else if (role === "admin") {
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let matchedAdmin = Object.values(adminRegistry).find(admin => 
-        (admin.email === identifier && (admin.passKey === passwordInput || admin.adminPass === passwordInput)) || 
-        admin.passKey === passwordInput || 
+  if (errorMsg) {
+    errorMsg.classList.add("hidden");
+    errorMsg.textContent = "Incorrect credentials.";
+  }
+
+  if (!passwordInput) {
+    if (errorMsg) {
+      errorMsg.textContent = "Please enter your password or pass key.";
+      errorMsg.classList.remove("hidden");
+    }
+    return;
+  }
+
+  // 1. SUPER ADMIN (Strictly isolated to superadmin role and master emails/password)
+  if (role === "superadmin") {
+    const isValidSuperAdminEmail =
+      identifier === SUPER_ADMIN_EMAIL.toLowerCase() ||
+      identifier === SECOND_ADMIN_EMAIL.toLowerCase();
+    const isMasterPasswordValid = passwordInput === MASTER_SUPER_ADMIN_PASSWORD;
+
+    if (isValidSuperAdminEmail && isMasterPasswordValid) {
+      state.isViewOnly = false;
+      sessionStorage.setItem("kvs_user_role", "superadmin");
+      if (authModal) authModal.style.display = "none";
+      applyViewOnlyLocks();
+      unlockAllSchoolsForSuperAdmin();
+      showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
+      return;
+    }
+
+    if (errorMsg) {
+      errorMsg.textContent = "Incorrect Super Admin email or master password.";
+      errorMsg.classList.remove("hidden");
+    }
+    return;
+  }
+
+  // 2. SCHOOL ADMIN
+  if (role === "admin") {
+    const adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+
+    const matchesAdminKey = (admin) =>
+      admin && (
+        admin.passKey === passwordInput ||
         admin.adminPass === passwordInput ||
         admin.adminPassword === passwordInput
       );
 
-      if (matchedAdmin) {
-        state.isViewOnly = false;
-        sessionStorage.setItem("kvs_user_role", "admin");
-        document.getElementById("auth-modal").style.display = "none";
-        isolateSchoolWorkspace(matchedAdmin.school);
-        applyViewOnlyLocks();
-        showNotification(`Welcome ${matchedAdmin.name || "Admin"}! Managing timetable for ${matchedAdmin.school}.`, "success");
-        return;
-      } 
-      else if (passwordInput === "kvs@schooladmin2026") {
-        state.isViewOnly = false;
-        sessionStorage.setItem("kvs_user_role", "admin");
-        document.getElementById("auth-modal").style.display = "none";
-        isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
-        applyViewOnlyLocks();
-        showNotification("Welcome School Admin! Independent workspace enabled.", "success");
-        return;
-      } 
-      else {
-        // Real-time cloud lookup fallback if local storage misses
-        if (typeof rtdb !== 'undefined') {
-          try {
-            const snapshot = await rtdb.ref("kvs_school_admins").once("value");
-            const cloudAdmins = snapshot.val();
-            let foundCloudAdmin = null;
-            if (cloudAdmins) {
-              Object.values(cloudAdmins).forEach(admin => {
-                if (admin && (
-                  admin.passKey === passwordInput || 
-                  admin.adminPass === passwordInput || 
-                  admin.adminPassword === passwordInput ||
-                  (identifier && admin.email === identifier && (admin.passKey === passwordInput || admin.adminPass === passwordInput))
-                )) {
-                  foundCloudAdmin = admin;
-                }
-              });
-            }
-
-            if (foundCloudAdmin) {
-              let localReg = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-              let regKey = foundCloudAdmin.email || "admin@school.kvs.gov.in";
-              localReg[regKey] = foundCloudAdmin;
-              localStorage.setItem("kvs_admin_registry", JSON.stringify(localReg));
-
-              state.isViewOnly = false;
-              sessionStorage.setItem("kvs_user_role", "admin");
-              document.getElementById("auth-modal").style.display = "none";
-              isolateSchoolWorkspace(foundCloudAdmin.school);
-              applyViewOnlyLocks();
-              showNotification(`Welcome ${foundCloudAdmin.name || "Admin"}! Managing timetable for ${foundCloudAdmin.school}.`, "success");
-              return;
-            }
-          } catch (e) {
-            console.error("Cloud admin lookup error:", e);
-          }
-        }
-
-        if (errorMsg) {
-          errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
-          errorMsg.classList.remove("hidden");
-        }
-        return;
+    const matchesAdminRecord = (admin) => {
+      if (!matchesAdminKey(admin)) return false;
+      if (identifier) {
+        const regEmail = (admin.email || "").trim().toLowerCase();
+        const regSchool = (admin.school || "").trim().toLowerCase();
+        return regEmail === identifier || regSchool === identifier;
       }
-    } 
-    else {
-      // 3. TEACHER / STAFF ACCESS (Accepts any passkey variant for maximum flexibility)
-      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-      let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => 
-        admin.teacherPassKey === passwordInput || 
-        admin.passKey === passwordInput || 
-        admin.adminPass === passwordInput ||
-        admin.adminPassword === passwordInput
-      );
+      return true;
+    };
 
-      if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
-        state.isViewOnly = true;
-        sessionStorage.setItem("kvs_user_role", "teacher");
-        document.getElementById("auth-modal").style.display = "none";
-        isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
-        applyViewOnlyLocks();
-        showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
-        return;
-      }
-      else if (matchedSchoolByPassKey) {
-        state.isViewOnly = true;
-        sessionStorage.setItem("kvs_user_role", "teacher");
-        document.getElementById("auth-modal").style.display = "none";
-        isolateSchoolWorkspace(matchedSchoolByPassKey.school);
-        applyViewOnlyLocks();
-        showNotification(`Welcome Teacher! Viewing timetable generated by ${matchedSchoolByPassKey.school} Admin.`, "success");
-        return;
-      } 
-      else {
-        // Real-time cloud lookup fallback for any valid Pass Key variant across devices
-        if (typeof rtdb !== 'undefined') {
-          try {
-            const snapshot = await rtdb.ref("kvs_school_admins").once("value");
-            const cloudAdmins = snapshot.val();
-            let foundCloudTeacher = null;
-            if (cloudAdmins) {
-              Object.values(cloudAdmins).forEach(admin => {
-                if (admin && (
-                  admin.teacherPassKey === passwordInput || 
-                  admin.passKey === passwordInput || 
-                  admin.adminPass === passwordInput ||
-                  admin.adminPassword === passwordInput
-                )) {
-                  foundCloudTeacher = admin;
-                }
-              });
-            }
+    let matchedAdmin = Object.values(adminRegistry).find(matchesAdminRecord);
 
-            if (foundCloudTeacher) {
-              let localReg = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-              let regKey = foundCloudTeacher.email || "teacher@school.kvs.gov.in";
-              localReg[regKey] = foundCloudTeacher;
-              localStorage.setItem("kvs_admin_registry", JSON.stringify(localReg));
+    if (!matchedAdmin && typeof rtdb !== "undefined") {
+      try {
+        const snapshot = await rtdb.ref("kvs_school_admins").once("value");
+        const cloudAdmins = snapshot.val() || {};
+        matchedAdmin = Object.values(cloudAdmins).find(matchesAdminRecord);
 
-              state.isViewOnly = true;
-              sessionStorage.setItem("kvs_user_role", "teacher");
-              document.getElementById("auth-modal").style.display = "none";
-              isolateSchoolWorkspace(foundCloudTeacher.school);
-              applyViewOnlyLocks();
-              showNotification(`Welcome Teacher! Viewing timetable generated by ${foundCloudTeacher.school} Admin.`, "success");
-              return;
-            }
-          } catch (e) {
-            console.error("Cloud teacher lookup error:", e);
-          }
+        if (matchedAdmin) {
+          const regKey = (matchedAdmin.email || "admin@school.kvs.gov.in").trim().toLowerCase();
+          adminRegistry[regKey] = { ...matchedAdmin, email: regKey };
+          localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
         }
-
-        if (errorMsg) {
-          errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
-          errorMsg.classList.remove("hidden");
-        }
-        return;
+      } catch (e) {
+        console.error("Cloud admin lookup error:", e);
       }
     }
+
+    if (matchedAdmin) {
+      const schoolName = matchedAdmin.school || "PM SHRI KV GILL NAGAR,CHENNAI";
+      state.isViewOnly = false;
+      sessionStorage.setItem("kvs_user_role", "admin");
+      if (authModal) authModal.style.display = "none";
+      isolateSchoolWorkspace(schoolName);
+      applyViewOnlyLocks();
+      showNotification(`Welcome ${matchedAdmin.name || "Admin"}! Managing timetable for ${schoolName}.`, "success");
+      return;
+    }
+
+    if (!identifier && passwordInput === "kvs@schooladmin2026") {
+      const defaultSchool = "PM SHRI KV GILL NAGAR,CHENNAI";
+      state.isViewOnly = false;
+      sessionStorage.setItem("kvs_user_role", "admin");
+      if (authModal) authModal.style.display = "none";
+      isolateSchoolWorkspace(defaultSchool);
+      applyViewOnlyLocks();
+      showNotification("Welcome School Admin! Independent workspace enabled.", "success");
+      return;
+    }
+
+    if (errorMsg) {
+      errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
+      errorMsg.classList.remove("hidden");
+    }
+    return;
   }
+
+  // 3. TEACHER / STAFF (VIEW-ONLY)
+  const adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+  const matchesTeacherKey = (admin) =>
+    admin && (
+      admin.teacherPassKey === passwordInput ||
+      admin.passKey === passwordInput ||
+      admin.adminPass === passwordInput ||
+      admin.adminPassword === passwordInput
+    );
+
+  let matchedSchoolByPassKey = Object.values(adminRegistry).find(matchesTeacherKey);
+
+  if (!matchedSchoolByPassKey && typeof rtdb !== "undefined") {
+    try {
+      const snapshot = await rtdb.ref("kvs_school_admins").once("value");
+      const cloudAdmins = snapshot.val() || {};
+      matchedSchoolByPassKey = Object.values(cloudAdmins).find(matchesTeacherKey);
+
+      if (matchedSchoolByPassKey) {
+        const regKey = (matchedSchoolByPassKey.email || "teacher@school.kvs.gov.in").trim().toLowerCase();
+        adminRegistry[regKey] = { ...matchedSchoolByPassKey, email: regKey };
+        localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
+      }
+    } catch (e) {
+      console.error("Cloud teacher passkey lookup error:", e);
+    }
+  }
+
+  if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
+    const defaultSchool = "PM SHRI KV GILL NAGAR,CHENNAI";
+    state.isViewOnly = true;
+    sessionStorage.setItem("kvs_user_role", "teacher");
+    if (authModal) authModal.style.display = "none";
+    isolateSchoolWorkspace(defaultSchool);
+    applyViewOnlyLocks();
+    showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
+    return;
+  }
+
+  if (matchedSchoolByPassKey) {
+    const schoolToLoad = matchedSchoolByPassKey.school || "PM SHRI KV GILL NAGAR,CHENNAI";
+    state.isViewOnly = true;
+    sessionStorage.setItem("kvs_user_role", "teacher");
+    if (authModal) authModal.style.display = "none";
+    isolateSchoolWorkspace(schoolToLoad);
+    applyViewOnlyLocks();
+    showNotification(`Welcome Teacher! Viewing timetable generated by ${schoolToLoad} Admin.`, "success");
+    return;
+  }
+
+  if (errorMsg) {
+    errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
+    errorMsg.classList.remove("hidden");
+  }
+}
  // Temporary storage for pending school admin registration data
   let pendingAdminData = null;
 
@@ -6881,23 +6891,7 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
       }
     }
   }
-    // --- FIREBASE REALTIME CLOUD SYNC ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",
-      authDomain: "kvs-timetable-sync.firebaseapp.com",
-      databaseURL: "https://kvs-timetable-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "kvs-timetable-sync",
-      storageBucket: "kvs-timetable-sync.firebasestorage.app",
-      messagingSenderId: "545842654239",
-      appId: "1:545842654239:web:7ce5564d0924f0efc3792a"
-    };
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const rtdb = firebase.database();
-    const timetableCloudRef = rtdb.ref("kvs_live_timetable");
-
+   
    function applyCloudMasterData(cloudData) {
       if (!cloudData || !cloudData.compressed) return false;
       try {

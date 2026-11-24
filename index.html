@@ -25,7 +25,29 @@
       emailjs.init("Ss5dR4prtDbkBJG0Y");
     })();
   </script>
- <style>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Black & White Print Mode Styles */
+    .monochrome-print,
+    .monochrome-print * {
+      background: white !important;
+      background-color: white !important;
+      color: black !important;
+      border-color: black !important;
+      box-shadow: none !important;
+    }
+    .monochrome-print div[style*="background"] {
+      background: white !important;
+    }
+
+<style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
@@ -1434,35 +1456,35 @@
     }
     const DAYS = ["सोमवार / MONDAY", "मंगलवार / TUESDAY", "बुधवार / WEDNESDAY", "गुरुवार / THURSDAY", "शुक्रवार / FRIDAY", "शनिवार / SATURDAY"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
- // 3-in-1 Auto-Unlimited Unique Color Engine (Subjects, Teachers & Classes)
-const COLOR_REGISTRIES = {
-  subject: { map: {}, index: 0, offset: 0 },
-  teacher: { map: {}, index: 0, offset: 45 },
-  class:   { map: {}, index: 0, offset: 90 }
-};
+  // Auto-Unlimited Unique Color Engine (Zero Duplicate Colors)
+const UNIQUE_COLOR_REGISTRY = {};
+let uniqueColorIndex = 0;
 
-function getUniqueColor(type, keyName) {
-  const reg = COLOR_REGISTRIES[type] || COLOR_REGISTRIES.subject;
+function getSubjectColor(keyName) {
   const key = String(keyName || "").trim().toUpperCase();
   if (!key) return { bg: "#f8fafc", border: "#cbd5e1", text: "#334155", sub: "#64748b" };
-  if (reg.map[key]) return reg.map[key];
 
-  const hue = Math.round((reg.offset + reg.index * 137.508) % 360);
-  const bgLightness = 92 - (Math.floor(reg.index / 18) % 3) * 4;
+  // Return already-assigned color so the same subject stays consistent across all 7 slides
+  if (UNIQUE_COLOR_REGISTRY[key]) {
+    return UNIQUE_COLOR_REGISTRY[key];
+  }
 
-  reg.map[key] = {
+  // Golden Angle (137.508°) guarantees maximum visual separation & never repeats
+  const hue = Math.round((uniqueColorIndex * 137.508) % 360);
+  // Subtle lightness variation after every 18 items keeps even 50+ items distinct
+  const bgLightness = 92 - (Math.floor(uniqueColorIndex / 18) % 3) * 4;
+
+  const colorObj = {
     bg:     `hsl(${hue}, 85%, ${bgLightness}%)`,
     border: `hsl(${hue}, 75%, 52%)`,
     text:   `hsl(${hue}, 80%, 22%)`,
     sub:    `hsl(${hue}, 75%, 35%)`
   };
-  reg.index++;
-  return reg.map[key];
-}
 
-function getSubjectColor(subject) { return getUniqueColor("subject", subject); }
-function getTeacherColor(teacherId) { return getUniqueColor("teacher", teacherId); }
-function getClassColor(className) { return getUniqueColor("class", className); }
+  UNIQUE_COLOR_REGISTRY[key] = colorObj;
+  uniqueColorIndex++;
+  return colorObj;
+}
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     let CLASSES = [];
 
@@ -3057,26 +3079,26 @@ function autoGenerateSingleClass(cls) {
         tbodyRows += rowHtml;
       });
 
-     card.innerHTML = `
-        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-orange-100 gap-2">
+      card.innerHTML = `
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
           <div class="flex items-center gap-2">
-            <span class="px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-orange-500 to-amber-500 text-white uppercase shadow-2xs">${day}</span>
-            <h3 class="text-sm font-extrabold text-indigo-950">Master Section Schedule for ${day}</h3>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
+            <h3 class="text-sm font-extrabold text-slate-900">Master Section Schedule for ${day}</h3>
           </div>
-          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1 shadow-2xs">
+          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
             <i class="ph-bold ph-printer text-xs"></i>
             <span>Print ${day} Schedule</span>
           </button>
         </div>
         <table class="w-full border-collapse text-center text-xs">
           <thead>
-            <tr class="font-extrabold border-b border-slate-200">
+            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
               <th class="py-2.5 px-3 text-left w-24">Class</th>
               <th class="py-2.5 px-2">P1</th>
               <th class="py-2.5 px-2">P2</th>
               <th class="py-2.5 px-2">P3</th>
               <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-1 bg-amber-100 text-amber-900 w-6" rowspan="${CLASSES.length}"></th>
+              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="${CLASSES.length}"></th>
               <th class="py-2.5 px-2">P5</th>
               <th class="py-2.5 px-2">P6</th>
               <th class="py-2.5 px-2">P7</th>
@@ -3088,6 +3110,7 @@ function autoGenerateSingleClass(cls) {
       `;
       return card;
     }
+
     function renderSlide4DayWiseClasses() {
       const container = document.getElementById("slide4-tables-container");
       if (!container) return;
@@ -3365,195 +3388,190 @@ function autoGenerateSingleClass(cls) {
       refreshAllScheduleViews();
       showNotification("Cleared all slots for selected teacher.", "info");
     }
- function function createClassTimetableCard(cls) {
-  const cc = getClassColor(cls);
-  const card = document.createElement("div");
-  card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
+   function createClassTimetableCard(cls) {
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
 
-  const [cNum, cSec] = cls.split("-");
-  const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
-  const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
+      const [cNum, cSec] = cls.split("-");
+      const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+      const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
 
-  let teacherBadges = "";
-  if (ct) {
-    teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">कक्षा अध्यापक / Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
-  }
-  if (coCt) {
-    teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
-  }
-  if (!ct && !coCt) {
-    teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">कक्षा अध्यापक / Class Teacher: Not Assigned</span>`;
-  }
-
-  let filledCount = 0;
-  const scheduledCounts = {};
-  DAYS.forEach(d => {
-    PERIODS.forEach(p => {
-      const slot = state.schedules[cls]?.[d]?.[p];
-      if (slot) {
-        filledCount++;
-        scheduledCounts[slot.subject] = (scheduledCounts[slot.subject] || 0) + 1;
+      let teacherBadges = "";
+      if (ct) {
+        teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">कक्षा अध्यापक / Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
       }
-    });
-  });
+      if (coCt) {
+        teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
+      }
+      if (!ct && !coCt) {
+        teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">कक्षा अध्यापक / Class Teacher: Not Assigned</span>`;
+      }
 
-  const classKey = `Class ${cNum}`;
-  const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+      let filledCount = 0;
+      const scheduledCounts = {};
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          const slot = state.schedules[cls]?.[d]?.[p];
+          if (slot) {
+            filledCount++;
+            scheduledCounts[slot.subject] = (scheduledCounts[slot.subject] || 0) + 1;
+          }
+        });
+      });
 
-  const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
-  const allottedTotals = {};
-  classAllots.forEach(a => {
-    allottedTotals[a.subject] = (allottedTotals[a.subject] || 0) + parseInt(a.periods || 0);
-  });
+      const classKey = `Class ${cNum}`;
+      const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
 
-  const completedList = [];
-  const pendingList = [];
-  const unassignedList = [];
+      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+      const allottedTotals = {};
+      classAllots.forEach(a => {
+        allottedTotals[a.subject] = (allottedTotals[a.subject] || 0) + parseInt(a.periods || 0);
+      });
 
-  const allSubjects = Array.from(new Set([...Object.keys(limits), ...Object.keys(allottedTotals)]));
+      const completedList = [];
+      const pendingList = [];
+      const unassignedList = [];
 
-  allSubjects.forEach(subj => {
-    const required = limits[subj] !== undefined ? limits[subj] : (allottedTotals[subj] || 0);
-    const assigned = scheduledCounts[subj] || 0;
-    const hasAllotment = allottedTotals[subj] > 0;
+      const allSubjects = Array.from(new Set([...Object.keys(limits), ...Object.keys(allottedTotals)]));
 
-    if (assigned >= required && required > 0) {
-      completedList.push({ subject: subj, count: assigned, total: required });
-    } else if (hasAllotment) {
-      pendingList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
-    } else {
-      unassignedList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
-    }
-  });
+      allSubjects.forEach(subj => {
+        const required = limits[subj] !== undefined ? limits[subj] : (allottedTotals[subj] || 0);
+        const assigned = scheduledCounts[subj] || 0;
+        const hasAllotment = allottedTotals[subj] > 0;
 
-  let statusSummaryHtml = `
-    <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200 space-y-2.5">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-          <i class="ph-bold ph-chart-pie text-indigo-600 text-sm"></i> Class Subjects Allocation Status:
-        </span>
-        <span class="text-[10px] font-bold text-slate-400">Total Periods: ${filledCount}/48</span>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-1.5">
-        ${completedList.map(item => `
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
-            <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
-            <span>${item.subject}: ${item.count}/${item.total} (Done)</span>
-          </span>
-        `).join("")}
-
-        ${pendingList.map(item => `
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>${item.subject}:${item.assigned}/${item.total} (${item.left} left)</span>
-          </span>
-        `).join("")}
-
-        ${unassignedList.map(item => `
-          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
-            <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
-            <span>${item.subject}: Unassigned (${item.left} left)</span>
-          </span>
-        `).join("")}
-      </div>
-    </div>
-  `;
-
-  let tbodyRows = "";
-  DAYS.forEach((d, index) => {
-    let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
-
-    PERIODS.forEach(p => {
-      const slot = state.schedules[cls]?.[d]?.[p];
-      if (slot) {
-        const teacher = state.teachers.find(t => t.id === slot.teacherId);
-        const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
-
-        let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
-        if (coTeacher) {
-          teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
+        if (assigned >= required && required > 0) {
+          completedList.push({ subject: subj, count: assigned, total: required });
+        } else if (hasAllotment) {
+          pendingList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
+        } else {
+          unassignedList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
         }
-        const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
-        const tc = getTeacherColor(slot.teacherId);
-        const cellStyle = hasConflict
-          ? `background:#ffe4e6; border-color:#e11d48; color:#881337;`
-          : `background:${tc.bg}; border-color:${tc.border}; color:${tc.text};`;
+      });
 
-        rowHtml += `
-          <td class="p-1">
-            <button onclick="openSlotModal('${cls}', '${d}', ${p})" style="${cellStyle}" class="w-full p-1.5 rounded-xl border-2 ${hasConflict ? 'animate-pulse' : ''} hover:brightness-95 transition text-center group shadow-2xs">
-              <div class="font-black text-[11px]">${slot.subject}</div>
-              <div style="color:${hasConflict ? '#9f1239' : tc.sub};" class="text-[10px] font-bold truncate">${teacherName}</div>
-            </button>
-          </td>
-        `;
-      } else {
-        rowHtml += `
-          <td class="p-1">
-            <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
-              <i class="ph-bold ph-plus text-xs"></i>
-            </button>
-          </td>
-        `;
-      }
+      let statusSummaryHtml = `
+        <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <i class="ph-bold ph-chart-pie text-indigo-600 text-sm"></i> Class Subjects Allocation Status:
+            </span>
+            <span class="text-[10px] font-bold text-slate-400">Total Periods: ${filledCount}/48</span>
+          </div>
 
-      if (p === 4 && index === 0) {
-        rowHtml += `
-          <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
-            LUNCH BREAK
-          </td>
-        `;
-      }
-    });
+          <div class="flex flex-wrap items-center gap-1.5">
+            ${completedList.map(item => `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
+                <span>${item.subject}: ${item.count}/${item.total} (Done)</span>
+              </span>
+            `).join("")}
 
-    rowHtml += `</tr>`;
-    tbodyRows += rowHtml;
-  });
+            ${pendingList.map(item => `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span>${item.subject}:${item.assigned}/${item.total} (${item.left} left)</span>
+              </span>
+            `).join("")}
 
-  card.innerHTML = `
-    <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
-      <div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <h3 style="background:${cc.bg}; color:${cc.text}; border: 1.5px solid ${cc.border};" class="text-sm font-extrabold px-2.5 py-1 rounded-lg">Class ${cls} Timetable</h3>
-          ${teacherBadges}
+            ${unassignedList.map(item => `
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
+                <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
+                <span>${item.subject}: Unassigned (${item.left} left)</span>
+              </span>
+            `).join("")}
+          </div>
         </div>
-        <p class="text-[11px] text-slate-400">Click any period slot to assign, edit, or swap subjects with live collision detection</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <button onclick="printClassTimetable('${cls}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
-          <i class="ph-bold ph-printer text-xs"></i>
-          <span>Print This Class</span>
-        </button>
-        <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${filledCount === 48 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${filledCount}/48</span>
-      </div>
-    </div>
+      `;
 
-    ${statusSummaryHtml}
+      let tbodyRows = "";
+      DAYS.forEach((d, index) => {
+        let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
 
-    <table class="w-full border-collapse text-center text-xs">
-      <thead>
-        <tr class="font-extrabold border-b border-slate-200">
-          <th class="py-2.5 px-3 text-left w-20">Day</th>
-          <th class="py-2.5 px-2">P1</th>
-          <th class="py-2.5 px-2">P2</th>
-          <th class="py-2.5 px-2">P3</th>
-          <th class="py-2.5 px-2">P4</th>
-          <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6"></th>
-          <th class="py-2.5 px-2">P5</th>
-          <th class="py-2.5 px-2">P6</th>
-          <th class="py-2.5 px-2">P7</th>
-          <th class="py-2.5 px-2">P8</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100">
-        ${tbodyRows}
-      </tbody>
-    </table>
-  `;
+        PERIODS.forEach(p => {
+          const slot = state.schedules[cls]?.[d]?.[p];
+          if (slot) {
+            const teacher = state.teachers.find(t => t.id === slot.teacherId);
+            const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
 
-  return card;
-} {
+            let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
+            if (coTeacher) {
+              teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
+            }
+            const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
+
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
+                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
+                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
+                </button>
+              </td>
+            `;
+          } else {
+            rowHtml += `
+              <td class="p-1">
+                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
+                  <i class="ph-bold ph-plus text-xs"></i>
+                </button>
+              </td>
+            `;
+          }
+
+          // Insert Lunch Break column after P4 (p === 4) spanning all 6 rows on Monday (index === 0)
+          if (p === 4 && index === 0) {
+            rowHtml += `
+              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+                LUNCH BREAK
+              </td>
+            `;
+          }
+        }); // <--- Closing brace for PERIODS.forEach(p => {
+
+        rowHtml += `</tr>`;
+        tbodyRows += rowHtml;
+      }); // <--- Closing brace for DAYS.forEach((d, index) => {
+      card.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-sm font-extrabold text-slate-900">Class ${cls} Timetable</h3>
+              ${teacherBadges}
+            </div>
+            <p class="text-[11px] text-slate-400">Click any period slot to assign, edit, or swap subjects with live collision detection</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="printClassTimetable('${cls}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+              <i class="ph-bold ph-printer text-xs"></i>
+              <span>Print This Class</span>
+            </button>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${filledCount === 48 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${filledCount}/48</span>
+          </div>
+        </div>
+
+        ${statusSummaryHtml}
+
+        <table class="w-full border-collapse text-center text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+              <th class="py-2.5 px-3 text-left w-20">Day</th>
+              <th class="py-2.5 px-2">P1</th>
+              <th class="py-2.5 px-2">P2</th>
+              <th class="py-2.5 px-2">P3</th>
+              <th class="py-2.5 px-2">P4</th>
+              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="6"></th>
+              <th class="py-2.5 px-2">P5</th>
+              <th class="py-2.5 px-2">P6</th>
+              <th class="py-2.5 px-2">P7</th>
+              <th class="py-2.5 px-2">P8</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${tbodyRows}
+          </tbody>
+        </table>
+      `;
+
+      return card;
+    }
     function renderSlide3Grid() {
       const container = document.getElementById("slide3-tables-container");
       if (!container) return;
@@ -6470,194 +6488,184 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
     showNotification(`Updated ${keyType} for ${sch.name} and synced to cloud!`, "success");
   };
 
- 
- // --- FIREBASE REALTIME CLOUD SYNC ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",
-      authDomain: "kvs-timetable-sync.firebaseapp.com",
-      databaseURL: "https://kvs-timetable-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "kvs-timetable-sync",
-      storageBucket: "kvs-timetable-sync.firebasestorage.app",
-      messagingSenderId: "545842654239",
-      appId: "1:545842654239:web:7ce5564d0924f0efc3792a"
-    };
+  // 3-Tier Login Handler with Real-Time Cloud Fallback for Cross-Device Access
+ // 3-Tier Login Handler with Universal Pass-Key Flexibility & Real-Time Cloud Fallback
+  async function handleLoginSubmit() {
+    const role = document.getElementById("login-role-select").value;
+    const identifier = document.getElementById("login-email-input")?.value.trim().toLowerCase() || "";
+    const passwordInput = document.getElementById("login-password-input").value.trim();
+    const errorMsg = document.getElementById("auth-error-msg");
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const rtdb = firebase.database();
-    const timetableCloudRef = rtdb.ref("kvs_live_timetable");
-   async function handleLoginSubmit() {
-  const roleSelect = document.getElementById("login-role-select");
-  const emailInput = document.getElementById("login-email-input");
-  const passwordInputEl = document.getElementById("login-password-input");
-  const errorMsg = document.getElementById("auth-error-msg");
-  const authModal = document.getElementById("auth-modal");
+    if (errorMsg) errorMsg.classList.add("hidden");
 
-  const role = roleSelect ? roleSelect.value : "teacher";
-  const identifier = emailInput ? emailInput.value.trim().toLowerCase() : "";
-  const passwordInput = passwordInputEl ? passwordInputEl.value.trim() : "";
+    if (role === "superadmin") {
+      const isValidSuperAdminEmail = (identifier === SUPER_ADMIN_EMAIL || identifier === SECOND_ADMIN_EMAIL);
+      const isMasterPasswordValid = (passwordInput === MASTER_SUPER_ADMIN_PASSWORD);
 
-  if (errorMsg) {
-    errorMsg.classList.add("hidden");
-    errorMsg.textContent = "Incorrect credentials.";
-  }
-
-  if (!passwordInput) {
-    if (errorMsg) {
-      errorMsg.textContent = "Please enter your password or pass key.";
-      errorMsg.classList.remove("hidden");
-    }
-    return;
-  }
-
-  // 1. SUPER ADMIN (Strictly isolated to superadmin role and master emails/password)
-  if (role === "superadmin") {
-    const isValidSuperAdminEmail =
-      identifier === SUPER_ADMIN_EMAIL.toLowerCase() ||
-      identifier === SECOND_ADMIN_EMAIL.toLowerCase();
-    const isMasterPasswordValid = passwordInput === MASTER_SUPER_ADMIN_PASSWORD;
-
-    if (isValidSuperAdminEmail && isMasterPasswordValid) {
-      state.isViewOnly = false;
-      sessionStorage.setItem("kvs_user_role", "superadmin");
-      if (authModal) authModal.style.display = "none";
-      applyViewOnlyLocks();
-      unlockAllSchoolsForSuperAdmin();
-      showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
-      return;
-    }
-
-    if (errorMsg) {
-      errorMsg.textContent = "Incorrect Super Admin email or master password.";
-      errorMsg.classList.remove("hidden");
-    }
-    return;
-  }
-
-  // 2. SCHOOL ADMIN
-  if (role === "admin") {
-    const adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-
-    const matchesAdminKey = (admin) =>
-      admin && (
-        admin.passKey === passwordInput ||
+      if (isValidSuperAdminEmail && isMasterPasswordValid) {
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "superadmin");
+        document.getElementById("auth-modal").style.display = "none";
+        applyViewOnlyLocks();
+        unlockAllSchoolsForSuperAdmin();
+        showNotification("Welcome Super Admin! Full multi-school master access enabled.", "success");
+        return;
+      } else {
+        if (errorMsg) {
+          errorMsg.textContent = "Incorrect Super Admin master credentials.";
+          errorMsg.classList.remove("hidden");
+        }
+        return;
+      }
+    } 
+    else if (role === "admin") {
+      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+      let matchedAdmin = Object.values(adminRegistry).find(admin => 
+        (admin.email === identifier && (admin.passKey === passwordInput || admin.adminPass === passwordInput)) || 
+        admin.passKey === passwordInput || 
         admin.adminPass === passwordInput ||
         admin.adminPassword === passwordInput
       );
 
-    const matchesAdminRecord = (admin) => {
-      if (!matchesAdminKey(admin)) return false;
-      if (identifier) {
-        const regEmail = (admin.email || "").trim().toLowerCase();
-        const regSchool = (admin.school || "").trim().toLowerCase();
-        return regEmail === identifier || regSchool === identifier;
-      }
-      return true;
-    };
+      if (matchedAdmin) {
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "admin");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace(matchedAdmin.school);
+        applyViewOnlyLocks();
+        showNotification(`Welcome ${matchedAdmin.name || "Admin"}! Managing timetable for ${matchedAdmin.school}.`, "success");
+        return;
+      } 
+      else if (passwordInput === "kvs@schooladmin2026") {
+        state.isViewOnly = false;
+        sessionStorage.setItem("kvs_user_role", "admin");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
+        applyViewOnlyLocks();
+        showNotification("Welcome School Admin! Independent workspace enabled.", "success");
+        return;
+      } 
+      else {
+        // Real-time cloud lookup fallback if local storage misses
+        if (typeof rtdb !== 'undefined') {
+          try {
+            const snapshot = await rtdb.ref("kvs_school_admins").once("value");
+            const cloudAdmins = snapshot.val();
+            let foundCloudAdmin = null;
+            if (cloudAdmins) {
+              Object.values(cloudAdmins).forEach(admin => {
+                if (admin && (
+                  admin.passKey === passwordInput || 
+                  admin.adminPass === passwordInput || 
+                  admin.adminPassword === passwordInput ||
+                  (identifier && admin.email === identifier && (admin.passKey === passwordInput || admin.adminPass === passwordInput))
+                )) {
+                  foundCloudAdmin = admin;
+                }
+              });
+            }
 
-    let matchedAdmin = Object.values(adminRegistry).find(matchesAdminRecord);
+            if (foundCloudAdmin) {
+              let localReg = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+              let regKey = foundCloudAdmin.email || "admin@school.kvs.gov.in";
+              localReg[regKey] = foundCloudAdmin;
+              localStorage.setItem("kvs_admin_registry", JSON.stringify(localReg));
 
-    if (!matchedAdmin && typeof rtdb !== "undefined") {
-      try {
-        const snapshot = await rtdb.ref("kvs_school_admins").once("value");
-        const cloudAdmins = snapshot.val() || {};
-        matchedAdmin = Object.values(cloudAdmins).find(matchesAdminRecord);
-
-        if (matchedAdmin) {
-          const regKey = (matchedAdmin.email || "admin@school.kvs.gov.in").trim().toLowerCase();
-          adminRegistry[regKey] = { ...matchedAdmin, email: regKey };
-          localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
+              state.isViewOnly = false;
+              sessionStorage.setItem("kvs_user_role", "admin");
+              document.getElementById("auth-modal").style.display = "none";
+              isolateSchoolWorkspace(foundCloudAdmin.school);
+              applyViewOnlyLocks();
+              showNotification(`Welcome ${foundCloudAdmin.name || "Admin"}! Managing timetable for ${foundCloudAdmin.school}.`, "success");
+              return;
+            }
+          } catch (e) {
+            console.error("Cloud admin lookup error:", e);
+          }
         }
-      } catch (e) {
-        console.error("Cloud admin lookup error:", e);
+
+        if (errorMsg) {
+          errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
+          errorMsg.classList.remove("hidden");
+        }
+        return;
+      }
+    } 
+    else {
+      // 3. TEACHER / STAFF ACCESS (Accepts any passkey variant for maximum flexibility)
+      let adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+      let matchedSchoolByPassKey = Object.values(adminRegistry).find(admin => 
+        admin.teacherPassKey === passwordInput || 
+        admin.passKey === passwordInput || 
+        admin.adminPass === passwordInput ||
+        admin.adminPassword === passwordInput
+      );
+
+      if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
+        state.isViewOnly = true;
+        sessionStorage.setItem("kvs_user_role", "teacher");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace("PM SHRI KENDRIYA VIDYALAYA GILL NAGAR, CHENNAI-94");
+        applyViewOnlyLocks();
+        showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
+        return;
+      }
+      else if (matchedSchoolByPassKey) {
+        state.isViewOnly = true;
+        sessionStorage.setItem("kvs_user_role", "teacher");
+        document.getElementById("auth-modal").style.display = "none";
+        isolateSchoolWorkspace(matchedSchoolByPassKey.school);
+        applyViewOnlyLocks();
+        showNotification(`Welcome Teacher! Viewing timetable generated by ${matchedSchoolByPassKey.school} Admin.`, "success");
+        return;
+      } 
+      else {
+        // Real-time cloud lookup fallback for any valid Pass Key variant across devices
+        if (typeof rtdb !== 'undefined') {
+          try {
+            const snapshot = await rtdb.ref("kvs_school_admins").once("value");
+            const cloudAdmins = snapshot.val();
+            let foundCloudTeacher = null;
+            if (cloudAdmins) {
+              Object.values(cloudAdmins).forEach(admin => {
+                if (admin && (
+                  admin.teacherPassKey === passwordInput || 
+                  admin.passKey === passwordInput || 
+                  admin.adminPass === passwordInput ||
+                  admin.adminPassword === passwordInput
+                )) {
+                  foundCloudTeacher = admin;
+                }
+              });
+            }
+
+            if (foundCloudTeacher) {
+              let localReg = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
+              let regKey = foundCloudTeacher.email || "teacher@school.kvs.gov.in";
+              localReg[regKey] = foundCloudTeacher;
+              localStorage.setItem("kvs_admin_registry", JSON.stringify(localReg));
+
+              state.isViewOnly = true;
+              sessionStorage.setItem("kvs_user_role", "teacher");
+              document.getElementById("auth-modal").style.display = "none";
+              isolateSchoolWorkspace(foundCloudTeacher.school);
+              applyViewOnlyLocks();
+              showNotification(`Welcome Teacher! Viewing timetable generated by ${foundCloudTeacher.school} Admin.`, "success");
+              return;
+            }
+          } catch (e) {
+            console.error("Cloud teacher lookup error:", e);
+          }
+        }
+
+        if (errorMsg) {
+          errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
+          errorMsg.classList.remove("hidden");
+        }
+        return;
       }
     }
-
-    if (matchedAdmin) {
-      const schoolName = matchedAdmin.school || "PM SHRI KV GILL NAGAR,CHENNAI";
-      state.isViewOnly = false;
-      sessionStorage.setItem("kvs_user_role", "admin");
-      if (authModal) authModal.style.display = "none";
-      isolateSchoolWorkspace(schoolName);
-      applyViewOnlyLocks();
-      showNotification(`Welcome ${matchedAdmin.name || "Admin"}! Managing timetable for ${schoolName}.`, "success");
-      return;
-    }
-
-    if (!identifier && passwordInput === "kvs@schooladmin2026") {
-      const defaultSchool = "PM SHRI KV GILL NAGAR,CHENNAI";
-      state.isViewOnly = false;
-      sessionStorage.setItem("kvs_user_role", "admin");
-      if (authModal) authModal.style.display = "none";
-      isolateSchoolWorkspace(defaultSchool);
-      applyViewOnlyLocks();
-      showNotification("Welcome School Admin! Independent workspace enabled.", "success");
-      return;
-    }
-
-    if (errorMsg) {
-      errorMsg.textContent = "Incorrect School Admin Pass Key or credentials.";
-      errorMsg.classList.remove("hidden");
-    }
-    return;
   }
-
-  // 3. TEACHER / STAFF (VIEW-ONLY)
-  const adminRegistry = JSON.parse(localStorage.getItem("kvs_admin_registry") || "{}");
-  const matchesTeacherKey = (admin) =>
-    admin && (
-      admin.teacherPassKey === passwordInput ||
-      admin.passKey === passwordInput ||
-      admin.adminPass === passwordInput ||
-      admin.adminPassword === passwordInput
-    );
-
-  let matchedSchoolByPassKey = Object.values(adminRegistry).find(matchesTeacherKey);
-
-  if (!matchedSchoolByPassKey && typeof rtdb !== "undefined") {
-    try {
-      const snapshot = await rtdb.ref("kvs_school_admins").once("value");
-      const cloudAdmins = snapshot.val() || {};
-      matchedSchoolByPassKey = Object.values(cloudAdmins).find(matchesTeacherKey);
-
-      if (matchedSchoolByPassKey) {
-        const regKey = (matchedSchoolByPassKey.email || "teacher@school.kvs.gov.in").trim().toLowerCase();
-        adminRegistry[regKey] = { ...matchedSchoolByPassKey, email: regKey };
-        localStorage.setItem("kvs_admin_registry", JSON.stringify(adminRegistry));
-      }
-    } catch (e) {
-      console.error("Cloud teacher passkey lookup error:", e);
-    }
-  }
-
-  if (passwordInput === GLOBAL_DEFAULT_TIMETABLE_PASSKEY) {
-    const defaultSchool = "PM SHRI KV GILL NAGAR,CHENNAI";
-    state.isViewOnly = true;
-    sessionStorage.setItem("kvs_user_role", "teacher");
-    if (authModal) authModal.style.display = "none";
-    isolateSchoolWorkspace(defaultSchool);
-    applyViewOnlyLocks();
-    showNotification("Logged in via Default Global Pass Key (View-Only Mode)", "info");
-    return;
-  }
-
-  if (matchedSchoolByPassKey) {
-    const schoolToLoad = matchedSchoolByPassKey.school || "PM SHRI KV GILL NAGAR,CHENNAI";
-    state.isViewOnly = true;
-    sessionStorage.setItem("kvs_user_role", "teacher");
-    if (authModal) authModal.style.display = "none";
-    isolateSchoolWorkspace(schoolToLoad);
-    applyViewOnlyLocks();
-    showNotification(`Welcome Teacher! Viewing timetable generated by ${schoolToLoad} Admin.`, "success");
-    return;
-  }
-
-  if (errorMsg) {
-    errorMsg.textContent = "Invalid School Admin Pass Key. Check with your Admin.";
-    errorMsg.classList.remove("hidden");
-  }
-}
  // Temporary storage for pending school admin registration data
   let pendingAdminData = null;
 
@@ -6951,7 +6959,23 @@ window.updateSchoolPassKey = function(schoolId, keyType, newValue) {
       }
     }
   }
-   
+    // --- FIREBASE REALTIME CLOUD SYNC ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBBfKYNRu5IEHKA6aZkIxsGcGD9TOmZjWw",
+      authDomain: "kvs-timetable-sync.firebaseapp.com",
+      databaseURL: "https://kvs-timetable-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "kvs-timetable-sync",
+      storageBucket: "kvs-timetable-sync.firebasestorage.app",
+      messagingSenderId: "545842654239",
+      appId: "1:545842654239:web:7ce5564d0924f0efc3792a"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const rtdb = firebase.database();
+    const timetableCloudRef = rtdb.ref("kvs_live_timetable");
+
    function applyCloudMasterData(cloudData) {
       if (!cloudData || !cloudData.compressed) return false;
       try {

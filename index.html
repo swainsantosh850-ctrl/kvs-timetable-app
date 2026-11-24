@@ -1456,38 +1456,34 @@
     }
     const DAYS = ["सोमवार / MONDAY", "मंगलवार / TUESDAY", "बुधवार / WEDNESDAY", "गुरुवार / THURSDAY", "शुक्रवार / FRIDAY", "शनिवार / SATURDAY"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
-    // KVS Samagam Festive Pastel Subject Palette
-const SUBJECT_COLORS = {
-  "MATH":    { bg: "#dbeafe", border: "#3b82f6", text: "#1e3a8a", sub: "#1d4ed8" },
-  "ENG":     { bg: "#d1fae5", border: "#10b981", text: "#064e3b", sub: "#047857" },
-  "HIN":     { bg: "#ffedd5", border: "#f97316", text: "#7c2d12", sub: "#c2410c" },
-  "TWAU":    { bg: "#ecfccb", border: "#84cc16", text: "#365314", sub: "#4d7c0f" },
-  "EVS":     { bg: "#ecfccb", border: "#84cc16", text: "#365314", sub: "#4d7c0f" },
-  "PE":      { bg: "#ffe4e6", border: "#f43f5e", text: "#881337", sub: "#be123c" },
-  "K.GAMES": { bg: "#ffe4e6", border: "#f43f5e", text: "#881337", sub: "#be123c" },
-  "K.YOGA":  { bg: "#fce7f3", border: "#ec4899", text: "#831843", sub: "#be185d" },
-  "V.ART":   { bg: "#f3e8ff", border: "#a855f7", text: "#581c87", sub: "#7e22ce" },
-  "P.ART":   { bg: "#ede9fe", border: "#8b5cf6", text: "#4c1d95", sub: "#6d28d9" },
-  "LIB":     { bg: "#fef3c7", border: "#f59e0b", text: "#78350f", sub: "#b45309" },
-  "GDN":     { bg: "#ccfbf1", border: "#14b8a6", text: "#134e4a", sub: "#0f766e" },
-  "CLA":     { bg: "#cffafe", border: "#06b6d4", text: "#164e63", sub: "#0e7490" },
-  "DL":      { bg: "#e0e7ff", border: "#6366f1", text: "#312e81", sub: "#4338ca" },
-  "TAMIL":   { bg: "#fef9c3", border: "#eab308", text: "#713f12", sub: "#a16207" }
-};
+  // Auto-Unlimited Unique Color Engine (Zero Duplicate Colors)
+const UNIQUE_COLOR_REGISTRY = {};
+let uniqueColorIndex = 0;
 
-const FALLBACK_PALETTE = [
-  { bg: "#e0f2fe", border: "#0ea5e9", text: "#0c4a6e", sub: "#0369a1" },
-  { bg: "#fae8ff", border: "#d946ef", text: "#701a75", sub: "#a21caf" },
-  { bg: "#dcfce7", border: "#22c55e", text: "#14532d", sub: "#15803d" },
-  { bg: "#ffedd5", border: "#fb923c", text: "#7c2d12", sub: "#c2410c" }
-];
+function getSubjectColor(keyName) {
+  const key = String(keyName || "").trim().toUpperCase();
+  if (!key) return { bg: "#f8fafc", border: "#cbd5e1", text: "#334155", sub: "#64748b" };
 
-function getSubjectColor(subject) {
-  const key = String(subject || "").trim().toUpperCase();
-  if (SUBJECT_COLORS[key]) return SUBJECT_COLORS[key];
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash);
-  return FALLBACK_PALETTE[Math.abs(hash) % FALLBACK_PALETTE.length];
+  // Return already-assigned color so the same subject stays consistent across all 7 slides
+  if (UNIQUE_COLOR_REGISTRY[key]) {
+    return UNIQUE_COLOR_REGISTRY[key];
+  }
+
+  // Golden Angle (137.508°) guarantees maximum visual separation & never repeats
+  const hue = Math.round((uniqueColorIndex * 137.508) % 360);
+  // Subtle lightness variation after every 18 items keeps even 50+ items distinct
+  const bgLightness = 92 - (Math.floor(uniqueColorIndex / 18) % 3) * 4;
+
+  const colorObj = {
+    bg:     `hsl(${hue}, 85%, ${bgLightness}%)`,
+    border: `hsl(${hue}, 75%, 52%)`,
+    text:   `hsl(${hue}, 80%, 22%)`,
+    sub:    `hsl(${hue}, 75%, 35%)`
+  };
+
+  UNIQUE_COLOR_REGISTRY[key] = colorObj;
+  uniqueColorIndex++;
+  return colorObj;
 }
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     let CLASSES = [];

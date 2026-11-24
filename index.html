@@ -48,106 +48,140 @@
     }
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
-    /* Black & White Print Mode Styles */
-    .monochrome-print,
-    .monochrome-print * {
-      background: white !important;
-      background-color: white !important;
-      color: black !important;
-      border-color: black !important;
-      box-shadow: none !important;
+  /* KVS Samagam Festive Background & Tricolor Top Ribbon */
+  body {
+    background: linear-gradient(135deg, #fff7ed 0%, #f8fafc 45%, #eff6ff 100%) !important;
+  }
+  body::before {
+    content: "";
+    display: block;
+    height: 5px;
+    width: 100%;
+    background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.3%, #ffffff 33.3%, #ffffff 66.6%, #138808 66.6%, #138808 100%);
+    position: sticky;
+    top: 0;
+    z-index: 60;
+  }
+
+  /* Header & Navigation Bar */
+  header {
+    background: linear-gradient(90deg, #ffffff 0%, #eef2ff 50%, #fff7ed 100%) !important;
+    border-bottom: 2px solid #f97316 !important;
+  }
+  header nav {
+    background: linear-gradient(90deg, #1e3a8a 0%, #312e81 55%, #0f766e 100%) !important;
+    border-top: none !important;
+  }
+  #header-school-name {
+    background: linear-gradient(90deg, #1e3a8a, #c2410c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Royal Blue & Teal Table Headers */
+  main table thead tr {
+    background: linear-gradient(90deg, #1e3a8a 0%, #4338ca 55%, #0d9488 100%) !important;
+    color: #ffffff !important;
+  }
+  main table thead th {
+    color: #ffffff !important;
+    border-color: #1e293b !important;
+  }
+
+  /* Color-Coded Day Column (Slides 3 & 6) */
+  main table tbody tr:nth-child(1) td:first-child { background: #eff6ff; color: #1d4ed8; }
+  main table tbody tr:nth-child(2) td:first-child { background: #fff7ed; color: #c2410c; }
+  main table tbody tr:nth-child(3) td:first-child { background: #ecfdf5; color: #047857; }
+  main table tbody tr:nth-child(4) td:first-child { background: #faf5ff; color: #7e22ce; }
+  main table tbody tr:nth-child(5) td:first-child { background: #fefce8; color: #a16207; }
+  main table tbody tr:nth-child(6) td:first-child { background: #fff1f2; color: #be123c; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #ea580c; }
+
+  /* Black & White Print Mode (Preserved) */
+  .monochrome-print,
+  .monochrome-print * {
+    background: white !important;
+    background-color: white !important;
+    color: black !important;
+    border-color: black !important;
+    box-shadow: none !important;
+  }
+  .monochrome-print div[style*="background"] {
+    background: white !important;
+  }
+
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
-    .monochrome-print div[style*="background"] {
-      background: white !important;
-    }
+    body::before { display: none !important; }
+    body { background: white !important; padding: 0 !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
+    table, th, td, div, span, h1, h2, h3, h4, p { font-family: "Times New Roman", Times, serif !important; }
+    .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal, #personal-lockout-modal { display: none !important; }
+    #printable-report-area { display: block !important; }
 
-   @media print {
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      body { background: white !important; padding: 0 !important; color: black !important; font-family: "Times New Roman", Times, serif !important; }
-      table, th, td, div, span, h1, h2, h3, h4, p { font-family: "Times New Roman", Times, serif !important; }
-      .no-print, header, nav, main, #toast-container, .modal-backdrop, #view-only-banner, #auth-modal, #secondary-busy-modal, #teacher-slot-modal, #slot-modal, #manage-limits-modal, #rules-modal, #school-manager-modal, #print-preview-modal, #personal-lockout-modal { display: none !important; }
-      #printable-report-area { display: block !important; }
-      
-      .print-page { 
-        page-break-after: always !important; 
-        break-after: page !important; 
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin: 0 !important; 
-        padding: 2mm !important; 
-        font-family: "Times New Roman", Times, serif !important;
-      }
-      .print-page:last-child {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
-      }
-
-      /* Global Default Portrait (Applies to Slide 1, 2, 3, 5, 6) */
-      @page {
-        size: portrait;
-        margin: 4mm;
-      }
-
-      /* Dedicated Landscape Page rule strictly for Slide 4 */
-      @page landscape-sheet {
-        size: landscape;
-        margin: 6mm;
-      }
-      .landscape-page {
-        page: landscape-sheet !important;
-        size: landscape !important;
-      }
-
-      table { border-collapse: collapse !important; width: 100% !important; }
-      th, td { border: 1.5px solid #0f172a !important; padding: 3px 4px !important; }
-    }
-
-    /* Multi-teacher portrait 4-up full page stretch rules */
-    .multi-teacher-print-card {
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-      margin-bottom: 4px !important;
-      padding-bottom: 2px !important;
-      border-bottom: 1.5px solid #475569 !important;
-    }
-    .multi-teacher-print-card:nth-child(4n) {
+    .print-page {
       page-break-after: always !important;
       break-after: page !important;
-      border-bottom: none !important;
-      margin-bottom: 0 !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      margin: 0 !important;
+      padding: 2mm !important;
+      font-family: "Times New Roman", Times, serif !important;
+    }
+    .print-page:last-child {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
     }
 
-    /* Multi-class portrait 2-up print card rules */
-    .multi-class-print-card {
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-      margin-bottom: 10px !important;
-      padding-bottom: 6px !important;
-      border-bottom: 2px solid #475569 !important;
-    }
-    .multi-class-print-card:nth-child(2n) {
-      page-break-after: always !important;
-      break-after: page !important;
-      border-bottom: none !important;
-      margin-bottom: 0 !important;
-    }
+    @page { size: portrait; margin: 4mm; }
+    @page landscape-sheet { size: landscape; margin: 6mm; }
+    .landscape-page { page: landscape-sheet !important; size: landscape !important; }
 
     table { border-collapse: collapse !important; width: 100% !important; }
-    th, td { border: 1.5px solid #0f172a !important; }
-    .print-shadow-none { box-shadow: none !important; border: 2px solid #0f172a !important; }
-  </style>
+    th, td { border: 1.5px solid #0f172a !important; padding: 3px 4px !important; }
+  }
+
+  .multi-teacher-print-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 4px !important;
+    padding-bottom: 2px !important;
+    border-bottom: 1.5px solid #475569 !important;
+  }
+  .multi-teacher-print-card:nth-child(4n) {
+    page-break-after: always !important;
+    break-after: page !important;
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  .multi-class-print-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 10px !important;
+    padding-bottom: 6px !important;
+    border-bottom: 2px solid #475569 !important;
+  }
+  .multi-class-print-card:nth-child(2n) {
+    page-break-after: always !important;
+    break-after: page !important;
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  table { border-collapse: collapse !important; width: 100% !important; }
+  th, td { border: 1.5px solid #0f172a !important; }
+  .print-shadow-none { box-shadow: none !important; border: 2px solid #0f172a !important; }
+</style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
 <div id="auth-modal" style="display: flex;" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm items-center justify-center p-4">
@@ -1422,6 +1456,39 @@
     }
     const DAYS = ["सोमवार / MONDAY", "मंगलवार / TUESDAY", "बुधवार / WEDNESDAY", "गुरुवार / THURSDAY", "शुक्रवार / FRIDAY", "शनिवार / SATURDAY"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
+    // KVS Samagam Festive Pastel Subject Palette
+const SUBJECT_COLORS = {
+  "MATH":    { bg: "#dbeafe", border: "#3b82f6", text: "#1e3a8a", sub: "#1d4ed8" },
+  "ENG":     { bg: "#d1fae5", border: "#10b981", text: "#064e3b", sub: "#047857" },
+  "HIN":     { bg: "#ffedd5", border: "#f97316", text: "#7c2d12", sub: "#c2410c" },
+  "TWAU":    { bg: "#ecfccb", border: "#84cc16", text: "#365314", sub: "#4d7c0f" },
+  "EVS":     { bg: "#ecfccb", border: "#84cc16", text: "#365314", sub: "#4d7c0f" },
+  "PE":      { bg: "#ffe4e6", border: "#f43f5e", text: "#881337", sub: "#be123c" },
+  "K.GAMES": { bg: "#ffe4e6", border: "#f43f5e", text: "#881337", sub: "#be123c" },
+  "K.YOGA":  { bg: "#fce7f3", border: "#ec4899", text: "#831843", sub: "#be185d" },
+  "V.ART":   { bg: "#f3e8ff", border: "#a855f7", text: "#581c87", sub: "#7e22ce" },
+  "P.ART":   { bg: "#ede9fe", border: "#8b5cf6", text: "#4c1d95", sub: "#6d28d9" },
+  "LIB":     { bg: "#fef3c7", border: "#f59e0b", text: "#78350f", sub: "#b45309" },
+  "GDN":     { bg: "#ccfbf1", border: "#14b8a6", text: "#134e4a", sub: "#0f766e" },
+  "CLA":     { bg: "#cffafe", border: "#06b6d4", text: "#164e63", sub: "#0e7490" },
+  "DL":      { bg: "#e0e7ff", border: "#6366f1", text: "#312e81", sub: "#4338ca" },
+  "TAMIL":   { bg: "#fef9c3", border: "#eab308", text: "#713f12", sub: "#a16207" }
+};
+
+const FALLBACK_PALETTE = [
+  { bg: "#e0f2fe", border: "#0ea5e9", text: "#0c4a6e", sub: "#0369a1" },
+  { bg: "#fae8ff", border: "#d946ef", text: "#701a75", sub: "#a21caf" },
+  { bg: "#dcfce7", border: "#22c55e", text: "#14532d", sub: "#15803d" },
+  { bg: "#ffedd5", border: "#fb923c", text: "#7c2d12", sub: "#c2410c" }
+];
+
+function getSubjectColor(subject) {
+  const key = String(subject || "").trim().toUpperCase();
+  if (SUBJECT_COLORS[key]) return SUBJECT_COLORS[key];
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash);
+  return FALLBACK_PALETTE[Math.abs(hash) % FALLBACK_PALETTE.length];
+}
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     let CLASSES = [];
 
@@ -2795,39 +2862,40 @@ function ensureAllotmentExists(teacherId, classNum, section, subject) {
     }
 
   function renderSlide2WorkloadStatus() {
-      const container = document.getElementById("slide2-class-workload-gauges");
-      if (!container) return;
-      container.innerHTML = "";
+  const container = document.getElementById("slide2-class-workload-gauges");
+  if (!container) return;
+  container.innerHTML = "";
 
-      CLASSES.forEach(cls => {
-        const [cNum, cSec] = cls.split("-");
-        const targetClassKey = `${cNum}-${cSec}`;
-        
-        // Count unique scheduled periods directly from the timetable grid
-        let total = 0;
-        DAYS.forEach(d => {
-          PERIODS.forEach(p => {
-            const slot = state.schedules[targetClassKey]?.[d]?.[p];
-            if (slot && slot.subject) {
-              total++;
-            }
-          });
-        });
-
-        const isComplete = total === 48;
-        const isOver = total > 48;
-
-        const row = document.createElement("div");
-        row.className = "flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition";
-        row.innerHTML = `
-          <span class="text-xs font-extrabold text-slate-800">Class ${cls}</span>
-          <span class="text-xs font-black ${isComplete ? 'text-emerald-600' : isOver ? 'text-purple-600' : 'text-rose-600'}">
-            ${total}/48
-          </span>
-        `;
-        container.appendChild(row);
+  CLASSES.forEach(cls => {
+    const [cNum, cSec] = cls.split("-");
+    const targetClassKey = `${cNum}-${cSec}`;
+    let total = 0;
+    DAYS.forEach(d => {
+      PERIODS.forEach(p => {
+        if (state.schedules[targetClassKey]?.[d]?.[p]?.subject) total++;
       });
-    }
+    });
+
+    const pct = Math.min(100, Math.round((total / 48) * 100));
+    const isComplete = total === 48;
+    const isOver = total > 48;
+    const barColor = isComplete ? "bg-emerald-500" : isOver ? "bg-purple-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500";
+    const textColor = isComplete ? "text-emerald-700" : isOver ? "text-purple-700" : pct >= 50 ? "text-amber-700" : "text-rose-700";
+
+    const row = document.createElement("div");
+    row.className = "p-3 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-1.5";
+    row.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-extrabold text-slate-800">Class ${cls}</span>
+        <span class="text-xs font-black ${textColor}">${total}/48 (${pct}%)</span>
+      </div>
+      <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-300 ${barColor}" style="width: ${pct}%"></div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
 
     function renderSlide3ClassPills() {
       const container = document.getElementById("slide3-class-pills");
@@ -4990,17 +5058,22 @@ function renderSlide6TeacherGrid() {
     let activePrintHtml = "";
 
     function renderOfficialHeader(title, subtitle = "") {
-      const schoolName = state.schoolInfo?.name || "KENDRIYA VIDYALAYA";
-      const session = state.schoolInfo?.session || "2026-27";
-      return `
-        <div style="text-align: center; border-bottom: 2px solid #1e293b; padding-bottom: 10px; margin-bottom: 14px; font-family: 'Times New Roman', Times, serif;">
-          <div style="font-size: 18px; font-weight: 900; color: #0f172a; text-transform: uppercase;">${schoolName}</div>
-          <div style="font-size: 12px; font-weight: 700; color: #475569; margin-top: 2px;">प्राथमिक विभाग / PRIMARY SECTION • शैक्षणिक सत्र  ACADEMIC SESSION ${session}</div>
-          <div style="margin-top: 8px; display: inline-block; padding: 3px 12px; background: #e0e7ff; color: #3730a3; border-radius: 6px; font-size: 13px; font-weight: 800; text-transform: uppercase;">${title}</div>
-          ${subtitle ? `<div style="font-size: 11px; font-weight: 600; color: #64748b; margin-top: 4px;">${subtitle}</div>` : ''}
-        </div>
-      `;
-    }
+  const schoolName = state.schoolInfo?.name || "KENDRIYA VIDYALAYA";
+  const session = state.schoolInfo?.session || "2026-27";
+  return `
+    <div style="text-align: center; border: 2px solid #1e3a8a; border-radius: 10px; overflow: hidden; margin-bottom: 12px; font-family: 'Times New Roman', Times, serif;">
+      <div style="height: 5px; background: linear-gradient(90deg, #FF9933 33.3%, #ffffff 33.3%, #ffffff 66.6%, #138808 66.6%);"></div>
+      <div style="background: linear-gradient(90deg, #1e3a8a 0%, #312e81 55%, #0f766e 100%); color: #ffffff; padding: 8px 12px;">
+        <div style="font-size: 18px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">${schoolName}</div>
+        <div style="font-size: 11.5px; font-weight: 700; color: #fde68a; margin-top: 2px;">प्राथमिक विभाग / PRIMARY SECTION • शैक्षणिक सत्र / ACADEMIC SESSION ${session}</div>
+      </div>
+      <div style="background: #fff7ed; padding: 6px 10px; border-top: 2px solid #f97316;">
+        <div style="display: inline-block; padding: 2px 14px; background: #ea580c; color: #ffffff; border-radius: 999px; font-size: 12.5px; font-weight: 800; text-transform: uppercase;">${title}</div>
+        ${subtitle ? `<div style="font-size: 11px; font-weight: 700; color: #1e293b; margin-top: 4px;">${subtitle}</div>` : ''}
+      </div>
+    </div>
+  `;
+}
 // Sync admin registry from Firebase RTDB to local storage on any device
 function syncAdminRegistryFromCloud() {
     if (typeof rtdb === 'undefined') {
@@ -5987,6 +6060,7 @@ function printCurrentSlide(slideNum) {
             <title>KVS Timetable Print Preview</title>
             <style>
               @page { ${pageSizeRule} margin: 8mm; } 
+              * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               body { 
                 font-family: 'Times New Roman', Times, serif; 
                 padding: 0; 

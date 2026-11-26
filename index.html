@@ -91,13 +91,7 @@
     border-color: #1e293b !important;
   }
 
-  /* Color-Coded Day Column (Slides 3 & 6) */
-  main table tbody tr:nth-child(1) td:first-child { background: #eff6ff; color: #1d4ed8; }
-  main table tbody tr:nth-child(2) td:first-child { background: #fff7ed; color: #c2410c; }
-  main table tbody tr:nth-child(3) td:first-child { background: #ecfdf5; color: #047857; }
-  main table tbody tr:nth-child(4) td:first-child { background: #faf5ff; color: #7e22ce; }
-  main table tbody tr:nth-child(5) td:first-child { background: #fefce8; color: #a16207; }
-  main table tbody tr:nth-child(6) td:first-child { background: #fff1f2; color: #be123c; }
+
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
@@ -1456,18 +1450,40 @@
     }
     const DAYS = ["सोमवार / MONDAY", "मंगलवार / TUESDAY", "बुधवार / WEDNESDAY", "गुरुवार / THURSDAY", "शुक्रवार / FRIDAY", "शनिवार / SATURDAY"];
     const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8];
-  // Auto-Unlimited Unique Color Engine (Zero Duplicate Colors)
+// Auto-Unlimited Unique Color Engine (Classes, Teachers, Subjects, Days)
 const UNIQUE_COLOR_REGISTRY = {};
-let uniqueColorIndex = 0;
+const UNIQUE_COLOR_COUNTERS = { SUBJECT: 0, CLASS: 0, TEACHER: 0, DAY: 0 };
+
+function getUniqueColor(type, keyName) {
+  const cleanKey = String(keyName || "").trim().toUpperCase();
+  if (!cleanKey) return { bg: "#f8fafc", border: "#cbd5e1", text: "#334155", sub: "#64748b" };
+
+  const regKey = `${type}:${cleanKey}`;
+  if (UNIQUE_COLOR_REGISTRY[regKey]) {
+    return UNIQUE_COLOR_REGISTRY[regKey];
+  }
+
+  const idx = UNIQUE_COLOR_COUNTERS[type] || 0;
+  const hueOffset = type === "TEACHER" ? 25 : type === "CLASS" ? 195 : type === "DAY" ? 215 : 0;
+  const hue = Math.round((hueOffset + idx * 137.508) % 360);
+  const bgLightness = 93 - (Math.floor(idx / 12) % 3) * 4;
+  const sat = 82 - (Math.floor(idx / 36) % 2) * 15;
+
+  const colorObj = {
+    bg:     `hsl(${hue}, ${sat}%, ${bgLightness}%)`,
+    border: `hsl(${hue}, 72%, 52%)`,
+    text:   `hsl(${hue}, 78%, 24%)`,
+    sub:    `hsl(${hue}, 65%, 36%)`
+  };
+
+  UNIQUE_COLOR_REGISTRY[regKey] = colorObj;
+  UNIQUE_COLOR_COUNTERS[type] = idx + 1;
+  return colorObj;
+}
 
 function getSubjectColor(keyName) {
-  const key = String(keyName || "").trim().toUpperCase();
-  if (!key) return { bg: "#f8fafc", border: "#cbd5e1", text: "#334155", sub: "#64748b" };
-
-  // Return already-assigned color so the same subject stays consistent across all 7 slides
-  if (UNIQUE_COLOR_REGISTRY[key]) {
-    return UNIQUE_COLOR_REGISTRY[key];
-  }
+  return getUniqueColor("SUBJECT", keyName);
+}
 
   // Golden Angle (137.508°) guarantees maximum visual separation & never repeats
   const hue = Math.round((uniqueColorIndex * 137.508) % 360);
@@ -3028,88 +3044,7 @@ function autoGenerateSingleClass(cls) {
       });
     }
 
-    function createDayWiseClassTableCard(day) {
-      const card = document.createElement("div");
-      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
-      
-      let tbodyRows = "";
-      CLASSES.forEach((cls, index) => {
-        let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">Class ${cls}</td>`;
-
-        PERIODS.forEach(p => {
-          const slot = state.schedules[cls]?.[day]?.[p];
-          if (slot) {
-            const teacher = state.teachers.find(t => t.id === slot.teacherId);
-            const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
-
-            let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
-            if (coTeacher) {
-              teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
-            }
-            const hasConflict = isTeacherConflicted(slot.teacherId, day, p);
-
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
-                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-
-          if (p === 4 && index === 0) {
-            rowHtml += `
-              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${CLASSES.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
-                LUNCH BREAK
-              </td>
-            `;
-          }
-        });
-
-        rowHtml += `</tr>`;
-        tbodyRows += rowHtml;
-      });
-
-      card.innerHTML = `
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
-            <h3 class="text-sm font-extrabold text-slate-900">Master Section Schedule for ${day}</h3>
-          </div>
-          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
-            <i class="ph-bold ph-printer text-xs"></i>
-            <span>Print ${day} Schedule</span>
-          </button>
-        </div>
-        <table class="w-full border-collapse text-center text-xs">
-          <thead>
-            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
-              <th class="py-2.5 px-3 text-left w-24">Class</th>
-              <th class="py-2.5 px-2">P1</th>
-              <th class="py-2.5 px-2">P2</th>
-              <th class="py-2.5 px-2">P3</th>
-              <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="${CLASSES.length}"></th>
-              <th class="py-2.5 px-2">P5</th>
-              <th class="py-2.5 px-2">P6</th>
-              <th class="py-2.5 px-2">P7</th>
-              <th class="py-2.5 px-2">P8</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">${tbodyRows}</tbody>
-        </table>
-      `;
-      return card;
-    }
+   
 
     function renderSlide4DayWiseClasses() {
       const container = document.getElementById("slide4-tables-container");
@@ -3248,85 +3183,7 @@ function autoGenerateSingleClass(cls) {
       });
     }
 
-   function renderSlide5DayWiseTeachers() {
-      const tbody = document.getElementById("slide5-teachers-tbody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      const day = state.selectedDaySlide5;
-
-      state.teachers.forEach((t, index) => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50/50 transition";
-
-        let roleSubtitle = t.isClassTeacher ? `CT (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT';
-        if (t.isCoClassTeacher) roleSubtitle += ` / Co-CT (${t.coClassNum}-${t.coSection})`;
-
-        let rowHtml = `
-          <td class="py-2.5 px-3 text-left font-extrabold text-slate-800">
-            <div>${t.name}</div>
-            <div class="text-[10px] text-slate-400 font-semibold">${roleSubtitle}</div>
-          </td>
-        `;
-
-        let dailyCount = 0;
-
-        PERIODS.forEach(p => {
-          const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
-          let teachingSlots = [];
-          CLASSES.forEach(c => {
-            const slot = state.schedules[c]?.[day]?.[p];
-            // Updated to check both primary and सह-कक्षा अध्यापक / Co-Class Teacher IDs
-            if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
-              teachingSlots.push({ class: c, subject: slot.subject });
-            }
-          });
-
-          if (isSecBusy) {
-            rowHtml += `
-              <td class="p-1">
-                <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
-                  <div class="font-extrabold text-[11px]">Secondary</div>
-                  <div class="text-[10px] text-rose-500 font-semibold">High School</div>
-                </div>
-              </td>
-            `;
-          } else if (teachingSlots.length > 0) {
-            dailyCount += teachingSlots.length;
-            const hasConflict = teachingSlots.length > 1;
-
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
-                  <div class="font-extrabold text-[11px]">${teachingSlots.map(s => s.class).join(", ")}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold">${teachingSlots.map(s => s.subject).join(", ")}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-
-          if (p === 4 && index === 0) {
-            rowHtml += `
-              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${state.teachers.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
-                LUNCH BREAK
-              </td>
-            `;
-          }
-        });
-
-        rowHtml += `<td class="py-2.5 px-2 text-right font-black text-indigo-700">${dailyCount} P</td>`;
-        tr.innerHTML = rowHtml;
-        tbody.appendChild(tr);
-      });
-    }
+ 
     function handleSlide5Regenerate() {
       if (state.isViewOnly) return;
       handleSlide4Regenerate();
@@ -3482,9 +3339,15 @@ function autoGenerateSingleClass(cls) {
         </div>
       `;
 
-      let tbodyRows = "";
+let tbodyRows = "";
       DAYS.forEach((d, index) => {
-        let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
+        const dayCol = getUniqueColor("DAY", d);
+        let rowHtml = `
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="py-2.5 px-3 text-left font-extrabold"
+                style="background: ${dayCol.bg}; color: ${dayCol.text}; border-left: 4px solid ${dayCol.border};">
+              ${d}
+            </td>`;
 
         PERIODS.forEach(p => {
           const slot = state.schedules[cls]?.[d]?.[p];
@@ -3496,13 +3359,20 @@ function autoGenerateSingleClass(cls) {
             if (coTeacher) {
               teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
             }
+
             const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
+            const subCol = getSubjectColor(slot.subject);
+            const cellStyle = hasConflict
+              ? ""
+              : `style="background: ${subCol.bg}; border-color: ${subCol.border}; color: ${subCol.text};"`;
 
             rowHtml += `
               <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
+                <button onclick="openSlotModal('${cls}', '${d}', ${p})"
+                        ${cellStyle}
+                        class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : ''} hover:shadow-xs transition text-center group">
                   <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
+                  <div class="text-[10px] font-semibold truncate" style="${hasConflict ? '' : `color: ${subCol.sub};`}">${teacherName}</div>
                 </button>
               </td>
             `;
@@ -3516,7 +3386,6 @@ function autoGenerateSingleClass(cls) {
             `;
           }
 
-          // Insert Lunch Break column after P4 (p === 4) spanning all 6 rows on Monday (index === 0)
           if (p === 4 && index === 0) {
             rowHtml += `
               <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
@@ -3524,10 +3393,11 @@ function autoGenerateSingleClass(cls) {
               </td>
             `;
           }
-        }); // <--- Closing brace for PERIODS.forEach(p => {
+        });
 
         rowHtml += `</tr>`;
         tbodyRows += rowHtml;
+      });
       }); // <--- Closing brace for DAYS.forEach((d, index) => {
       card.innerHTML = `
         <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
@@ -4183,25 +4053,35 @@ function renderSlide7Content() {
     let classRowCells = "";
     let subjectRowCells = "";
 
-    PERIODS.forEach(p => {
+   PERIODS.forEach(p => {
       let assignedClass = "-";
       let assignedSubject = "-";
+      let rawClass = null;
 
       CLASSES.forEach(c => {
         const slot = state.schedules[c]?.[selectedDay]?.[p];
         if (slot) {
           if (slot.teacherId === t.id) {
+            rawClass = c;
             assignedClass = c;
             assignedSubject = slot.subject;
           } else if (slot.coTeacherId === t.id) {
+            rawClass = c;
             assignedClass = `${c} [Co-T]`;
             assignedSubject = slot.subject;
           }
         }
       });
 
-      classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 10px 6px; text-align: center; font-weight: 800; font-size: 12.5px; width: 11%;">${assignedClass}</td>`;
-      subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 10px 6px; text-align: center; font-weight: 700; font-size: 12.5px; width: 11%;">${assignedSubject}</td>`;
+      const clsStyle = rawClass
+        ? (() => { const col = getUniqueColor("CLASS", rawClass); return `background: ${col.bg}; color: ${col.text};`; })()
+        : `color: #94a3b8;`;
+      const subStyle = rawClass
+        ? (() => { const col = getSubjectColor(assignedSubject); return `background: ${col.bg}; color: ${col.text};`; })()
+        : `color: #94a3b8;`;
+
+      classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 10px 6px; text-align: center; font-weight: 800; font-size: 12.5px; width: 11%; ${clsStyle}">${assignedClass}</td>`;
+      subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 10px 6px; text-align: center; font-weight: 700; font-size: 12.5px; width: 11%; ${subStyle}">${assignedSubject}</td>`;
     });
 
     container.innerHTML = `
@@ -4261,27 +4141,36 @@ function printAllSlide7Teachers() {
       let classRowCells = "";
       let subjectRowCells = "";
 
-      PERIODS.forEach(p => {
+     PERIODS.forEach(p => {
         let assignedClass = "-";
         let assignedSubject = "-";
+        let rawClass = null;
 
         CLASSES.forEach(c => {
           const slot = state.schedules[c]?.[selectedDay]?.[p];
           if (slot) {
             if (slot.teacherId === t.id) {
+              rawClass = c;
               assignedClass = c;
               assignedSubject = slot.subject;
             } else if (slot.coTeacherId === t.id) {
+              rawClass = c;
               assignedClass = `${c} [Co-T]`;
               assignedSubject = slot.subject;
             }
           }
         });
 
-        classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 7px 4px; text-align: center; font-weight: 800; font-size: 11px; width: 11%;">${assignedClass}</td>`;
-        subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 7px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 11%;">${assignedSubject}</td>`;
-      });
+        const clsStyle = rawClass
+          ? (() => { const col = getUniqueColor("CLASS", rawClass); return `background: ${col.bg}; color: ${col.text};`; })()
+          : `color: #94a3b8;`;
+        const subStyle = rawClass
+          ? (() => { const col = getSubjectColor(assignedSubject); return `background: ${col.bg}; color: ${col.text};`; })()
+          : `color: #94a3b8;`;
 
+        classRowCells += `<td style="border: 1.5px solid #0f172a; padding: 7px 4px; text-align: center; font-weight: 800; font-size: 11px; width: 11%; ${clsStyle}">${assignedClass}</td>`;
+        subjectRowCells += `<td style="border: 1.5px solid #0f172a; padding: 7px 4px; text-align: center; font-weight: 700; font-size: 11px; width: 11%; ${subStyle}">${assignedSubject}</td>`;
+      });
       pageChunk += `
         <div style="margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1.5px solid #94a3b8; page-break-inside: avoid; break-inside: avoid;">
           ${renderOfficialHeader(`शिक्षकों की समय सारिणी / TEACHER'S TIME TABLE • ${selectedDay.toUpperCase()}`)}
@@ -4358,92 +4247,100 @@ function printAllSlide7Teachers() {
       });
     }
     function createDayWiseClassTableCard(day) {
-      const card = document.createElement("div");
-      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
-      
-      let totalFilledForDay = 0;
-      let totalPossibleForDay = CLASSES.length * 8;
+  const card = document.createElement("div");
+  card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
 
-      let tbodyRows = "";
-      CLASSES.forEach((cls, index) => {
-        let rowHtml = `<tr class="hover:bg-slate-50/50 transition"><td class="py-2.5 px-3 text-left font-extrabold text-slate-800">Class ${cls}</td>`;
+  let tbodyRows = "";
+  CLASSES.forEach((cls, index) => {
+    const clsCol = getUniqueColor("CLASS", cls);
+    let rowHtml = `
+      <tr class="hover:bg-slate-50/50 transition">
+        <td class="py-2.5 px-3 text-left font-extrabold"
+            style="background: ${clsCol.bg}; color: ${clsCol.text}; border-left: 4px solid ${clsCol.border};">
+          Class ${cls}
+        </td>`;
 
-        PERIODS.forEach(p => {
-          const slot = state.schedules[cls]?.[day]?.[p];
-          if (slot) {
-            totalFilledForDay++;
-            const teacher = state.teachers.find(t => t.id === slot.teacherId);
-            const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
+    PERIODS.forEach(p => {
+      const slot = state.schedules[cls]?.[day]?.[p];
+      if (slot) {
+        const teacher = state.teachers.find(t => t.id === slot.teacherId);
+        const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
 
-            let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
-            if (coTeacher) {
-              teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
-            }
-            const hasConflict = isTeacherConflicted(slot.teacherId, day, p);
+        let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
+        if (coTeacher) {
+          teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
+        }
 
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50/70 border-indigo-200 text-indigo-900'} hover:shadow-xs transition text-center group">
-                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] text-slate-500 font-semibold truncate">${teacherName}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
+        const hasConflict = isTeacherConflicted(slot.teacherId, day, p);
+        const subCol = getSubjectColor(slot.subject);
+        const cellStyle = hasConflict
+          ? ""
+          : `style="background: ${subCol.bg}; border-color: ${subCol.border}; color: ${subCol.text};"`;
 
-          // Insert slim vertical Lunch Break after P4 (p === 4) on the first class row (index === 0)
-          if (p === 4 && index === 0) {
-            rowHtml += `
-              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${CLASSES.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
-                LUNCH BREAK
-              </td>
-            `;
-          }
-        });
+        rowHtml += `
+          <td class="p-1">
+            <button onclick="openSlotModal('${cls}', '${day}', ${p})"
+                    ${cellStyle}
+                    class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : ''} hover:shadow-xs transition text-center group">
+              <div class="font-extrabold text-[11px]">${slot.subject}</div>
+              <div class="text-[10px] font-semibold truncate" style="${hasConflict ? '' : `color: ${subCol.sub};`}">${teacherName}</div>
+            </button>
+          </td>
+        `;
+      } else {
+        rowHtml += `
+          <td class="p-1">
+            <button onclick="openSlotModal('${cls}', '${day}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
+              <i class="ph-bold ph-plus text-xs"></i>
+            </button>
+          </td>
+        `;
+      }
 
-        rowHtml += `</tr>`;
-        tbodyRows += rowHtml;
-      });
+      if (p === 4 && index === 0) {
+        rowHtml += `
+          <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${CLASSES.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+            LUNCH BREAK
+          </td>
+        `;
+      }
+    });
 
-      card.innerHTML = `
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
-            <h3 class="text-sm font-extrabold text-slate-900">Master Section Schedule for ${day}</h3>
-          </div>
-          <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
-            <i class="ph-bold ph-printer text-xs"></i>
-            <span>Print ${day} Schedule</span>
-          </button>
-        </div>
-        <table class="w-full border-collapse text-center text-xs">
-          <thead>
-            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
-              <th class="py-2.5 px-3 text-left w-24">Class</th>
-              <th class="py-2.5 px-2">P1</th>
-              <th class="py-2.5 px-2">P2</th>
-              <th class="py-2.5 px-2">P3</th>
-              <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="${CLASSES.length}"></th>
-              <th class="py-2.5 px-2">P5</th>
-              <th class="py-2.5 px-2">P6</th>
-              <th class="py-2.5 px-2">P7</th>
-              <th class="py-2.5 px-2">P8</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">${tbodyRows}</tbody>
-        </table>
-      `;
-      return card;
-    }
+    rowHtml += `</tr>`;
+    tbodyRows += rowHtml;
+  });
+
+  card.innerHTML = `
+    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 uppercase">${day}</span>
+        <h3 class="text-sm font-extrabold text-slate-900">Master Section Schedule for ${day}</h3>
+      </div>
+      <button onclick="printDayWiseClassTimetable('${day}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+        <i class="ph-bold ph-printer text-xs"></i>
+        <span>Print ${day} Schedule</span>
+      </button>
+    </div>
+    <table class="w-full border-collapse text-center text-xs">
+      <thead>
+        <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+          <th class="py-2.5 px-3 text-left w-24">Class</th>
+          <th class="py-2.5 px-2">P1</th>
+          <th class="py-2.5 px-2">P2</th>
+          <th class="py-2.5 px-2">P3</th>
+          <th class="py-2.5 px-2">P4</th>
+          <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="${CLASSES.length}"></th>
+          <th class="py-2.5 px-2">P5</th>
+          <th class="py-2.5 px-2">P6</th>
+          <th class="py-2.5 px-2">P7</th>
+          <th class="py-2.5 px-2">P8</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">${tbodyRows}</tbody>
+    </table>
+  `;
+  return card;
+}
 
     function renderSlide4DayWiseClasses() {
       const container = document.getElementById("slide4-tables-container");
@@ -4582,105 +4479,109 @@ function printAllSlide7Teachers() {
       });
     }
 
-    function renderSlide5DayWiseTeachers() {
-    const tbody = document.getElementById("slide5-teachers-tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+   function renderSlide5DayWiseTeachers() {
+  const tbody = document.getElementById("slide5-teachers-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
 
-    const day = state.selectedDaySlide5;
+  const day = state.selectedDaySlide5;
 
-    state.teachers.forEach((t, index) => {
-      const tr = document.createElement("tr");
-      tr.className = "hover:bg-slate-50/50 transition";
+  state.teachers.forEach((t, index) => {
+    const tr = document.createElement("tr");
+    tr.className = "hover:bg-slate-50/50 transition";
 
-      let roleSubtitle = t.isClassTeacher ? `CT (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT';
-      if (t.isCoClassTeacher) roleSubtitle += ` / Co-CT (${t.coClassNum}-${t.coSection})`;
+    let roleSubtitle = t.isClassTeacher ? `CT (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT';
+    if (t.isCoClassTeacher) roleSubtitle += ` / Co-CT (${t.coClassNum}-${t.coSection})`;
 
-      let rowHtml = `
-        <td class="py-2.5 px-3 text-left font-extrabold text-slate-800">
-          <div>${t.name}</div>
-          <div class="text-[10px] text-slate-400 font-semibold">${roleSubtitle}</div>
-        </td>
-      `;
+    const tCol = getUniqueColor("TEACHER", t.id);
+    let rowHtml = `
+      <td class="py-2.5 px-3 text-left font-extrabold"
+          style="background: ${tCol.bg}; color: ${tCol.text}; border-left: 4px solid ${tCol.border};">
+        <div>${t.name}</div>
+        <div class="text-[10px] font-semibold" style="color: ${tCol.sub};">${roleSubtitle}</div>
+      </td>
+    `;
 
-      let primaryCount = 0;
-      let coTeacherCount = 0;
+    let primaryCount = 0;
+    let coTeacherCount = 0;
 
-      PERIODS.forEach(p => {
-        const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
-        let teachingSlots = [];
-        
-        CLASSES.forEach(c => {
-          const slot = state.schedules[c]?.[day]?.[p];
-          if (slot) {
-            // Check primary teacher assignment
-            if (slot.teacherId === t.id) {
-              teachingSlots.push({ class: c, subject: slot.subject, type: 'primary' });
-            }
-            // Check co-teacher assignment
-            if (slot.coTeacherId === t.id) {
-              teachingSlots.push({ class: c, subject: slot.subject, type: 'coteacher' });
-            }
+    PERIODS.forEach(p => {
+      const isSecBusy = t.secondaryBusySlots?.[day]?.includes(p);
+      let teachingSlots = [];
+
+      CLASSES.forEach(c => {
+        const slot = state.schedules[c]?.[day]?.[p];
+        if (slot) {
+          if (slot.teacherId === t.id) {
+            teachingSlots.push({ class: c, subject: slot.subject, type: 'primary' });
           }
-        });
-
-        if (isSecBusy) {
-          rowHtml += `
-            <td class="p-1">
-              <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
-                <div class="font-extrabold text-[11px]">Secondary</div>
-                <div class="text-[10px] text-rose-500 font-semibold">High School</div>
-              </div>
-            </td>
-          `;
-        } else if (teachingSlots.length > 0) {
-          // Count quota breakdown for this period
-          teachingSlots.forEach(s => {
-            if (s.type === 'primary') primaryCount++;
-            if (s.type === 'coteacher') coTeacherCount++;
-          });
-
-          // Conflict flag if primary is double-booked
-          const hasConflict = teachingSlots.filter(s => s.type === 'primary').length > 1;
-
-          rowHtml += `
-            <td class="p-1">
-              <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
-                <div class="font-extrabold text-[11px]">${teachingSlots.map(s => `${s.class}${s.type === 'coteacher' ? ' [Co-T]' : ''}`).join(", ")}</div>
-                <div class="text-[10px] text-slate-500 font-semibold">${teachingSlots.map(s => s.subject).join(", ")}</div>
-              </button>
-            </td>
-          `;
-        } else {
-          rowHtml += `
-            <td class="p-1">
-              <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
-                <i class="ph-bold ph-plus text-xs"></i>
-              </button>
-            </td>
-          `;
-        }
-
-        if (p === 4 && index === 0) {
-          rowHtml += `
-            <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${state.teachers.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
-              LUNCH BREAK
-            </td>
-          `;
+          if (slot.coTeacherId === t.id) {
+            teachingSlots.push({ class: c, subject: slot.subject, type: 'coteacher' });
+          }
         }
       });
 
-      const totalDaily = primaryCount + coTeacherCount;
-      rowHtml += `
-        <td class="py-2.5 px-2 text-right font-black text-indigo-700 text-xs">
-          <div>${totalDaily} P</div>
-          <div class="text-[9px] text-slate-500 font-normal">Main:${primaryCount} | Co:${coTeacherCount}</div>
-        </td>
-      `;
-      tr.innerHTML = rowHtml;
-      tbody.appendChild(tr);
+      if (isSecBusy) {
+        rowHtml += `
+          <td class="p-1">
+            <div class="w-full p-2 rounded-xl border bg-rose-50 border-rose-300 text-rose-700 text-center">
+              <div class="font-extrabold text-[11px]">Secondary</div>
+              <div class="text-[10px] text-rose-500 font-semibold">High School</div>
+            </div>
+          </td>
+        `;
+      } else if (teachingSlots.length > 0) {
+        teachingSlots.forEach(s => {
+          if (s.type === 'primary') primaryCount++;
+          if (s.type === 'coteacher') coTeacherCount++;
+        });
+
+        const hasConflict = teachingSlots.filter(s => s.type === 'primary').length > 1;
+        const slotCol = getUniqueColor("CLASS", teachingSlots[0].class);
+        const btnStyle = hasConflict
+          ? ""
+          : `style="background: ${slotCol.bg}; border-color: ${slotCol.border}; color: ${slotCol.text};"`;
+
+        rowHtml += `
+          <td class="p-1">
+            <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})"
+                    ${btnStyle}
+                    class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'hover:shadow-xs'} text-center transition">
+              <div class="font-extrabold text-[11px]">${teachingSlots.map(s => `${s.class}${s.type === 'coteacher' ? ' [Co-T]' : ''}`).join(", ")}</div>
+              <div class="text-[10px] font-semibold" style="${hasConflict ? '' : `color: ${slotCol.sub};`}">${teachingSlots.map(s => s.subject).join(", ")}</div>
+            </button>
+          </td>
+        `;
+      } else {
+        rowHtml += `
+          <td class="p-1">
+            <button type="button" onclick="openTeacherSlotModal('${t.id}', '${day}', ${p})" class="w-full py-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 transition flex items-center justify-center font-black">
+              <i class="ph-bold ph-plus text-xs"></i>
+            </button>
+          </td>
+        `;
+      }
+
+      if (p === 4 && index === 0) {
+        rowHtml += `
+          <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="${state.teachers.length}" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+            LUNCH BREAK
+          </td>
+        `;
+      }
     });
-  }
+
+    const totalDaily = primaryCount + coTeacherCount;
+    rowHtml += `
+      <td class="py-2.5 px-2 text-right font-black text-indigo-700 text-xs">
+        <div>${totalDaily} P</div>
+        <div class="text-[9px] text-slate-500 font-normal">Main:${primaryCount} | Co:${coTeacherCount}</div>
+      </td>
+    `;
+    tr.innerHTML = rowHtml;
+    tbody.appendChild(tr);
+  });
+}
 
     // ==========================================
     // --- SLIDE 6: TEACHER WEEKLY TT ---
@@ -4719,11 +4620,16 @@ function renderSlide6TeacherGrid() {
     let totalPrimaryLoad = 0;
     let totalCoTeacherLoad = 0;
 
-    DAYS.forEach((d, index) => {
+   DAYS.forEach((d, index) => {
       const tr = document.createElement("tr");
       tr.className = "hover:bg-slate-50/50 transition";
 
-      let rowHtml = `<td class="py-2.5 px-3 text-left font-extrabold text-slate-800">${d}</td>`;
+      const dayCol = getUniqueColor("DAY", d);
+      let rowHtml = `
+        <td class="py-2.5 px-3 text-left font-extrabold"
+            style="background: ${dayCol.bg}; color: ${dayCol.text}; border-left: 4px solid ${dayCol.border};">
+          ${d}
+        </td>`;
       let dayPrimary = 0;
       let dayCoTeacher = 0;
 
@@ -4759,12 +4665,18 @@ function renderSlide6TeacherGrid() {
           });
 
           const conflict = assignedSlots.filter(s => s.type === 'primary').length > 1;
+          const slotCol = getUniqueColor("CLASS", assignedSlots[0].class);
+          const btnStyle = conflict
+            ? ""
+            : `style="background: ${slotCol.bg}; border-color: ${slotCol.border}; color: ${slotCol.text};"`;
 
           rowHtml += `
             <td class="p-1">
-              <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})" class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'bg-indigo-50 border-indigo-200 text-indigo-900 hover:shadow-xs'} text-center transition">
+              <button type="button" onclick="openTeacherSlotModal('${t.id}', '${d}', ${p})"
+                      ${btnStyle}
+                      class="w-full p-1.5 rounded-xl border ${conflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : 'hover:shadow-xs'} text-center transition">
                 <div class="font-extrabold text-[11px]">${assignedSlots.map(s => `${s.class}${s.type === 'coteacher' ? ' [Co-T]' : ''}`).join(", ")}</div>
-                <div class="text-[10px] text-slate-500 font-semibold">${assignedSlots.map(s => s.subject).join(", ")}</div>
+                <div class="text-[10px] font-semibold" style="${conflict ? '' : `color: ${slotCol.sub};`}">${assignedSlots.map(s => s.subject).join(", ")}</div>
               </button>
             </td>
           `;
@@ -5161,8 +5073,9 @@ function syncAdminRegistryFromCloud() {
       }
 
       let gridRows = "";
-      DAYS.forEach((d, index) => {
-        let rowHtml = `<td style="padding: 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc;">${d}</td>`;
+     DAYS.forEach((d, index) => {
+        const dayCol = getUniqueColor("DAY", d);
+        let rowHtml = `<td style="padding: 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: ${dayCol.bg}; color: ${dayCol.text};">${d}</td>`;
         PERIODS.forEach(p => {
           const slot = state.schedules[cls]?.[d]?.[p];
           if (slot) {
@@ -5170,7 +5083,8 @@ function syncAdminRegistryFromCloud() {
             const coT = state.teachers.find(item => item.id === slot.coTeacherId);
             let tStr = t ? t.shortName : '';
             if (coT) tStr += ` + ${coT.shortName}`;
-            rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center;"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 10px; color: #475569;">${tStr}</div></td>`;
+            const subCol = getSubjectColor(slot.subject);
+            rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center; background: ${subCol.bg}; color: ${subCol.text};"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 10px; color: ${subCol.sub};">${tStr}</div></td>`;
           } else {
             rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8;">-</td>`;
           }
@@ -5181,7 +5095,6 @@ function syncAdminRegistryFromCloud() {
         });
         gridRows += `<tr>${rowHtml}</tr>`;
       });
-
       const html = `
         <div class="print-page">
           ${renderOfficialHeader(`कक्षा समय सारणी / CLASS TIMETABLE • कक्षा / CLASS ${cls}`, teacherSub)}
@@ -5222,9 +5135,9 @@ function printAllClassesTimetables() {
         const coTText = coCt ? ` | Co-Teacher: ${coCt.name} [${coCt.shortName || coCt.name}]` : ``;
 
         let gridRows = "";
-        DAYS.forEach(d => {
-          // Expanded padding and larger font sizes to fill the page height completely
-          let rowHtml = `<td style="padding: 8px 5px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 11px; width: 11%;">&#x200B;${d}</td>`;
+       DAYS.forEach(d => {
+          const dayCol = getUniqueColor("DAY", d);
+          let rowHtml = `<td style="padding: 8px 5px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: ${dayCol.bg}; color: ${dayCol.text}; font-size: 11px; width: 11%;">​${d}</td>`;
           
           PERIODS.forEach(p => {
             const slot = state.schedules[c]?.[d]?.[p];
@@ -5233,10 +5146,11 @@ function printAllClassesTimetables() {
               const coTObj = state.teachers.find(t => t.id === slot.coTeacherId);
               let tName = tObj ? (tObj.shortName || tObj.name) : "";
               if (coTObj) tName += ` + ${coTObj.shortName || coTObj.name}`;
+              const subCol = getSubjectColor(slot.subject);
 
-              rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 11px; width: 11%; line-height: 1.25;">
-                <div style="font-weight: 900; color: #0f172a; font-size: 12px;">${slot.subject}</div>
-                <div style="font-size: 9.5px; color: #475569; font-weight: 600;">[${tName}]</div>
+              rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 11px; width: 11%; line-height: 1.25; background: ${subCol.bg}; color: ${subCol.text};">
+                <div style="font-weight: 900; font-size: 12px;">${slot.subject}</div>
+                <div style="font-size: 9.5px; color: ${subCol.sub}; font-weight: 600;">[${tName}]</div>
               </td>`;
             } else {
               rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 11px; width: 11%;">-</td>`;
@@ -5283,8 +5197,9 @@ function printAllClassesTimetables() {
     }
     function printDayWiseClassTimetable(day) {
     let gridRows = "";
-    CLASSES.forEach((cls, index) => {
-      let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: left; background: #f8fafc; font-size: 11px; color: #0f172a; width: 11%; font-family: 'Times New Roman', Times, serif;">Class ${cls}</td>`;
+   CLASSES.forEach((cls, index) => {
+      const clsCol = getUniqueColor("CLASS", cls);
+      let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: left; background: ${clsCol.bg}; color: ${clsCol.text}; font-size: 11px; width: 11%; font-family: 'Times New Roman', Times, serif;">Class ${cls}</td>`;
       
       PERIODS.forEach(p => {
         const slot = state.schedules[cls]?.[day]?.[p];
@@ -5293,11 +5208,12 @@ function printAllClassesTimetables() {
           const coT = state.teachers.find(item => item.id === slot.coTeacherId);
           let tStr = t ? (t.shortName || t.name) : '';
           if (coT) tStr += ` + ${coT.shortName || coT.name}`;
+          const subCol = getSubjectColor(slot.subject);
 
           rowHtml += `
-            <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%; font-family: 'Times New Roman', Times, serif;">
-              <div style="font-weight: 900; font-size: 11.5px; color: #0f172a;">${slot.subject}</div>
-              <div style="font-size: 9.5px; color: #475569; font-weight: 700; margin-top: 1px;">[${tStr}]</div>
+            <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%; background: ${subCol.bg}; color: ${subCol.text}; font-family: 'Times New Roman', Times, serif;">
+              <div style="font-weight: 900; font-size: 11.5px;">${slot.subject}</div>
+              <div style="font-size: 9.5px; color: ${subCol.sub}; font-weight: 700; margin-top: 1px;">[${tStr}]</div>
             </td>
           `;
         } else {
@@ -5328,7 +5244,6 @@ function printAllClassesTimetables() {
 
       gridRows += `<tr>${rowHtml}</tr>`;
     });
-
     const html = `
       <div class="print-page landscape-page" style="width: 100%; max-width: none; font-family: 'Times New Roman', Times, serif;">
         ${renderOfficialHeader(`दैनिक कक्षा समय सारणी / DAILY CLASS SCHEDULE • ${day.toUpperCase()}`)}
@@ -5359,7 +5274,8 @@ function printAllClassesTimetables() {
     DAYS.forEach(day => {
       let gridRows = "";
       CLASSES.forEach((cls, index) => {
-        let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: left; background: #f8fafc; font-size: 11px; color: #0f172a; width: 11%;">Class ${cls}</td>`;
+        const clsCol = getUniqueColor("CLASS", cls);
+        let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: left; background: ${clsCol.bg}; color: ${clsCol.text}; font-size: 11px; width: 11%;">Class ${cls}</td>`;
         
         PERIODS.forEach(p => {
           const slot = state.schedules[cls]?.[day]?.[p];
@@ -5368,11 +5284,12 @@ function printAllClassesTimetables() {
             const coT = state.teachers.find(item => item.id === slot.coTeacherId);
             let tStr = t ? (t.shortName || t.name) : '';
             if (coT) tStr += ` + ${coT.shortName || coT.name}`;
+            const subCol = getSubjectColor(slot.subject);
 
             rowHtml += `
-              <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%;">
-                <div style="font-weight: 900; font-size: 11.5px; color: #0f172a;">${slot.subject}</div>
-                <div style="font-size: 9.5px; color: #475569; font-weight: 700; margin-top: 1px;">[${tStr}]</div>
+              <td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; width: 11%; background: ${subCol.bg}; color: ${subCol.text};">
+                <div style="font-weight: 900; font-size: 11.5px;">${slot.subject}</div>
+                <div style="font-size: 9.5px; color: ${subCol.sub}; font-weight: 700; margin-top: 1px;">[${tStr}]</div>
               </td>
             `;
           } else {
@@ -5430,198 +5347,30 @@ function printAllClassesTimetables() {
     });
     showPrintPreviewModal("दैनिक समय सारणी / DAY TIME TABLE • All 6 Days", fullHtml);
   }   
-function printDayWiseTeacherTimetable(day) {
-    let gridRows = "";
-    state.teachers.forEach((t, index) => {
-      let rowHtml = `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 11px;">${t.name} <span style="color: #475569; font-weight: 800;">[${t.shortName}]</span></td>`;
-      let primaryCount = 0;
-      let coTeacherCount = 0;
-      
-      PERIODS.forEach(p => {
-        let assigned = [];
-        CLASSES.forEach(c => {
-          const slot = state.schedules[c]?.[day]?.[p];
-          if (slot) {
-            if (slot.teacherId === t.id) {
-              assigned.push(`${c}: ${slot.subject}`);
-              primaryCount++;
-            }
-            if (slot.coTeacherId === t.id) {
-              assigned.push(`${c}: ${slot.subject} [Co-T]`);
-              coTeacherCount++;
-            }
-          }
-        });
-        
-        if (assigned.length > 0) {
-          rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px; line-height: 1.25;">${assigned.join("<br>")}</td>`;
-        } else {
-          rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 10.5px;">-</td>`;
-        }
 
-        if (p === 4 && index === 0) {
-          let lunchInner = '<div style="display: flex; flex-direction: column; height: 100%; width: 100%; justify-content: space-between;">';
-          CLASSES.forEach((_, cIdx) => {
-            const isMiddle = cIdx === Math.floor(CLASSES.length / 2);
-            lunchInner += `
-              <div style="flex: 1; border-bottom: ${cIdx < CLASSES.length - 1 ? '1.5px solid #0f172a' : 'none'}; display: flex; align-items: center; justify-content: center; min-height: 22px;">
-                ${isMiddle ? '<span style="writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; font-family: \'Times New Roman\', Times, serif;">LUNCH BREAK</span>' : ''}
-              </div>
-            `;
-          });
-          lunchInner += '</div>';
-
-          rowHtml += `
-            <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 0px; border: 1.5px solid #0f172a; background: #fef3c7; vertical-align: top; font-family: 'Times New Roman', Times, serif;" rowspan="${state.teachers.length}">
-              ${lunchInner}
-            </td>
-          `;
-        }
-      });
-
-      const totalDaily = primaryCount + coTeacherCount;
-      rowHtml += `
-        <td style="padding: 8px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: right; font-size: 10px;">
-          <div>${totalDaily} P</div>
-          <div style="font-size: 8px; color: #475569; font-weight: normal;">Main:${primaryCount} | Co:${coTeacherCount}</div>
-        </td>
-      `;
-      gridRows += `<tr>${rowHtml}</tr>`;
-    });
-
-    const html = `
-      <div class="print-page" style="width: 100%; max-width: none; font-family: 'Times New Roman', Times, serif;">
-        ${renderOfficialHeader(`शिक्षक दैनिक कार्यभार एवं आवंटन / DAILY STAFF DEPLOYMENT & ALLOTMENT • ${day.toUpperCase()}`)}
-        <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 6px;">
-          <thead>
-            <tr style="background: #f1f5f9; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
-              <th style="border: 1.5px solid #0f172a; padding: 6px; text-align: left; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 22%;">Teacher / शिक्षक</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P1</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P2</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P3</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P4</th>
-              <th style="background: #fef3c7; width: 16px; max-width: 16px; min-width: 16px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${state.teachers.length}"></th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P5</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P6</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P7</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P8</th>
-              <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 10%;">Load</th>
-            </tr>
-          </thead>
-          <tbody>${gridRows}</tbody>
-        </table>
-        ${renderOfficialFooter(false)}
-      </div>
-    `;
-    showPrintPreviewModal(`Staff Deployment (${day})`, html);
-  }
-
-  function printAllDaysTeacherTimetables() {
-    let fullHtml = "";
-    DAYS.forEach(day => {
-      let gridRows = "";
-      state.teachers.forEach((t, index) => {
-        let rowHtml = `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 11px;">${t.name} <span style="color: #475569; font-weight: 800;">[${t.shortName}]</span></td>`;
-        let primaryCount = 0;
-        let coTeacherCount = 0;
-        
-        PERIODS.forEach(p => {
-          let assigned = [];
-          CLASSES.forEach(c => {
-            const slot = state.schedules[c]?.[day]?.[p];
-            if (slot) {
-              if (slot.teacherId === t.id) {
-                assigned.push(`${c}: ${slot.subject}`);
-                primaryCount++;
-              }
-              if (slot.coTeacherId === t.id) {
-                assigned.push(`${c}: ${slot.subject} [Co-T]`);
-                coTeacherCount++;
-              }
-            }
-          });
-          
-          if (assigned.length > 0) {
-            rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px; line-height: 1.25;">${assigned.join("<br>")}</td>`;
-          } else {
-            rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 10.5px;">-</td>`;
-          }
-
-          if (p === 4 && index === 0) {
-            let lunchInner = '<div style="display: flex; flex-direction: column; height: 100%; width: 100%; justify-content: space-between;">';
-            CLASSES.forEach((_, cIdx) => {
-              const isMiddle = cIdx === Math.floor(CLASSES.length / 2);
-              lunchInner += `
-                <div style="flex: 1; border-bottom: ${cIdx < CLASSES.length - 1 ? '1.5px solid #0f172a' : 'none'}; display: flex; align-items: center; justify-content: center; min-height: 22px;">
-                  ${isMiddle ? '<span style="writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 800; font-size: 8.5px; letter-spacing: 0.5px; color: #78350f; font-family: \'Times New Roman\', Times, serif;">LUNCH BREAK</span>' : ''}
-                </div>
-              `;
-            });
-            lunchInner += '</div>';
-
-            rowHtml += `
-              <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 0px; border: 1.5px solid #0f172a; background: #fef3c7; vertical-align: top; font-family: 'Times New Roman', Times, serif;" rowspan="${state.teachers.length}">
-                ${lunchInner}
-              </td>
-            `;
-          }
-        });
-
-        const totalDaily = primaryCount + coTeacherCount;
-        rowHtml += `
-          <td style="padding: 8px 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: right; font-size: 10px;">
-            <div>${totalDaily} P</div>
-            <div style="font-size: 8px; color: #475569; font-weight: normal;">Main:${primaryCount} | Co:${coTeacherCount}</div>
-          </td>
-        `;
-        gridRows += `<tr>${rowHtml}</tr>`;
-      });
-
-      fullHtml += `
-        <div class="print-page" style="margin-bottom: 0; width: 98%; margin: 0 auto; font-family: 'Times New Roman', Times, serif; page-break-after: always; break-after: page;">
-          ${renderOfficialHeader(`शिक्षक दैनिक कार्यभार एवं आवंटन / DAILY STAFF DEPLOYMENT & ALLOTMENT • ${day.toUpperCase()}`)}
-          <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #0f172a; font-size: 11px; text-align: center; font-family: 'Times New Roman', Times, serif; margin-top: 6px;">
-            <thead>
-              <tr style="background: #f1f5f9; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;">
-                <th style="border: 1.5px solid #0f172a; padding: 6px; text-align: left; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 22%;">Teacher / शिक्षक</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P1</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P2</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P3</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P4</th>
-                <th style="background: #fef3c7; width: 16px; max-width: 16px; min-width: 16px; border: 1.5px solid #0f172a; font-family: 'Times New Roman', Times, serif;" rowspan="${state.teachers.length}"></th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P5</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P6</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P7</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 8%;">P8</th>
-                <th style="border: 1.5px solid #0f172a; padding: 6px; font-family: 'Times New Roman', Times, serif; font-size: 11px; width: 10%;">Load</th>
-              </tr>
-            </thead>
-            <tbody>${gridRows}</tbody>
-          </table>
-          ${renderOfficialFooter(false)}
-        </div>
-      `;
-    });
-    showPrintPreviewModal("शिक्षक आवंटन / DAILY STAFF DEPLOYMENT • All 6 Days", fullHtml);
-  }
+ 
  
 function printDayWiseTeacherTimetable(day) {
     let gridRows = "";
     state.teachers.forEach((t, index) => {
-      let rowHtml = `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 11px;">${t.name} <span style="color: #475569; font-weight: 800;">[${t.shortName}]</span></td>`;
+      const tCol = getUniqueColor("TEACHER", t.id);
+      let rowHtml = `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 11px; background: ${tCol.bg}; color: ${tCol.text};">${t.name} <span style="color: ${tCol.sub}; font-weight: 800;">[${t.shortName}]</span></td>`;
       let primaryCount = 0;
       let coTeacherCount = 0;
       
       PERIODS.forEach(p => {
         let assigned = [];
+        let firstClass = null;
         CLASSES.forEach(c => {
           const slot = state.schedules[c]?.[day]?.[p];
           if (slot) {
             if (slot.teacherId === t.id) {
+              if (!firstClass) firstClass = c;
               assigned.push(`${c}: ${slot.subject}`);
               primaryCount++;
             }
             if (slot.coTeacherId === t.id) {
+              if (!firstClass) firstClass = c;
               assigned.push(`${c}: ${slot.subject} [Co-T]`);
               coTeacherCount++;
             }
@@ -5629,12 +5378,12 @@ function printDayWiseTeacherTimetable(day) {
         });
         
         if (assigned.length > 0) {
-          rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px; line-height: 1.25;">${assigned.join("<br>")}</td>`;
+          const cCol = getUniqueColor("CLASS", firstClass);
+          rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px; line-height: 1.25; background: ${cCol.bg}; color: ${cCol.text};">${assigned.join("<br>")}</td>`;
         } else {
           rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 10.5px;">-</td>`;
         }
 
-        // Insert Lunch Break column after P4 (p === 4) on the first teacher row (index === 0)
         if (p === 4 && index === 0) {
           rowHtml += `
             <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 0px; border: 1.5px solid #0f172a; background: #fef3c7; vertical-align: middle; text-align: center;" rowspan="${state.teachers.length}">
@@ -5680,25 +5429,29 @@ function printDayWiseTeacherTimetable(day) {
     `;
     showPrintPreviewModal(`Staff Deployment (${day})`, html);
   }
- function printAllDaysTeacherTimetables() {
+function printAllDaysTeacherTimetables() {
     let fullHtml = "";
     DAYS.forEach(day => {
       let gridRows = "";
       state.teachers.forEach((t, index) => {
-        let rowHtml = `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 11px;">${t.name} <span style="color: #475569; font-weight: 800;">[${t.shortName}]</span></td>`;
+        const tCol = getUniqueColor("TEACHER", t.id);
+        let rowHtml = `<td style="padding: 8px 10px; border: 1.5px solid #0f172a; font-weight: 700; text-align: left; font-size: 11px; background: ${tCol.bg}; color: ${tCol.text};">${t.name} <span style="color: ${tCol.sub}; font-weight: 800;">[${t.shortName}]</span></td>`;
         let primaryCount = 0;
         let coTeacherCount = 0;
         
         PERIODS.forEach(p => {
           let assigned = [];
+          let firstClass = null;
           CLASSES.forEach(c => {
             const slot = state.schedules[c]?.[day]?.[p];
             if (slot) {
               if (slot.teacherId === t.id) {
+                if (!firstClass) firstClass = c;
                 assigned.push(`${c}: ${slot.subject}`);
                 primaryCount++;
               }
               if (slot.coTeacherId === t.id) {
+                if (!firstClass) firstClass = c;
                 assigned.push(`${c}: ${slot.subject} [Co-T]`);
                 coTeacherCount++;
               }
@@ -5706,12 +5459,12 @@ function printDayWiseTeacherTimetable(day) {
           });
           
           if (assigned.length > 0) {
-            rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px; line-height: 1.25;">${assigned.join("<br>")}</td>`;
+            const cCol = getUniqueColor("CLASS", firstClass);
+            rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 10px; line-height: 1.25; background: ${cCol.bg}; color: ${cCol.text};">${assigned.join("<br>")}</td>`;
           } else {
             rowHtml += `<td style="padding: 6px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 10.5px;">-</td>`;
           }
 
-          // Insert Lunch Break column after P4 (p === 4) on the first teacher row (index === 0)
           if (p === 4 && index === 0) {
             rowHtml += `
               <td style="width: 16px; max-width: 16px; min-width: 16px; padding: 0px; border: 1.5px solid #0f172a; background: #fef3c7; vertical-align: middle; text-align: center;" rowspan="${state.teachers.length}">
@@ -5765,20 +5518,24 @@ function printDayWiseTeacherTimetable(day) {
     let totalPrimary = 0;
     let totalCoTeacher = 0;
     
-    DAYS.forEach(d => {
-      let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 10px; width: 10%;">​${d}</td>`;
+   DAYS.forEach(d => {
+      const dayCol = getUniqueColor("DAY", d);
+      let rowHtml = `<td style="padding: 6px 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: ${dayCol.bg}; color: ${dayCol.text}; font-size: 10px; width: 10%;">​${d}</td>`;
       let dayCount = 0;
       
       PERIODS.forEach(p => {
         let assigned = [];
+        let firstClass = null;
         CLASSES.forEach(c => {
           const slot = state.schedules[c]?.[d]?.[p];
           if (slot) {
             if (slot.teacherId === t.id) {
+              if (!firstClass) firstClass = c;
               assigned.push(`${c}: ${slot.subject}`);
               totalPrimary++;
             }
             if (slot.coTeacherId === t.id) {
+              if (!firstClass) firstClass = c;
               assigned.push(`${c}: ${slot.subject} [Co-T]`);
               totalCoTeacher++;
             }
@@ -5787,7 +5544,8 @@ function printDayWiseTeacherTimetable(day) {
         
         if (assigned.length > 0) {
           dayCount += assigned.length;
-          rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9px; width: 10%; line-height: 1.2;">${assigned.join("<br>")}</td>`;
+          const cCol = getUniqueColor("CLASS", firstClass);
+          rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9px; width: 10%; line-height: 1.2; background: ${cCol.bg}; color: ${cCol.text};">${assigned.join("<br>")}</td>`;
         } else {
           rowHtml += `<td style="padding: 4px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8; font-size: 9.5px; width: 10%;">-</td>`;
         }
@@ -5796,7 +5554,6 @@ function printDayWiseTeacherTimetable(day) {
       rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 10px; width: 10%;">${dayCount} P</td>`;
       gridRows += `<tr>${rowHtml}</tr>`;
     });
-
     const totalWeekly = totalPrimary + totalCoTeacher;
     const html = `
       <div class="print-page">
@@ -5829,15 +5586,18 @@ function printDayWiseTeacherTimetable(day) {
         let gridRows = "";
         let totalWeekly = 0;
         
-        DAYS.forEach(d => {
-          let rowHtml = `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: #f8fafc; font-size: 9px; width: 10%;">&#x200B;${d}</td>`;
+       DAYS.forEach(d => {
+          const dayCol = getUniqueColor("DAY", d);
+          let rowHtml = `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: ${dayCol.bg}; color: ${dayCol.text}; font-size: 9px; width: 10%;">​${d}</td>`;
           let dayCount = 0;
           
           PERIODS.forEach(p => {
             let assigned = [];
+            let firstClass = null;
             CLASSES.forEach(c => {
               const slot = state.schedules[c]?.[d]?.[p];
               if (slot && (slot.teacherId === t.id || slot.coTeacherId === t.id)) {
+                if (!firstClass) firstClass = c;
                 assigned.push(`${c}: ${slot.subject}`);
               }
             });
@@ -5845,7 +5605,8 @@ function printDayWiseTeacherTimetable(day) {
             if (assigned.length > 0) {
               dayCount += assigned.length;
               totalWeekly += assigned.length;
-              rowHtml += `<td style="padding: 8px 2px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9px; width: 10%; line-height: 1.25;">${assigned.join("<br>")}</td>`;
+              const cCol = getUniqueColor("CLASS", firstClass);
+              rowHtml += `<td style="padding: 8px 2px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 9px; width: 10%; line-height: 1.25; background: ${cCol.bg}; color: ${cCol.text};">${assigned.join("<br>")}</td>`;
             } else {
               rowHtml += `<td style="padding: 8px 2px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 9px; width: 10%;">-</td>`;
             }
@@ -5854,7 +5615,6 @@ function printDayWiseTeacherTimetable(day) {
           rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; font-size: 9px; width: 10%;">${dayCount} P</td>`;
           gridRows += `<tr>${rowHtml}</tr>`;
         });
-
         fullHtml += `
           <div class="multi-teacher-print-card">
             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; border-bottom: 1px solid #0f172a; padding-bottom: 1px;">

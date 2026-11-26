@@ -5798,11 +5798,7 @@ function printCurrentSlide(slideNum) {
       border-radius: 10px !important;
     }
   ` : '';
-.pill-card-table,
-.pill-card-table th,
-.pill-card-table td {
-  border: 2px solid #000000 !important;
-}
+
   const htmlContent = isBw ? `<div class="monochrome-print">${activePrintHtml}</div>` : activePrintHtml;
   const pageSizeRule = isLandscape ? 'size: landscape;' : 'size: portrait;';
 
@@ -5845,11 +5841,6 @@ table:not(.pill-card-table) td {
           }
           ${pillCardPrintStyle}
           ${bwStyle}
-          .pill-card-table,
-  .pill-card-table th,
-  .pill-card-table td {
-    border: 2px solid #000000 !important;
-  }
         </style>
       </head>
       <body>

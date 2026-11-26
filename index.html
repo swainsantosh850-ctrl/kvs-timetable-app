@@ -26,28 +26,7 @@
     })();
   </script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* Black & White Print Mode Styles */
-    .monochrome-print,
-    .monochrome-print * {
-      background: white !important;
-      background-color: white !important;
-      color: black !important;
-      border-color: black !important;
-      box-shadow: none !important;
-    }
-    .monochrome-print div[style*="background"] {
-      background: white !important;
-    }
-
-<style>
+  <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
@@ -90,8 +69,6 @@
     color: #ffffff !important;
     border-color: #1e293b !important;
   }
-
-
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
@@ -1485,22 +1462,7 @@ function getSubjectColor(keyName) {
   return getUniqueColor("SUBJECT", keyName);
 }
 
-  // Golden Angle (137.508°) guarantees maximum visual separation & never repeats
-  const hue = Math.round((uniqueColorIndex * 137.508) % 360);
-  // Subtle lightness variation after every 18 items keeps even 50+ items distinct
-  const bgLightness = 92 - (Math.floor(uniqueColorIndex / 18) % 3) * 4;
-
-  const colorObj = {
-    bg:     `hsl(${hue}, 85%, ${bgLightness}%)`,
-    border: `hsl(${hue}, 75%, 52%)`,
-    text:   `hsl(${hue}, 80%, 22%)`,
-    sub:    `hsl(${hue}, 75%, 35%)`
-  };
-
-  UNIQUE_COLOR_REGISTRY[key] = colorObj;
-  uniqueColorIndex++;
-  return colorObj;
-}
+ 
     const SECTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     let CLASSES = [];
 

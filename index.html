@@ -3027,8 +3027,7 @@
       const isComplete = total === 48;
       const isOver = total > 48;
       const barColor = isComplete ? "bg-emerald-500" : isOver ? "bg-purple-500" : pct >= 50 ? "bg-amber-500" : "bg-rose-500";
-      const textColor = isComplete ? "text-emerald-700" : isOver ? "text-
-
+      const textColor = isComplete ? "text-emerald-700" : isOver ? "text-purple-700" : pct >= 50 ? "text-amber-700" : "text-rose-700";
     const row = document.createElement("div");
     row.className = "p-3 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-1.5";
     row.innerHTML = `

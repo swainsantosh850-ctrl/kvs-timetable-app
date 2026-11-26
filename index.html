@@ -3180,144 +3180,16 @@ function autoGenerateSingleClass(cls) {
 
    
 
-    function renderSlide4DayWiseClasses() {
-      const container = document.getElementById("slide4-tables-container");
-      if (!container) return;
-      container.innerHTML = "";
-      container.appendChild(createDayWiseClassTableCard(state.selectedDaySlide4));
-    }
+    
 
-    function handleSlide4Regenerate() {
-      if (state.isViewOnly) return;
-      const day = state.selectedDaySlide4;
-      CLASSES.forEach(cls => {
-        const [cNum, cSec] = cls.split("-");
-        const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
-        let pool = [];
-        classAllots.forEach(a => {
-          for (let i = 0; i < parseInt(a.periods || 0); i++) {
-            pool.push({ subject: a.subject, teacherId: a.teacherId });
-          }
-        });
-        pool.sort(() => Math.random() - 0.5);
-
-        PERIODS.forEach(p => {
-          if (pool.length > 0) {
-            const item = pool.shift();
-            if (!state.schedules[cls][day][p]) {
-              state.schedules[cls][day][p] = {
-                subject: item.subject,
-                teacherId: item.teacherId,
-                coTeacherId: null,
-                isBlock: false
-              };
-            }
-          }
-        });
-      });
-      refreshAllScheduleViews();
-      showNotification(`Re-generated schedule for ${day}!`, "success");
-    }
-
-    function handleSlide4Clear() {
-      if (state.isViewOnly) return;
-      const day = state.selectedDaySlide4;
-      CLASSES.forEach(cls => {
-        PERIODS.forEach(p => {
-          if (state.schedules[cls]?.[day]?.[p]) {
-            state.schedules[cls][day][p] = null;
-          }
-        });
-      });
-      refreshAllScheduleViews();
-      showNotification(`Cleared schedule for ${day}.`, "info");
-    }
-
-
+    
+    
     // ==========================================
     // --- SLIDE 5: DAY-WISE TEACHER TT ---
     // ==========================================
-    function renderSlide5DayPills() {
-      const container = document.getElementById("slide5-day-pills");
-      if (!container) return;
-      container.innerHTML = "";
-
-      DAYS.forEach(d => {
-        const isSelected = d === state.selectedDaySlide5;
-        const btn = document.createElement("button");
-        btn.onclick = () => {
-          state.selectedDaySlide5 = d;
-          renderSlide5DayPills();
-          renderSlide5DayWiseTeachers();
-          renderSubstitutionAssistant();
-          const dayLbl = document.getElementById("slide5-current-day-label");
-          if (dayLbl) dayLbl.textContent = d;
-        };
-        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
-        btn.textContent = d;
-        container.appendChild(btn);
-      });
-    }
-
-    function renderSlide5SubPeriodPills() {
-      const container = document.getElementById("slide5-sub-period-pills");
-      if (!container) return;
-      container.innerHTML = "";
-
-      PERIODS.forEach(p => {
-        const isSelected = p === state.subPeriodSlide5;
-        const btn = document.createElement("button");
-        btn.onclick = () => {
-          state.subPeriodSlide5 = p;
-          renderSlide5SubPeriodPills();
-          renderSubstitutionAssistant();
-        };
-        btn.className = `px-2 py-0.5 rounded-md text-[11px] font-extrabold transition ${isSelected ? 'bg-emerald-700 text-white shadow-xs' : 'bg-white text-emerald-900 border border-emerald-200'}`;
-        btn.textContent = `P${p}`;
-        container.appendChild(btn);
-      });
-    }
-
-    function renderSubstitutionAssistant() {
-      const container = document.getElementById("slide5-free-teachers-chips");
-      if (!container) return;
-      container.innerHTML = "";
-
-      const day = state.selectedDaySlide5;
-      const period = state.subPeriodSlide5;
-
-      const freeTeachers = [];
-      state.teachers.forEach(t => {
-        const isSecondaryBusy = (t.secondaryBusySlots && t.secondaryBusySlots[day] && t.secondaryBusySlots[day].includes(period));
-        let isBusy = isSecondaryBusy;
-
-        if (!isBusy) {
-          CLASSES.forEach(c => {
-            if (state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
-              isBusy = true;
-            }
-          });
-        }
-        if (!isBusy) freeTeachers.push(t);
-      });
-
-      if (freeTeachers.length === 0) {
-        container.innerHTML = `<span class="text-xs text-rose-700 font-bold p-1">No free staff available during Period ${period} on ${day}.</span>`;
-        return;
-      }
-
-      freeTeachers.forEach(t => {
-        const chip = document.createElement("div");
-        chip.className = "px-2.5 py-1 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-1.5 shadow-xs";
-        chip.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>${t.name} (${t.shortName})</span>
-        `;
-        container.appendChild(chip);
-      });
-    }
-
- 
+   
+   
+    
     function handleSlide5Regenerate() {
       if (state.isViewOnly) return;
       handleSlide4Regenerate();
@@ -3333,30 +3205,7 @@ function autoGenerateSingleClass(cls) {
     // ==========================================
     // --- SLIDE 6: TEACHER WEEKLY TT ---
     // ==========================================
-   function renderSlide6TeacherSelect() {
-      const select = document.getElementById("slide6-teacher-select");
-      if (!select) return;
-
-      // Keep current selection if valid, otherwise default to first teacher
-      const currentSelection = state.selectedTeacherSlide6 || (state.teachers[0] ? state.teachers[0].id : "");
-      select.innerHTML = "";
-
-      state.teachers.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.id; // CRITICAL: Must be t.id to match teacher lookup
-        opt.textContent = `${t.name} (${t.shortName}) - ${t.isClassTeacher ? `CT (${t.classNum}-${t.section})` : t.isCommon ? 'Common Specialist' : 'PRT'}`;
-        
-        if (t.id === currentSelection) {
-          opt.selected = true;
-        }
-        select.appendChild(opt);
-      });
-
-      if (!state.selectedTeacherSlide6 && state.teachers[0]) {
-        state.selectedTeacherSlide6 = state.teachers[0].id;
-      }
-    }
-
+  
    
     function handleSlide6Regenerate() {
       if (state.isViewOnly) return;
@@ -4360,27 +4209,8 @@ function printAllSlide7Teachers() {
 
     showPrintPreviewModal(`All Teachers Time Table (3-Up) - ${selectedDay}`, allTeachersChunk);
   }
-    // ==========================================
-    // --- SLIDE 4: DAY-WISE CLASS TT ---
-    // ==========================================
-    function renderSlide4DayPills() {
-      const container = document.getElementById("slide4-day-pills");
-      if (!container) return;
-      container.innerHTML = "";
-
-      DAYS.forEach(d => {
-        const isSelected = d === state.selectedDaySlide4;
-        const btn = document.createElement("button");
-        btn.onclick = () => {
-          state.selectedDaySlide4 = d;
-          renderSlide4DayPills();
-          renderSlide4DayWiseClasses();
-        };
-        btn.className = `px-3 py-1 rounded-lg text-xs font-bold transition ${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`;
-        btn.textContent = d;
-        container.appendChild(btn);
-      });
-    }
+   
+    
     function createDayWiseClassTableCard(day) {
   const card = document.createElement("div");
   card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";

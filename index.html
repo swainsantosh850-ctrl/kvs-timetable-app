@@ -5025,65 +5025,81 @@ function syncAdminRegistryFromCloud() {
     function printSlide2Allotments() {
       printTeachersReport();
     }
+function printClassTimetable(cls) {
+  const [cNum, cSec] = cls.split("-");
+  const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+  const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
 
-  function printClassTimetable(cls) {
-      const [cNum, cSec] = cls.split("-");
-      const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
-      const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
-      
-      let teacherSub = `कक्षा अध्यापक / Class Teacher: ${ct ? ct.name + ' (' + ct.shortName + ')' : 'Not Assigned'}`;
-      if (coCt) {
-        teacherSub += ` | सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName})`;
+  let teacherSub = `कक्षा अध्यापक / Class Teacher: ${ct ? ct.name + ' (' + ct.shortName + ')' : 'Not Assigned'}`;
+  if (coCt) {
+    teacherSub += ` | सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName})`;
+  }
+
+  let gridRows = "";
+  DAYS.forEach((d, index) => {
+    const dayCol = getUniqueColor("DAY", d);
+    let rowHtml = `
+      <td style="padding: 8px 10px; border: 1px solid #cbd5e1; font-weight: 800; text-align: left; vertical-align: middle; background: ${dayCol.bg}; color: ${dayCol.text}; border-left: 4px solid ${dayCol.border}; font-size: 11px; line-height: 1.3;">
+        ${d}
+      </td>`;
+
+    PERIODS.forEach(p => {
+      const slot = state.schedules[cls]?.[d]?.[p];
+      if (slot) {
+        const t = state.teachers.find(item => item.id === slot.teacherId);
+        const coT = state.teachers.find(item => item.id === slot.coTeacherId);
+        let tStr = t ? (t.shortName || t.name) : "";
+        if (coT) tStr += ` + ${coT.shortName || coT.name}`;
+        const subCol = getSubjectColor(slot.subject);
+
+        rowHtml += `
+          <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; background: #ffffff;">
+            <div style="background: ${subCol.bg}; border: 1.5px solid ${subCol.border}; color: ${subCol.text}; border-radius: 10px; padding: 5px 4px; line-height: 1.25;">
+              <div style="font-weight: 900; font-size: 11px; letter-spacing: 0.2px;">${slot.subject}</div>
+              <div style="font-size: 9.5px; font-weight: 700; color: ${subCol.sub}; margin-top: 2px;">${tStr}</div>
+            </div>
+          </td>`;
+      } else {
+        rowHtml += `
+          <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; background: #ffffff; color: #94a3b8; font-size: 11px;">-</td>`;
       }
 
-      let gridRows = "";
-     DAYS.forEach((d, index) => {
-        const dayCol = getUniqueColor("DAY", d);
-        let rowHtml = `<td style="padding: 8px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: ${dayCol.bg}; color: ${dayCol.text};">${d}</td>`;
-        PERIODS.forEach(p => {
-          const slot = state.schedules[cls]?.[d]?.[p];
-          if (slot) {
-            const t = state.teachers.find(item => item.id === slot.teacherId);
-            const coT = state.teachers.find(item => item.id === slot.coTeacherId);
-            let tStr = t ? t.shortName : '';
-            if (coT) tStr += ` + ${coT.shortName}`;
-            const subCol = getSubjectColor(slot.subject);
-            rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center; background: ${subCol.bg}; color: ${subCol.text};"><div style="font-weight: 800; font-size: 11px;">${slot.subject}</div><div style="font-size: 10px; color: ${subCol.sub};">${tStr}</div></td>`;
-          } else {
-            rowHtml += `<td style="padding: 6px; border: 1.5px solid #0f172a; text-align: center; color: #94a3b8;">-</td>`;
-          }
+      if (p === 4 && index === 0) {
+        rowHtml += `
+          <td style="width: 24px; max-width: 24px; padding: 2px; border: 1px solid #cbd5e1; font-weight: 800; font-size: 9px; letter-spacing: 1.5px; color: #78350f; text-align: center; vertical-align: middle; background: #fef9ec; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">
+            LUNCH BREAK
+          </td>`;
+      }
+    });
 
-          if (p === 4 && index === 0) {
-            rowHtml += `<td style="width: 22px; max-width: 22px; padding: 2px; border: 1.5px solid #0f172a; font-weight: 700; font-size: 9px; letter-spacing: 1px; color: #78350f; text-align: center; background: #fef3c7; writing-mode: vertical-rl; transform: rotate(180deg);" rowspan="6">LUNCH BREAK</td>`;
-          }
-        });
-        gridRows += `<tr>${rowHtml}</tr>`;
-      });
-      const html = `
-        <div class="print-page">
-          ${renderOfficialHeader(`कक्षा समय सारणी / CLASS TIMETABLE • कक्षा / CLASS ${cls}`, teacherSub)}
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
-            <thead>
-              <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                <th style="border: 1.5px solid #0f172a;">Day</th>
-                <th style="border: 1.5px solid #0f172a;">P1</th>
-                <th style="border: 1.5px solid #0f172a;">P2</th>
-                <th style="border: 1.5px solid #0f172a;">P3</th>
-                <th style="border: 1.5px solid #0f172a;">P4</th>
-                <th style="background: #fef3c7; width: 22px; max-width: 22px; border: 1.5px solid #0f172a;" rowspan="6"></th>
-                <th style="border: 1.5px solid #0f172a;">P5</th>
-                <th style="border: 1.5px solid #0f172a;">P6</th>
-                <th style="border: 1.5px solid #0f172a;">P7</th>
-                <th style="border: 1.5px solid #0f172a;">P8</th>
-              </tr>
-            </thead>
-            <tbody>${gridRows}</tbody>
-          </table>
-          ${renderOfficialFooter(true)}
-        </div>
-      `;
-      showPrintPreviewModal(`Class ${cls} Timetable`, html);
-    }
+    gridRows += `<tr>${rowHtml}</tr>`;
+  });
+
+  const html = `
+    <div class="print-page">
+      ${renderOfficialHeader(`कक्षा समय सारणी / CLASS TIMETABLE • कक्षा / CLASS ${cls}`, teacherSub)}
+      <table class="pill-card-table" style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;">
+        <thead>
+          <tr style="background: linear-gradient(90deg, #1e3a8a 0%, #312e81 55%, #0f766e 100%); color: #ffffff;">
+            <th style="border: 1px solid #1e293b; padding: 8px 10px; text-align: left; color: #ffffff; width: 13%;">Day</th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P1</th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P2</th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P3</th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P4</th>
+            <th style="background: #312e81; width: 24px; max-width: 24px; border: 1px solid #1e293b;" rowspan="6"></th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P5</th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P6</th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P7</th>
+            <th style="border: 1px solid #1e293b; padding: 8px 4px; color: #ffffff; width: 10.5%;">P8</th>
+          </tr>
+        </thead>
+        <tbody>${gridRows}</tbody>
+      </table>
+      ${renderOfficialFooter(true)}
+    </div>
+  `;
+  showPrintPreviewModal(`Class ${cls} Timetable`, html);
+}
 function printAllClassesTimetables() {
       let pagesHtml = "";
       let classCardsChunk = "";
@@ -5736,86 +5752,106 @@ function printCurrentSlide(slideNum) {
       }
     }
 
-  function executeBrowserPrint() {
-      const printableArea = document.getElementById("printable-report-area");
-      if (printableArea && activePrintHtml) printableArea.innerHTML = activePrintHtml;
-      
-      // Check if Black & White mode is active
-      const modeSelect = document.getElementById("print-mode-select");
-      const isBw = modeSelect && modeSelect.value === 'bw';
+ function executeBrowserPrint() {
+  const printableArea = document.getElementById("printable-report-area");
+  if (printableArea && activePrintHtml) printableArea.innerHTML = activePrintHtml;
 
-      if (isBw && printableArea) {
-        printableArea.classList.add("monochrome-print");
-      }
+  const modeSelect = document.getElementById("print-mode-select");
+  const isBw = modeSelect && modeSelect.value === 'bw';
 
-      // Automatically detects 'landscape-page' class for Slide 4 and Slide 5
-      const isLandscape = activePrintHtml.includes('landscape-page') || 
-                          (printableArea && printableArea.querySelector('.landscape-page'));
+  if (isBw && printableArea) {
+    printableArea.classList.add("monochrome-print");
+  }
 
-      const printWin = window.open("", "_blank", "width=1100,height=800");
-      if (!printWin) {
-        showNotification("Please allow popups to open the print view.", "warning");
-        return;
-      }
-      
-      // Include monochrome styles in the popup if B&W is selected
-      const bwStyle = isBw ? `
-        .monochrome-print, .monochrome-print * {
-          background: white !important;
-          background-color: white !important;
-          color: black !important;
-          border-color: black !important;
-          box-shadow: none !important;
-        }
-        .monochrome-print div[style*="background"] { background: white !important; }
-      ` : '';
+  const isLandscape = activePrintHtml.includes('landscape-page') ||
+                      (printableArea && printableArea.querySelector('.landscape-page'));
 
-      const htmlContent = isBw ? `<div class="monochrome-print">${activePrintHtml}</div>` : activePrintHtml;
-      const pageSizeRule = isLandscape ? 'size: landscape;' : 'size: portrait;';
+  const printWin = window.open("", "_blank", "width=1100,height=800");
+  if (!printWin) {
+    showNotification("Please allow popups to open the print view.", "warning");
+    return;
+  }
 
-      printWin.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>KVS Timetable Print Preview</title>
-            <style>
-              @page { ${pageSizeRule} margin: 8mm; } 
-              * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              body { 
-                font-family: 'Times New Roman', Times, serif; 
-                padding: 0; 
-                margin: 0; 
-                background: white; 
-                color: black; 
-              } 
-              table { 
-                width: 100%; 
-                border-collapse: collapse !important; 
-              } 
-              th, td { 
-                border: 1.5px solid #0f172a !important; 
-                padding: 6px !important; 
-              } 
-              .print-page { 
-                page-break-after: always; 
-                break-after: page; 
-                margin-bottom: 20px; 
-              } 
-              ${bwStyle}
-            </style>
-          </head>
-          <body>
-            ${htmlContent}
-            <script>
-              window.onload = function() { 
-                setTimeout(() => window.print(), 300); 
-              };
-            <\/script>
-          </body>
-        </html>
-      `);
-      printWin.document.close();
+  const bwStyle = isBw ? `
+    .monochrome-print, .monochrome-print * {
+      background: white !important;
+      background-color: white !important;
+      color: black !important;
+      border-color: black !important;
+      box-shadow: none !important;
     }
+    .monochrome-print div[style*="background"] { background: white !important; }
+  ` : '';
+
+  const pillCardPrintStyle = !isBw ? `
+    .pill-card-table thead tr {
+      background: linear-gradient(90deg, #1e3a8a 0%, #312e81 55%, #0f766e 100%) !important;
+      color: #ffffff !important;
+    }
+    .pill-card-table thead th {
+      color: #ffffff !important;
+    }
+    .pill-card-table td > div {
+      border-radius: 10px !important;
+    }
+  ` : '';
+
+  const htmlContent = isBw ? `<div class="monochrome-print">${activePrintHtml}</div>` : activePrintHtml;
+  const pageSizeRule = isLandscape ? 'size: landscape;' : 'size: portrait;';
+
+  printWin.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>KVS Timetable Print Preview</title>
+        <style>
+          @page { ${pageSizeRule} margin: 8mm; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body {
+            font-family: 'Times New Roman', Times, serif;
+            padding: 0;
+            margin: 0;
+            background: white;
+            color: black;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse !important;
+          }
+          table:not(.pill-card-table) th,
+table:not(.pill-card-table) td {
+  border: 1.5px solid #0f172a !important;
+  padding: 3px 4px !important;
+}
+          table:not(.pill-card-table) td {
+            border: 1.5px solid #0f172a !important;
+            padding: 6px !important;
+          }
+          .pill-card-table th,
+          .pill-card-table td {
+            padding: 4px !important;
+          }
+          .print-page {
+            page-break-after: always;
+            break-after: page;
+            margin-bottom: 20px;
+          }
+          ${pillCardPrintStyle}
+          ${bwStyle}
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+        <script>
+          window.onload = function() {
+            setTimeout(() => window.print(), 300);
+          };
+        <\/script>
+      </body>
+    </html>
+  `);
+  printWin.document.close();
+}
 
     function openPrintInNewWindow() {
       if (!activePrintHtml) return;

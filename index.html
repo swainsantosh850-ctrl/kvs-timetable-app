@@ -5101,80 +5101,83 @@ function printClassTimetable(cls) {
   showPrintPreviewModal(`Class ${cls} Timetable`, html);
 }
 function printAllClassesTimetables() {
-      let pagesHtml = "";
-      let classCardsChunk = "";
-      
-      CLASSES.forEach((c, index) => {
-        const [cNum, cSec] = c.split("-");
-        
-        // Lookup Class Teacher and Co-Teacher
-        const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
-        const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
-        
-        const ctText = ct ? `कक्षा अध्यापक / Class Teacher: ${ct.name} [${ct.shortName || ct.name}]` : `कक्षा अध्यापक / Class Teacher: Not Assigned`;
-        const coTText = coCt ? ` | Co-Teacher: ${coCt.name} [${coCt.shortName || coCt.name}]` : ``;
+  let pagesHtml = "";
+  let classCardsChunk = "";
 
-        let gridRows = "";
-       DAYS.forEach(d => {
-          const dayCol = getUniqueColor("DAY", d);
-          let rowHtml = `<td style="padding: 8px 5px; border: 1.5px solid #0f172a; font-weight: 800; text-align: center; background: ${dayCol.bg}; color: ${dayCol.text}; font-size: 11px; width: 11%;">​${d}</td>`;
-          
-          PERIODS.forEach(p => {
-            const slot = state.schedules[c]?.[d]?.[p];
-            if (slot) {
-              const tObj = state.teachers.find(t => t.id === slot.teacherId);
-              const coTObj = state.teachers.find(t => t.id === slot.coTeacherId);
-              let tName = tObj ? (tObj.shortName || tObj.name) : "";
-              if (coTObj) tName += ` + ${coTObj.shortName || coTObj.name}`;
-              const subCol = getSubjectColor(slot.subject);
+  CLASSES.forEach((c, index) => {
+    const [cNum, cSec] = c.split("-");
+    const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+    const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
 
-              rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; text-align: center; font-weight: 700; font-size: 11px; width: 11%; line-height: 1.25; background: ${subCol.bg}; color: ${subCol.text};">
-                <div style="font-weight: 900; font-size: 12px;">${slot.subject}</div>
-                <div style="font-size: 9.5px; color: ${subCol.sub}; font-weight: 600;">[${tName}]</div>
-              </td>`;
-            } else {
-              rowHtml += `<td style="padding: 8px 4px; border: 1.5px solid #0f172a; text-align: center; color: #cbd5e1; font-size: 11px; width: 11%;">-</td>`;
-            }
-          });
-          gridRows += `<tr>${rowHtml}</tr>`;
-        });
+    const ctText = ct ? `कक्षा अध्यापक / Class Teacher: ${ct.name} [${ct.shortName || ct.name}]` : `कक्षा अध्यापक / Class Teacher: Not Assigned`;
+    const coTText = coCt ? ` | Co-Teacher: ${coCt.name} [${coCt.shortName || coCt.name}]` : ``;
 
-        // Add each class card with its own official header
-        classCardsChunk += `
-          <div class="multi-class-print-card" style="margin-bottom: 16px; padding-bottom: 10px; break-inside: avoid; page-break-inside: avoid;">
-            ${renderOfficialHeader(`कक्षा समय सारणी / CLASS TIMETABLE • कक्षा / CLASS ${c}`, `${ctText}${coTText}`)}
-            <table style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; text-align: center;">
-              <thead>
-                <tr style="background: #f1f5f9; border: 1.5px solid #0f172a;">
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">Day</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P1</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P2</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P3</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P4</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P5</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P6</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P7</th>
-                  <th style="border: 1.5px solid #0f172a; padding: 6px 4px; width: 11%;">P8</th>
-                </tr>
-              </thead>
-              <tbody>${gridRows}</tbody>
-            </table>
-          </div>
-        `;
+    let gridRows = "";
+    DAYS.forEach(d => {
+      const dayCol = getUniqueColor("DAY", d);
+      let rowHtml = `
+        <td style="padding: 6px 8px; border: 1px solid #cbd5e1; font-weight: 800; text-align: left; vertical-align: middle; background: ${dayCol.bg}; color: ${dayCol.text}; border-left: 4px solid ${dayCol.border}; font-size: 10.5px; width: 11%;">
+          ​${d}
+        </td>`;
 
-        // Output exactly 2 classes per page container
-        if ((index + 1) % 2 === 0 || index === CLASSES.length - 1) {
-          pagesHtml += `
-            <div class="print-page" style="page-break-after: always; break-after: page;">
-              ${classCardsChunk}
-            </div>
-          `;
-          classCardsChunk = "";
+      PERIODS.forEach(p => {
+        const slot = state.schedules[c]?.[d]?.[p];
+        if (slot) {
+          const tObj = state.teachers.find(t => t.id === slot.teacherId);
+          const coTObj = state.teachers.find(t => t.id === slot.coTeacherId);
+          let tName = tObj ? (tObj.shortName || tObj.name) : "";
+          if (coTObj) tName += ` + ${coTObj.shortName || coTObj.name}`;
+          const subCol = getSubjectColor(slot.subject);
+
+          rowHtml += `
+            <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; background: #ffffff; width: 11.125%;">
+              <div style="background: ${subCol.bg}; border: 1.5px solid ${subCol.border}; color: ${subCol.text}; border-radius: 10px; padding: 4px 3px; line-height: 1.2;">
+                <div style="font-weight: 900; font-size: 11px;">${slot.subject}</div>
+                <div style="font-size: 9px; color: ${subCol.sub}; font-weight: 700; margin-top: 1px;">${tName}</div>
+              </div>
+            </td>`;
+        } else {
+          rowHtml += `
+            <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; background: #ffffff; color: #cbd5e1; font-size: 10.5px; width: 11.125%;">-</td>`;
         }
       });
+      gridRows += `<tr>${rowHtml}</tr>`;
+    });
 
-      showPrintPreviewModal("All Classes Timetables Master Book (2-Up Portrait)", pagesHtml);
+    classCardsChunk += `
+      <div class="multi-class-print-card" style="margin-bottom: 16px; padding-bottom: 10px; break-inside: avoid; page-break-inside: avoid;">
+        ${renderOfficialHeader(`कक्षा समय सारणी / CLASS TIMETABLE • कक्षा / CLASS ${c}`, `${ctText}${coTText}`)}
+        <table class="pill-card-table" style="width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 11px; text-align: center;">
+          <thead>
+            <tr style="background: linear-gradient(90deg, #1e3a8a 0%, #312e81 55%, #0f766e 100%); color: #ffffff;">
+              <th style="border: 1px solid #1e293b; padding: 6px 8px; text-align: left; color: #ffffff; width: 11%;">Day</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P1</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P2</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P3</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P4</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P5</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P6</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P7</th>
+              <th style="border: 1px solid #1e293b; padding: 6px 4px; color: #ffffff; width: 11.125%;">P8</th>
+            </tr>
+          </thead>
+          <tbody>${gridRows}</tbody>
+        </table>
+      </div>
+    `;
+
+    if ((index + 1) % 2 === 0 || index === CLASSES.length - 1) {
+      pagesHtml += `
+        <div class="print-page" style="page-break-after: always; break-after: page;">
+          ${classCardsChunk}
+        </div>
+      `;
+      classCardsChunk = "";
     }
+  });
+
+  showPrintPreviewModal("All Classes Timetables Master Book (2-Up Portrait)", pagesHtml);
+}
     function printDayWiseClassTimetable(day) {
     let gridRows = "";
    CLASSES.forEach((cls, index) => {

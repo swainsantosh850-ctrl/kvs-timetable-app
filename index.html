@@ -8172,12 +8172,11 @@ if (document.readyState === "loading") {
 </script>
 <script>
 const KvsMotion3DEngine = (() => {
-  
-  let motionEnabled = localStorage.getItem("kvs_motion_enabled") !== "false";
+  const STORAGE_KEY_3D = "kvs_3d_keys_enabled";
+  let keys3DEnabled = localStorage.getItem(STORAGE_KEY_3D) !== "false";
 
   function apply3DKeys() {
-    // Upgrade top nav pills, action buttons, and AI buttons into tactile 3D keys
-    const selectors = [
+    const buttonSelectors = [
       "header nav button",
       "header button",
       "#slide3-class-pills button",
@@ -8186,103 +8185,70 @@ const KvsMotion3DEngine = (() => {
       "#slide5-sub-period-pills button",
       ".kvs-ai-btn"
     ];
-    document.querySelectorAll(selectors.join(",")).forEach((btn) => {
-      if (!btn.classList.contains("kvs-3d-key")) {
-        btn.classList.add("kvs-3d-key");
-      }
+
+    const slotSelectors = [
+      ".kvs-slot-cell",
+      "#slide3-tables-container td button",
+      "#slide4-tables-container td button",
+      "#slide5-teachers-tbody td button",
+      "#slide6-teacher-grid-body td button"
+    ];
+
+    document.querySelectorAll(buttonSelectors.join(",")).forEach((btn) => {
+      btn.classList.toggle("kvs-3d-key", keys3DEnabled);
     });
 
-    // Upgrade period cells into 3D keycaps with suitable moving subject icons
-    document.querySelectorAll(".kvs-slot-cell, #slide3-tables-container td button, #slide4-tables-container td button, #slide5-teachers-tbody td button, #slide6-teacher-grid-body td button").forEach((cell) => {
-      cell.classList.add("kvs-slot-3d");
-
-      // Add moving picture badge above subject code if not already added
-      if (cell.dataset.picApplied === "1") return;
-      const lines = cell.querySelectorAll("div");
-      if (lines.length >= 2) {
-        const subjCode = lines[0].textContent.trim().toUpperCase();
-        const match = SUBJECT_VISUALS[subjCode] || { icon: "📖", anim: "" };
-        const picSpan = document.createElement("span");
-        picSpan.className = `kvs-subj-pic ${match.anim}`;
-        picSpan.textContent = match.icon;
-        cell.prepend(picSpan);
-        cell.dataset.picApplied = "1";
-      }
+    document.querySelectorAll(slotSelectors.join(",")).forEach((cell) => {
+      cell.classList.toggle("kvs-slot-3d", keys3DEnabled);
+      cell.querySelectorAll(".kvs-subj-pic").forEach((pic) => pic.remove());
+      delete cell.dataset.picApplied;
     });
   }
 
-  function renderFloatingBackdrop(slideNum = 1) {
-    let backdrop = document.getElementById("kvs-motion-backdrop");
-    if (!motionEnabled) {
-      if (backdrop) backdrop.remove();
-      return;
-    }
-
-    if (!backdrop) {
-      backdrop = document.createElement("div");
-      backdrop.id = "kvs-motion-backdrop";
-      backdrop.className = "no-print";
-      document.body.prepend(backdrop);
-    }
-
-    const icons = SLIDE_STICKERS[slideNum] || SLIDE_STICKERS[3];
-    backdrop.innerHTML = icons.map((emoji, i) => {
-      const top = 12 + ((i * 17) % 76);
-      const left = 5 + ((i * 19) % 88);
-      const size = 26 + (i % 3) * 10;
-      const dur = 18 + (i % 4) * 5;
-      const dx = (i % 2 === 0 ? 1 : -1) * (25 + i * 6);
-      const dy = (i % 3 === 0 ? -1 : 1) * (20 + i * 5);
-      return `<div class="kvs-floating-sticker" style="top:${top}%;left:${left}%;font-size:${size}px;--dur:${dur}s;--delay:-${i * 2}s;--dx:${dx}px;--dy:${dy}px;">${emoji}</div>`;
-    }).join("");
-  }
-
-  function mountMotionToggle() {
+  function mount3DKeyToggle() {
     const headerActions = document.querySelector("header .flex.items-center.flex-wrap.gap-2");
-    if (!headerActions || document.getElementById("btn-toggle-3d-motion")) return;
+    if (!headerActions || document.getElementById("btn-toggle-3d-keys")) return;
 
     const btn = document.createElement("button");
-    btn.id = "btn-toggle-3d-motion";
+    btn.id = "btn-toggle-3d-keys";
     btn.type = "button";
-    btn.className = "kvs-3d-key px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white transition flex items-center gap-1.5";
-    btn.innerHTML = `<i class="ph-bold ph-cube text-sm"></i><span>${motionEnabled ? "3D Motion: ON" : "3D Motion: OFF"}</span>`;
+    btn.className = "kvs-3d-key px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center gap-1.5";
+    btn.innerHTML = `<i class="ph-bold ph-cube text-sm"></i><span>${keys3DEnabled ? "3D Keys: ON" : "3D Keys: OFF"}</span>`;
+
     btn.addEventListener("click", () => {
-      motionEnabled = !motionEnabled;
-      localStorage.setItem("kvs_motion_enabled", String(motionEnabled));
-      btn.querySelector("span").textContent = motionEnabled ? "3D Motion: ON" : "3D Motion: OFF";
-      renderFloatingBackdrop(window.state?.activeSlide || 1);
+      keys3DEnabled = !keys3DEnabled;
+      localStorage.setItem(STORAGE_KEY_3D, String(keys3DEnabled));
+      btn.querySelector("span").textContent = keys3DEnabled ? "3D Keys: ON" : "3D Keys: OFF";
       apply3DKeys();
     });
+
     headerActions.prepend(btn);
   }
 
   function init() {
-    mountMotionToggle();
-    renderFloatingBackdrop(window.state?.activeSlide || 1);
+    mount3DKeyToggle();
     apply3DKeys();
 
-    // Automatically re-apply 3D keys & subject pictures whenever grids re-render
     const mainEl = document.querySelector("main");
-    if (mainEl) {
+    if (mainEl && !mainEl._kvs3dObserved) {
       const observer = new MutationObserver(() => {
         apply3DKeys();
       });
       observer.observe(mainEl, { childList: true, subtree: true });
+      mainEl._kvs3dObserved = true;
     }
 
-    // Hook slide navigation so floating pictures match the active slide's theme
-    if (typeof window.goToSlide === "function" && !window.goToSlide._kvs3dWrapped) {
+    if (typeof window.goToSlide === "function" && !window.goToSlide._kvs3dKeysWrapped) {
       const origGoToSlide = window.goToSlide;
-      window.goToSlide = function(slideNum) {
+      window.goToSlide = function() {
         origGoToSlide.apply(this, arguments);
-        renderFloatingBackdrop(slideNum);
         apply3DKeys();
       };
-      window.goToSlide._kvs3dWrapped = true;
+      window.goToSlide._kvs3dKeysWrapped = true;
     }
   }
 
-  return { init, apply3DKeys, renderFloatingBackdrop };
+  return { init, apply3DKeys };
 })();
 
 if (document.readyState === "loading") {

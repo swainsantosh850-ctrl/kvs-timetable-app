@@ -8172,35 +8172,7 @@ if (document.readyState === "loading") {
 </script>
 <script>
 const KvsMotion3DEngine = (() => {
-  const SUBJECT_VISUALS = {
-    MATH: { icon: "📐", anim: "" },
-    ENG: { icon: "📘", anim: "" },
-    HIN: { icon: "🪷", anim: "" },
-    TWAU: { icon: "🌍", anim: "science" },
-    EVS: { icon: "🌱", anim: "" },
-    PE: { icon: "⚽", anim: "sport" },
-    "K.GAMES": { icon: "🏸", anim: "sport" },
-    "K.YOGA": { icon: "🧘", anim: "" },
-    "V.ART": { icon: "🎨", anim: "" },
-    "P.ART": { icon: "🎭", anim: "" },
-    MUSIC: { icon: "🎵", anim: "" },
-    LIB: { icon: "📚", anim: "" },
-    GDN: { icon: "🌻", anim: "" },
-    CLA: { icon: "✨", anim: "" },
-    DL: { icon: "💻", anim: "" },
-    COMP: { icon: "🖥️", anim: "" }
-  };
-
-  const SLIDE_STICKERS = {
-    1: ["🏫", "👩‍🏫", "👨‍🏫", "📋", "🪪", "🔔"],
-    2: ["📊", "📚", "⚖️", "🧩", "📝", "🎯"],
-    3: ["📐", "🌍", "📘", "🎨", "⚽", "🌻"],
-    4: ["🗓️", "⏰", "🔔", "📖", "✏️", "🎒"],
-    5: ["🧑‍🏫", "🔄", "⭐", "📋", "🏫", "🕒"],
-    6: ["📅", "🌟", "📘", "🎓", "✏️", "🏅"],
-    7: ["🖨️", "📄", "🏫", "✨", "📌", "🕒"]
-  };
-
+  
   let motionEnabled = localStorage.getItem("kvs_motion_enabled") !== "false";
 
   function apply3DKeys() {

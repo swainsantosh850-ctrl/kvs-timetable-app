@@ -7605,7 +7605,7 @@ const KvsAiEngine = (() => {
       .sort((a, b) => b.score - a.score);
   }
 
-  function executeActions(actions = []) {
+function executeActions(actions = []) {
     if (state.isViewOnly) {
       throw new Error("View-Only Mode: Log in as School Admin or Super Admin to apply AI edits.");
     }
@@ -7665,13 +7665,14 @@ const KvsAiEngine = (() => {
         touched.push(`${cls}|${day}|${period}`);
         results.push(`Assigned ${teacher.shortName} (${state.schedules[cls][day][period].subject}) to Class ${cls} on ${day} P${period}.`);
       } else if (act.type === "FIND_SUBSTITUTE") {
-        const ranked = findBestSubstitutes(act.className, act.day, act.period);
-        if (ranked.length === 0) {
-          results.push(`No free teachers found for ${act.className} on ${act.day} P${act.period}.`);
-        } else {
-          const top3 = ranked.slice(0, 3).map(r => `${r.teacher.shortName} (${r.dayLoad}P today)`).join(", ");
-          results.push(`Best substitutes for ${normalizeClass(act.className)} P${act.period}: ${top3}.`);
-        }
+        const cls = normalizeClass(act.className);
+        const targetPeriods = act.period ? [Number(act.period)] : PERIODS;
+        const summary = targetPeriods.map(p => {
+          const ranked = findBestSubstitutes(cls, act.day, p);
+          const top2 = ranked.slice(0, 2).map(r => `${r.teacher.shortName}(${r.dayLoad}P)`).join("/");
+          return `P${p}: ${top2 || "None"}`;
+        });
+        results.push(`Best substitutes for ${cls} (${normalizeDay(act.day)}) → ${summary.join(" | ")}`);
       }
     });
 
@@ -7692,14 +7693,14 @@ const KvsAiEngine = (() => {
       "Allowed action types:",
       '1) {"type":"SWAP_PERIODS","className":"5-A","day":"TUESDAY","periodA":3,"periodB":5}',
       '2) {"type":"ASSIGN_TEACHER","className":"2-A","day":"WEDNESDAY","period":2,"teacherShort":"SS","subject":"MATH"}',
-      '3) {"type":"FIND_SUBSTITUTE","className":"5-A","day":"MONDAY","period":4}',
+      '3) {"type":"FIND_SUBSTITUTE","className":"5-A","day":"MONDAY","period":4} (omit "period" if the user asks for the whole day)',
       `Active classes: ${JSON.stringify(CLASSES)}.`,
       `Active teachers: ${teacherList}.`,
       "Return ONLY valid JSON."
     ].join(" ");
 
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

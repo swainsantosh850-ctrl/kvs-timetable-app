@@ -151,10 +151,143 @@
     th, td { border: 1.5px solid #0f172a !important; }
     .print-shadow-none { box-shadow: none !important; border: 2px solid #0f172a !important; }
     .pill-card-table,
-.pill-card-table th,
-.pill-card-table td {
-  border: 2px solid #000000 !important;
-}
+    .pill-card-table th,
+    .pill-card-table td {
+      border: 2px solid #000000 !important;
+    }
+
+    /* === KVS Timetable Synchronizer Studio — Animations & AI Bar === */
+    @keyframes kvsCardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes kvsSlotPulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.65);
+      }
+      50% {
+        transform: scale(1.04);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    @keyframes kvsConflictShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    @keyframes kvsAiPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.18); }
+    }
+
+    .kvs-anim-card {
+      animation: kvsCardEnter 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: calc(var(--card-index, 0) * 45ms);
+    }
+
+    .kvs-slot-cell {
+      transition: transform 0.16s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .kvs-slot-cell:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
+    }
+
+    .kvs-slot-updated {
+      animation: kvsSlotPulse 0.85s ease-out 2;
+      outline: 2px solid #10b981;
+      background-color: rgba(16, 185, 129, 0.14) !important;
+    }
+
+    .kvs-slot-conflict {
+      animation: kvsConflictShake 0.35s ease-in-out;
+      outline: 2px solid #ef4444;
+      background-color: rgba(239, 68, 68, 0.14) !important;
+    }
+
+    .kvs-ai-dock {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 14px;
+      margin: 12px 0;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .kvs-ai-dock:focus-within {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .kvs-ai-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #2563eb;
+      animation: kvsAiPulse 1.5s infinite ease-in-out;
+    }
+
+    .kvs-ai-input {
+      flex: 1 1 260px;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 14px;
+    }
+
+    .kvs-ai-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      background: #1d4ed8;
+      color: #fff;
+      transition: transform 0.12s ease, background-color 0.18s ease;
+    }
+
+    .kvs-ai-btn:hover:not(:disabled) {
+      background: #1e40af;
+      transform: translateY(-1px);
+    }
+
+    .kvs-ai-btn.secondary {
+      background: #0f766e;
+    }
+
+    .kvs-ai-btn.secondary:hover:not(:disabled) {
+      background: #115e59;
+    }
+
+    @media print {
+      .kvs-ai-dock,
+      .kvs-anim-card {
+        animation: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
@@ -7267,9 +7400,348 @@ syncAdminRegistryFromCloud();
           Back to Admin Form
         </button>
       </div>
+   </div>
+      </div>
     </div>
-  </div>
-</div>
+
+<script>
+const KvsAiEngine = (() => {
+  const STORAGE_KEY_API = "kvs_tt_gemini_api_key";
+
+  ffunction getState() {
+  // Replace `window.appState` with your actual global state object if named differently
+  const src = window.appState || window.timetableState || window.state || {};
+  return {
+    classes: Array.isArray(src.classes) ? src.classes : [],
+    teachers: Array.isArray(src.teachers) ? src.teachers : [],
+    allocations: Array.isArray(src.allocations) ? src.allocations : []
+  };
+}
+
+  function applyStaggeredCardAnimations(selector = ".timetable-card, .pill-card-table, .multi-class-print-card, .multi-teacher-print-card") {
+    const cards = document.querySelectorAll(selector);
+    cards.forEach((card, idx) => {
+      card.classList.remove("kvs-anim-card");
+      card.style.setProperty("--card-index", Math.min(idx, 20));
+      void card.offsetWidth;
+      card.classList.add("kvs-anim-card");
+    });
+  }
+
+  function highlightModifiedSlots(slotKeys = []) {
+    slotKeys.forEach((key) => {
+      const el = document.querySelector(`[data-slot-key="${CSS.escape(key)}"]`);
+      if (!el) return;
+      el.classList.remove("kvs-slot-updated");
+      void el.offsetWidth;
+      el.classList.add("kvs-slot-updated");
+    });
+  }
+
+  function triggerConflictAnimation(elementOrKey) {
+    const el =
+      typeof elementOrKey === "string"
+        ? document.querySelector(`[data-slot-key="${CSS.escape(elementOrKey)}"]`)
+        : elementOrKey;
+    if (!el) return;
+    el.classList.remove("kvs-slot-conflict");
+    void el.offsetWidth;
+    el.classList.add("kvs-slot-conflict");
+  }
+
+ function persistAndRefresh(touchedKeys = []) {
+  // 1. Replace with your actual save / Firebase sync function name:
+  // e.g., if your function is `saveWorkspaceData()`, call `window.saveWorkspaceData?.()`
+  if (typeof window.saveTimetableData === "function") {
+    window.saveTimetableData();
+  } else if (typeof window.saveToFirebase === "function") {
+    window.saveToFirebase();
+  } else if (typeof window.syncToFirebase === "function") {
+    window.syncToFirebase();
+  }
+
+  // 2. Replace with your actual render function name (e.g., `renderTimetableViews` or `renderAll`):
+  if (typeof window.renderTimetableViews === "function") {
+    window.renderTimetableViews();
+  } else if (typeof window.renderAll === "function") {
+    window.renderAll();
+  }
+
+  // 3. Replay staggered card animations and highlight changed period cells
+  applyStaggeredCardAnimations();
+  highlightModifiedSlots(touchedKeys);
+}
+  function isTeacherBusy(allocations, teacherShort, day, period) {
+    return allocations.some(
+      (a) =>
+        a.teacherShort === teacherShort &&
+        String(a.day).toLowerCase() === String(day).toLowerCase() &&
+        Number(a.period) === Number(period)
+    );
+  }
+
+  function isTeacherOff(teacher, day, period) {
+    if (!teacher || !Array.isArray(teacher.offSlots)) return false;
+    return teacher.offSlots.some(
+      (s) =>
+        String(s.day).toLowerCase() === String(day).toLowerCase() &&
+        Number(s.period) === Number(period)
+    );
+  }
+
+  function findBestSubstitutes({ className, day, period, excludeTeacher = "" }) {
+    const { classes, teachers, allocations } = getState();
+    const clsObj = classes.find((c) => c.name === className) || {};
+
+    return teachers
+      .filter((t) => t.shortName && t.shortName !== excludeTeacher)
+      .filter((t) => !isTeacherOff(t, day, period))
+      .filter((t) => !isTeacherBusy(allocations, t.shortName, day, period))
+      .map((t) => {
+        const weeklyLoad = allocations.filter((a) => a.teacherShort === t.shortName).length;
+        const dayLoad = allocations.filter(
+          (a) => a.teacherShort === t.shortName && String(a.day).toLowerCase() === String(day).toLowerCase()
+        ).length;
+
+        let score = 100 - dayLoad * 15 - weeklyLoad * 2;
+        const reasons = [];
+
+        if (clsObj.classTeacher === t.shortName || clsObj.coClassTeacher === t.shortName) {
+          score += 25;
+          reasons.push("Class/Co-Class familiarity");
+        }
+        if (dayLoad === 0) {
+          score += 10;
+          reasons.push("0 periods taken today");
+        }
+        reasons.push(`${dayLoad} today / ${weeklyLoad} total`);
+
+        return {
+          teacherShort: t.shortName,
+          teacherName: t.name || t.shortName,
+          score,
+          reason: reasons.join(" · ")
+        };
+      })
+      .sort((a, b) => b.score - a.score);
+  }
+
+  function autoFillUnassignedSlots(targetClass = null) {
+    const { classes, teachers, allocations } = getState();
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const periodsPerDay = 8;
+    const touched = [];
+    let addedCount = 0;
+
+    const classList = targetClass
+      ? classes.filter((c) => c.name === targetClass)
+      : classes;
+
+    classList.forEach((cls) => {
+      days.forEach((day) => {
+        for (let p = 1; p <= periodsPerDay; p++) {
+          const exists = allocations.some(
+            (a) => a.className === cls.name && a.day === day && Number(a.period) === p
+          );
+          if (exists) continue;
+
+          const candidates = teachers
+            .filter((t) => t.shortName && !t.isCommon)
+            .filter((t) => !isTeacherOff(t, day, p))
+            .filter((t) => !isTeacherBusy(allocations, t.shortName, day, p))
+            .sort((a, b) => {
+              const loadA = allocations.filter((x) => x.teacherShort === a.shortName).length;
+              const loadB = allocations.filter((x) => x.teacherShort === b.shortName).length;
+              return loadA - loadB;
+            });
+
+          if (candidates.length > 0) {
+            const chosen = candidates[0];
+            allocations.push({
+              id: `${cls.name}-${day}-${p}-${Date.now()}-${addedCount}`,
+              className: cls.name,
+              day,
+              period: p,
+              subject: chosen.primarySubject || "General",
+              teacherShort: chosen.shortName,
+              isCommon: false
+            });
+            addedCount++;
+            touched.push(`${day}-${p}-${cls.name}`);
+          }
+        }
+      });
+    });
+
+    persistAndRefresh(touched);
+    return addedCount;
+  }
+
+  function executeActions(actions = []) {
+    const { allocations } = getState();
+    const touched = [];
+    const results = [];
+
+    actions.forEach((act) => {
+      if (act.type === "SWAP_PERIODS") {
+        const slotA = allocations.find(
+          (a) => a.className === act.className && a.day === act.day && Number(a.period) === Number(act.periodA)
+        );
+        const slotB = allocations.find(
+          (a) => a.className === act.className && a.day === act.day && Number(a.period) === Number(act.periodB)
+        );
+
+        if (slotA) slotA.period = Number(act.periodB);
+        if (slotB) slotB.period = Number(act.periodA);
+
+        touched.push(`${act.day}-${act.periodA}-${act.className}`, `${act.day}-${act.periodB}-${act.className}`);
+        results.push(`Swapped P${act.periodA} and P${act.periodB} for ${act.className} on ${act.day}.`);
+      } else if (act.type === "ASSIGN_TEACHER") {
+        if (isTeacherBusy(allocations, act.teacherShort, act.day, act.period)) {
+          triggerConflictAnimation(`${act.day}-${act.period}-${act.className}`);
+          results.push(`Skipped ${act.teacherShort} on ${act.day} P${act.period}: already busy.`);
+          return;
+        }
+        const existing = allocations.find(
+          (a) => a.className === act.className && a.day === act.day && Number(a.period) === Number(act.period)
+        );
+        if (existing) {
+          existing.teacherShort = act.teacherShort;
+          if (act.subject) existing.subject = act.subject;
+        } else {
+          allocations.push({
+            id: `${act.className}-${act.day}-${act.period}-${Date.now()}`,
+            className: act.className,
+            day: act.day,
+            period: Number(act.period),
+            subject: act.subject || "Assigned",
+            teacherShort: act.teacherShort,
+            isCommon: false
+          });
+        }
+        touched.push(`${act.day}-${act.period}-${act.className}`);
+        results.push(`Assigned ${act.teacherShort} to ${act.className} (${act.day} P${act.period}).`);
+      }
+    });
+
+    persistAndRefresh(touched);
+    return results;
+  }
+
+  async function runGeminiCommand(promptText) {
+    const apiKey = localStorage.getItem(STORAGE_KEY_API);
+    if (!apiKey) {
+      throw new Error("Please set your Gemini API key first using the API Key button.");
+    }
+
+    const { classes, teachers } = getState();
+    const classNames = classes.map((c) => c.name);
+    const teacherCodes = teachers.map((t) => t.shortName);
+
+    const systemInstruction = [
+      "You are a timetable scheduling assistant for KVS Timetable Synchronizer Studio.",
+      "Convert the user's instruction into a JSON array of actions.",
+      "Allowed action objects:",
+      '1) {"type":"SWAP_PERIODS","className":"5A","day":"Tuesday","periodA":3,"periodB":5}',
+      '2) {"type":"ASSIGN_TEACHER","className":"4B","day":"Wednesday","period":2,"teacherShort":"SS","subject":"Maths"}',
+      `Known classes: ${JSON.stringify(classNames)}. Known teachers: ${JSON.stringify(teacherCodes)}.`,
+      "Return ONLY valid JSON."
+    ].join(" ");
+
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents: [{ role: "user", parts: [{ text: promptText }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.1
+          }
+        })
+      }
+    );
+
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      throw new Error(`Gemini API error (${resp.status}): ${errBody}`);
+    }
+
+    const data = await resp.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+    const parsed = JSON.parse(rawText);
+    const actions = Array.isArray(parsed) ? parsed : [parsed];
+    return executeActions(actions);
+  }
+
+  function mountDock(containerSelector = "main, #timetable-container, body") {
+    const host = document.querySelector(containerSelector);
+    if (!host || document.getElementById("kvs-ai-dock")) return;
+
+    const dock = document.createElement("div");
+    dock.id = "kvs-ai-dock";
+    dock.className = "kvs-ai-dock no-print";
+    dock.innerHTML = `
+      <span class="kvs-ai-dot" title="AI Engine Ready"></span>
+      <input id="kvs-ai-prompt" class="kvs-ai-input" type="text"
+        placeholder='Ask AI: e.g., "Swap Period 3 and Period 5 for 5A on Tuesday"' />
+      <button id="kvs-ai-run-btn" class="kvs-ai-btn" type="button">Run AI Command</button>
+      <button id="kvs-ai-autofill-btn" class="kvs-ai-btn secondary" type="button">Smart Auto-Fill</button>
+      <button id="kvs-ai-key-btn" class="kvs-ai-btn" style="background:#475569;" type="button">API Key</button>
+      <div id="kvs-ai-status" style="width:100%;font-size:12.5px;color:#334155;">Ready.</div>
+    `;
+
+    host.prepend(dock);
+    applyStaggeredCardAnimations();
+
+    const statusEl = document.getElementById("kvs-ai-status");
+    const promptEl = document.getElementById("kvs-ai-prompt");
+
+    document.getElementById("kvs-ai-key-btn").addEventListener("click", () => {
+      const current = localStorage.getItem(STORAGE_KEY_API) || "";
+      const next = prompt("Enter your Gemini API Key (stored locally in this browser):", current);
+      if (next !== null) {
+        localStorage.setItem(STORAGE_KEY_API, next.trim());
+        statusEl.textContent = next.trim() ? "Gemini API key saved locally." : "Gemini API key cleared.";
+      }
+    });
+
+    document.getElementById("kvs-ai-autofill-btn").addEventListener("click", () => {
+      const added = autoFillUnassignedSlots();
+      statusEl.textContent = `Smart Auto-Fill added ${added} clash-free slot(s) with animated highlights.`;
+    });
+
+    document.getElementById("kvs-ai-run-btn").addEventListener("click", async () => {
+      const text = promptEl.value.trim();
+      if (!text) return;
+      statusEl.textContent = "AI is analyzing your timetable command...";
+      try {
+        const msgs = await runGeminiCommand(text);
+        statusEl.textContent = msgs.length ? msgs.join(" ") : "No matching timetable actions returned.";
+      } catch (err) {
+        statusEl.textContent = err.message;
+      }
+    });
+  }
+
+  return {
+    mountDock,
+    applyStaggeredCardAnimations,
+    highlightModifiedSlots,
+    triggerConflictAnimation,
+    persistAndRefresh,
+    findBestSubstitutes,
+    autoFillUnassignedSlots,
+    runGeminiCommand
+  };
+})();
+
+document.addEventListener("DOMContentLoaded", () => {
+  KvsAiEngine.mountDock();
+});
+</script>
 
 </body>
 </html>

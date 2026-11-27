@@ -7680,10 +7680,58 @@ function executeActions(actions = []) {
     return results;
   }
 
+function tryLocalCommandParser(promptText) {
+    const text = promptText.trim();
+
+    // 1. Local Substitution Command: "find substitute for class 1a monday p1" or "find substitution for 5-a monday"
+    const subMatch = text.match(/substitut\w*.*?\b([1-5]\s*-?\s*[a-j])\b.*?\b(mon|tue|wed|thu|fri|sat)\w*(?:.*?\bp?\s*([1-8])\b)?/i);
+    if (subMatch) {
+      return executeActions([{
+        type: "FIND_SUBSTITUTE",
+        className: subMatch[1],
+        day: subMatch[2],
+        period: subMatch[3] ? Number(subMatch[3]) : null
+      }]);
+    }
+
+    // 2. Local Swap Command: "swap p3 and p5 for 5-a on tuesday"
+    const swapMatch = text.match(/swap\s+p?([1-8])\s+(?:and|&|with)\s+p?([1-8]).*?\b([1-5]\s*-?\s*[a-j])\b.*?\b(mon|tue|wed|thu|fri|sat)\w*/i);
+    if (swapMatch) {
+      return executeActions([{
+        type: "SWAP_PERIODS",
+        periodA: Number(swapMatch[1]),
+        periodB: Number(swapMatch[2]),
+        className: swapMatch[3],
+        day: swapMatch[4]
+      }]);
+    }
+
+    // 3. Local Assign Command: "assign ss to 2-a wednesday p2 math"
+    const assignMatch = text.match(/assign\s+([a-z0-9]+)\s+(?:to|for)\s+\b([1-5]\s*-?\s*[a-j])\b.*?\b(mon|tue|wed|thu|fri|sat)\w*.*?\bp?\s*([1-8])\b(?:\s+([a-z.]+))?/i);
+    if (assignMatch) {
+      return executeActions([{
+        type: "ASSIGN_TEACHER",
+        teacherShort: assignMatch[1],
+        className: assignMatch[2],
+        day: assignMatch[3],
+        period: Number(assignMatch[4]),
+        subject: assignMatch[5] || ""
+      }]);
+    }
+
+    return null;
+  }
+
   async function runGeminiCommand(promptText) {
+    // Fast-path: Execute standard substitute/swap/assign commands locally with zero latency & zero 503 errors
+    const localResult = tryLocalCommandParser(promptText);
+    if (localResult) {
+      return localResult;
+    }
+
     const apiKey = localStorage.getItem(STORAGE_KEY_API);
     if (!apiKey) {
-      throw new Error("Click 'API Key' first to save your Gemini API key locally.");
+      throw new Error("Click 'API Key' first to save your Gemini API key locally (or use commands like 'find substitute for 1-A Monday P1').");
     }
 
     const teacherList = state.teachers.map(t => `${t.shortName} (${t.name})`).join(", ");
@@ -7699,26 +7747,43 @@ function executeActions(actions = []) {
       "Return ONLY valid JSON."
     ].join(" ");
 
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents: [{ role: "user", parts: [{ text: promptText }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.1
-          }
-        })
-      }
-    );
+    const candidateModels = ["gemini-3.8-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite"];
+    let lastError = "";
 
-    if (!resp.ok) {
-      const errBody = await resp.text();
-      throw new Error(`Gemini API error (${resp.status}): ${errBody}`);
+    for (const modelName of candidateModels) {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            contents: [{ role: "user", parts: [{ text: promptText }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.1
+            }
+          })
+        }
+      );
+
+      if (resp.ok) {
+        const data = await resp.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+        const parsed = JSON.parse(rawText);
+        const actions = Array.isArray(parsed) ? parsed : [parsed];
+        return executeActions(actions);
+      }
+
+      lastError = await resp.text();
+      // Retry next model automatically if 503 (high demand) or 404 (model unavailable)
+      if (resp.status !== 503 && resp.status !== 404) {
+        throw new Error(`Gemini API error (${resp.status}): ${lastError}`);
+      }
     }
+
+    throw new Error(`All Gemini models temporarily busy (503). Try a direct command like "find substitute for 1-A Monday P1".`);
+  }
 
     const data = await resp.json();
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";

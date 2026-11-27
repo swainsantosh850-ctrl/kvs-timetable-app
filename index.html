@@ -402,6 +402,119 @@ header, main {
     box-shadow: none !important;
   }
 }
+   /* === Colorful Cartoon 3D Background & Motion === */
+#kvs-cartoon-3d-scene {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  perspective: 1100px;
+  transform-style: preserve-3d;
+  background:
+    radial-gradient(circle at 14% 16%, rgba(251, 191, 36, 0.34) 0%, transparent 34%),
+    radial-gradient(circle at 86% 18%, rgba(56, 189, 248, 0.32) 0%, transparent 36%),
+    radial-gradient(circle at 78% 82%, rgba(52, 211, 153, 0.28) 0%, transparent 38%),
+    linear-gradient(155deg, #fffbeb 0%, #eff6ff 48%, #f0fdf4 100%);
+}
+
+/* Cartoon 3D Sun / Burst */
+.kvs-cartoon-sun {
+  position: absolute;
+  top: 28px;
+  right: 6%;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 32%, #fef08a 0%, #facc15 55%, #f59e0b 100%);
+  box-shadow: 0 0 0 10px rgba(250, 204, 21, 0.16), 0 12px 28px rgba(245, 158, 11, 0.25);
+  animation: kvsSunSpin 28s linear infinite;
+}
+
+@keyframes kvsSunSpin {
+  0% { transform: translateZ(-80px) rotate(0deg) scale(1); }
+  50% { transform: translateZ(-50px) rotate(180deg) scale(1.06); }
+  100% { transform: translateZ(-80px) rotate(360deg) scale(1); }
+}
+
+/* Layered 3D Cartoon Hills along the Bottom */
+.kvs-cartoon-hill {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -48px;
+  height: 155px;
+  border-radius: 55% 45% 0 0 / 75% 75% 0 0;
+  will-change: transform;
+}
+
+.kvs-cartoon-hill.back {
+  bottom: -36px;
+  height: 170px;
+  background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%);
+  opacity: 0.36;
+  animation: kvsHillWaveBack 9s ease-in-out infinite alternate;
+}
+
+.kvs-cartoon-hill.front {
+  bottom: -54px;
+  height: 145px;
+  background: linear-gradient(180deg, #86efac 0%, #34d399 100%);
+  opacity: 0.42;
+  animation: kvsHillWaveFront 6.5s ease-in-out infinite alternate;
+}
+
+@keyframes kvsHillWaveBack {
+  0% { transform: translate3d(-18px, 0, -120px) rotate(-0.8deg); }
+  100% { transform: translate3d(18px, -6px, -120px) rotate(0.8deg); }
+}
+
+@keyframes kvsHillWaveFront {
+  0% { transform: translate3d(16px, 0, -40px) rotate(0.9deg); }
+  100% { transform: translate3d(-16px, -5px, -40px) rotate(-0.9deg); }
+}
+
+/* 3D Animated Cartoon Characters & Props */
+.kvs-cartoon-3d-prop {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(4px);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 6px 0 rgba(15, 23, 42, 0.12),
+    0 14px 24px rgba(30, 58, 138, 0.14);
+  opacity: 0.52;
+  user-select: none;
+  will-change: transform;
+  transform-style: preserve-3d;
+  animation: kvsCartoon3DFloat var(--dur, 10s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes kvsCartoon3DFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, var(--z, 0px)) rotateX(6deg) rotateY(-12deg) rotateZ(-3deg);
+  }
+  25% {
+    transform: translate3d(var(--mx, 18px), calc(var(--my, -16px) * 0.7), calc(var(--z, 0px) + 35px)) rotateX(-5deg) rotateY(14deg) rotateZ(4deg);
+  }
+  50% {
+    transform: translate3d(calc(var(--mx, 18px) * -0.5), var(--my, -16px), calc(var(--z, 0px) + 15px)) rotateX(8deg) rotateY(4deg) rotateZ(-2deg);
+  }
+  75% {
+    transform: translate3d(calc(var(--mx, 18px) * 0.8), calc(var(--my, -16px) * -0.5), calc(var(--z, 0px) + 45px)) rotateX(-6deg) rotateY(-10deg) rotateZ(3deg);
+  }
+}
+
+@media print {
+  #kvs-cartoon-3d-scene {
+    display: none !important;
+  }
+} 
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
@@ -8147,6 +8260,141 @@ if (document.readyState === "loading") {
     enforceOwnerCreditInPrints();
   }
 })();
+</script>
+  <script>
+const KvsCartoon3DBackground = (() => {
+  const SLIDE_PROPS = {
+    1: [
+      { icon: "👩‍🏫", bg: "#fef3c7", top: "16%", left: "6%", size: 46, z: 30, mx: 20, my: -14, dur: 9 },
+      { icon: "🏫", bg: "#dbeafe", top: "24%", left: "84%", size: 50, z: 20, mx: -18, my: -12, dur: 11 },
+      { icon: "🪪", bg: "#dcfce7", top: "58%", left: "8%", size: 42, z: 40, mx: 16, my: 14, dur: 8.5 },
+      { icon: "🔔", bg: "#fce7f3", top: "64%", left: "87%", size: 42, z: 25, mx: -15, my: -16, dur: 10.5 }
+    ],
+    2: [
+      { icon: "📊", bg: "#e0e7ff", top: "18%", left: "7%", size: 46, z: 35, mx: 18, my: -12, dur: 9.5 },
+      { icon: "🧩", bg: "#ffedd5", top: "26%", left: "85%", size: 46, z: 25, mx: -20, my: 14, dur: 10 },
+      { icon: "🎯", bg: "#ccfbf1", top: "62%", left: "6%", size: 42, z: 30, mx: 14, my: -18, dur: 8 },
+      { icon: "📚", bg: "#fef9c3", top: "66%", left: "86%", size: 44, z: 45, mx: -16, my: -10, dur: 11.5 }
+    ],
+    3: [
+      { icon: "📐", bg: "#dbeafe", top: "17%", left: "6%", size: 46, z: 40, mx: 20, my: -15, dur: 9 },
+      { icon: "🌍", bg: "#d1fae5", top: "22%", left: "85%", size: 48, z: 30, mx: -18, my: -12, dur: 12 },
+      { icon: "🎨", bg: "#fce7f3", top: "60%", left: "7%", size: 44, z: 25, mx: 16, my: 12, dur: 8.5 },
+      { icon: "⚽", bg: "#fef3c7", top: "65%", left: "86%", size: 44, z: 50, mx: -20, my: -16, dur: 7.5 }
+    ],
+    4: [
+      { icon: "🗓️", bg: "#e0f2fe", top: "18%", left: "6%", size: 46, z: 35, mx: 18, my: -14, dur: 10 },
+      { icon: "⏰", bg: "#fef08a", top: "25%", left: "85%", size: 46, z: 25, mx: -16, my: 12, dur: 9 },
+      { icon: "🎒", bg: "#ede9fe", top: "62%", left: "7%", size: 44, z: 30, mx: 15, my: -12, dur: 11 },
+      { icon: "✏️", bg: "#dcfce7", top: "66%", left: "86%", size: 42, z: 40, mx: -18, my: -14, dur: 8.5 }
+    ],
+    5: [
+      { icon: "🧑‍🏫", bg: "#fef3c7", top: "17%", left: "6%", size: 46, z: 35, mx: 18, my: -14, dur: 9.5 },
+      { icon: "🔄", bg: "#cffafe", top: "25%", left: "85%", size: 46, z: 30, mx: -20, my: 14, dur: 8 },
+      { icon: "⭐", bg: "#fef9c3", top: "60%", left: "7%", size: 44, z: 45, mx: 16, my: -16, dur: 10.5 },
+      { icon: "📋", bg: "#dcfce7", top: "66%", left: "86%", size: 42, z: 25, mx: -14, my: 12, dur: 9 }
+    ],
+    6: [
+      { icon: "📅", bg: "#dbeafe", top: "18%", left: "6%", size: 46, z: 35, mx: 18, my: -14, dur: 10 },
+      { icon: "🏅", bg: "#fef3c7", top: "25%", left: "85%", size: 46, z: 40, mx: -18, my: 12, dur: 9 },
+      { icon: "🎓", bg: "#e0e7ff", top: "62%", left: "7%", size: 44, z: 25, mx: 15, my: -14, dur: 11 },
+      { icon: "🌟", bg: "#fce7f3", top: "66%", left: "86%", size: 42, z: 30, mx: -16, my: -12, dur: 8.5 }
+    ],
+    7: [
+      { icon: "🖨️", bg: "#e0f2fe", top: "18%", left: "6%", size: 46, z: 35, mx: 18, my: -14, dur: 9.5 },
+      { icon: "📄", bg: "#fef9c3", top: "25%", left: "85%", size: 46, z: 25, mx: -16, my: 12, dur: 10.5 },
+      { icon: "✨", bg: "#fce7f3", top: "62%", left: "7%", size: 44, z: 40, mx: 15, my: -12, dur: 8 },
+      { icon: "🏫", bg: "#dcfce7", top: "66%", left: "86%", size: 44, z: 30, mx: -18, my: -14, dur: 11 }
+    ]
+  };
+
+  let enabled = localStorage.getItem("kvs_cartoon_3d_bg") !== "false";
+
+  function renderScene(slideNum = 1) {
+    let scene = document.getElementById("kvs-cartoon-3d-scene");
+    if (!enabled) {
+      if (scene) scene.remove();
+      return;
+    }
+
+    if (!scene) {
+      scene = document.createElement("div");
+      scene.id = "kvs-cartoon-3d-scene";
+      scene.className = "no-print";
+      document.body.prepend(scene);
+    }
+
+    const props = SLIDE_PROPS[slideNum] || SLIDE_PROPS[3];
+    const propHtml = props.map((p, idx) => `
+      <div class="kvs-cartoon-3d-prop"
+           style="top:${p.top};left:${p.left};width:${p.size + 18}px;height:${p.size + 18}px;font-size:${p.size}px;background:${p.bg};--z:${p.z}px;--mx:${p.mx}px;--my:${p.my}px;--dur:${p.dur}s;--delay:-${idx * 1.6}s;">
+        ${p.icon}
+      </div>
+    `).join("");
+
+    scene.innerHTML = `
+      <div class="kvs-cartoon-sun"></div>
+      ${propHtml}
+      <div class="kvs-cartoon-hill back"></div>
+      <div class="kvs-cartoon-hill front"></div>
+    `;
+  }
+
+  function bindParallax() {
+    if (window._kvsCartoonParallaxBound) return;
+    window._kvsCartoonParallaxBound = true;
+
+    window.addEventListener("pointermove", (e) => {
+      if (!enabled) return;
+      const scene = document.getElementById("kvs-cartoon-3d-scene");
+      if (!scene) return;
+      const nx = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 18;
+      const ny = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 14;
+      scene.style.transform = `translate3d(${(-nx * 0.4).toFixed(1)}px, ${(-ny * 0.4).toFixed(1)}px, 0) rotateY(${(nx * 0.25).toFixed(1)}deg) rotateX(${(-ny * 0.25).toFixed(1)}deg)`;
+    }, { passive: true });
+  }
+
+  function mountToggleButton() {
+    const actionsBar = document.querySelector("header .flex.items-center.flex-wrap.gap-2");
+    if (!actionsBar || document.getElementById("btn-toggle-cartoon-3d")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "btn-toggle-cartoon-3d";
+    btn.type = "button";
+    btn.className = "kvs-3d-key px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition flex items-center gap-1.5";
+    btn.innerHTML = `<i class="ph-bold ph-rainbow text-sm"></i><span>${enabled ? "Cartoon 3D: ON" : "Cartoon 3D: OFF"}</span>`;
+    btn.addEventListener("click", () => {
+      enabled = !enabled;
+      localStorage.setItem("kvs_cartoon_3d_bg", String(enabled));
+      btn.querySelector("span").textContent = enabled ? "Cartoon 3D: ON" : "Cartoon 3D: OFF";
+      renderScene(window.state?.activeSlide || 1);
+    });
+    actionsBar.prepend(btn);
+  }
+
+  function init() {
+    mountToggleButton();
+    renderScene(window.state?.activeSlide || 1);
+    bindParallax();
+
+    if (typeof window.goToSlide === "function" && !window.goToSlide._kvsCartoonWrapped) {
+      const prevGoToSlide = window.goToSlide;
+      window.goToSlide = function(slideNum) {
+        prevGoToSlide.apply(this, arguments);
+        renderScene(slideNum);
+      };
+      window.goToSlide._kvsCartoonWrapped = true;
+    }
+  }
+
+  return { init, renderScene };
+})();
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => KvsCartoon3DBackground.init());
+} else {
+  KvsCartoon3DBackground.init();
+}
 </script>
 </body>
 </html>

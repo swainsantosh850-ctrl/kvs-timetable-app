@@ -288,6 +288,120 @@
         opacity: 1 !important;
       }
     }
+    /* === 3D Tactile Keys & Floating Educational Motion Layer === */
+.kvs-3d-key {
+  position: relative;
+  transform: translateY(0);
+  box-shadow: 0 4px 0 rgba(15, 23, 42, 0.28), 0 6px 12px rgba(15, 23, 42, 0.14);
+  transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.08s ease, filter 0.18s ease;
+  will-change: transform;
+}
+
+.kvs-3d-key:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(15, 23, 42, 0.28), 0 10px 16px rgba(15, 23, 42, 0.18);
+  filter: brightness(1.04);
+}
+
+.kvs-3d-key:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.32), 0 2px 4px rgba(15, 23, 42, 0.12);
+}
+
+/* 3D Period Slot Keycap */
+.kvs-slot-3d {
+  position: relative;
+  border-bottom-width: 3px !important;
+  box-shadow: 0 3px 0 rgba(15, 23, 42, 0.16), 0 4px 8px rgba(15, 23, 42, 0.08);
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease;
+}
+
+.kvs-slot-3d:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 5px 0 rgba(15, 23, 42, 0.18), 0 8px 14px rgba(15, 23, 42, 0.12);
+}
+
+.kvs-slot-3d:active {
+  transform: translateY(2px) scale(0.99);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.2);
+}
+
+/* Subject Picture Micro-Animations inside Period Keys */
+@keyframes kvsIconFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2.5px) rotate(4deg); }
+}
+
+@keyframes kvsIconBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+@keyframes kvsIconSpinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.kvs-subj-pic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  margin-bottom: 2px;
+  animation: kvsIconFloat 2.8s ease-in-out infinite;
+}
+
+.kvs-subj-pic.sport { animation: kvsIconBounce 1.8s ease-in-out infinite; }
+.kvs-subj-pic.science { animation: kvsIconSpinSlow 14s linear infinite; }
+
+/* Ambient Moving Educational Backdrop Layer */
+#kvs-motion-backdrop {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.kvs-floating-sticker {
+  position: absolute;
+  opacity: 0.13;
+  user-select: none;
+  will-change: transform;
+  animation: kvsDriftAcross var(--dur, 24s) ease-in-out infinite alternate;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes kvsDriftAcross {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-6deg) scale(1);
+  }
+  50% {
+    transform: translate3d(var(--dx, 35px), var(--dy, -28px), 0) rotate(6deg) scale(1.06);
+  }
+  100% {
+    transform: translate3d(calc(var(--dx, 35px) * -0.6), calc(var(--dy, -28px) * 0.8), 0) rotate(-4deg) scale(0.98);
+  }
+}
+
+/* Keep main UI above ambient motion backdrop */
+header, main {
+  position: relative;
+  z-index: 10;
+}
+
+@media print {
+  #kvs-motion-backdrop,
+  .kvs-subj-pic {
+    display: none !important;
+  }
+  .kvs-3d-key,
+  .kvs-slot-3d {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
@@ -7605,7 +7719,7 @@ const KvsAiEngine = (() => {
       .sort((a, b) => b.score - a.score);
   }
 
-function executeActions(actions = []) {
+  function executeActions(actions = []) {
     if (state.isViewOnly) {
       throw new Error("View-Only Mode: Log in as School Admin or Super Admin to apply AI edits.");
     }
@@ -7680,10 +7794,9 @@ function executeActions(actions = []) {
     return results;
   }
 
-function tryLocalCommandParser(promptText) {
+  function tryLocalCommandParser(promptText) {
     const text = promptText.trim();
 
-    // 1. Local Substitution Command: "find substitute for class 1a monday p1" or "find substitution for 5-a monday"
     const subMatch = text.match(/substitut\w*.*?\b([1-5]\s*-?\s*[a-j])\b.*?\b(mon|tue|wed|thu|fri|sat)\w*(?:.*?\bp?\s*([1-8])\b)?/i);
     if (subMatch) {
       return executeActions([{
@@ -7694,7 +7807,6 @@ function tryLocalCommandParser(promptText) {
       }]);
     }
 
-    // 2. Local Swap Command: "swap p3 and p5 for 5-a on tuesday"
     const swapMatch = text.match(/swap\s+p?([1-8])\s+(?:and|&|with)\s+p?([1-8]).*?\b([1-5]\s*-?\s*[a-j])\b.*?\b(mon|tue|wed|thu|fri|sat)\w*/i);
     if (swapMatch) {
       return executeActions([{
@@ -7706,7 +7818,6 @@ function tryLocalCommandParser(promptText) {
       }]);
     }
 
-    // 3. Local Assign Command: "assign ss to 2-a wednesday p2 math"
     const assignMatch = text.match(/assign\s+([a-z0-9]+)\s+(?:to|for)\s+\b([1-5]\s*-?\s*[a-j])\b.*?\b(mon|tue|wed|thu|fri|sat)\w*.*?\bp?\s*([1-8])\b(?:\s+([a-z.]+))?/i);
     if (assignMatch) {
       return executeActions([{
@@ -7723,7 +7834,6 @@ function tryLocalCommandParser(promptText) {
   }
 
   async function runGeminiCommand(promptText) {
-    // Fast-path: Execute standard substitute/swap/assign commands locally with zero latency & zero 503 errors
     const localResult = tryLocalCommandParser(promptText);
     if (localResult) {
       return localResult;
@@ -7748,7 +7858,6 @@ function tryLocalCommandParser(promptText) {
     ].join(" ");
 
     const candidateModels = ["gemini-3.8-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite"];
-    let lastError = "";
 
     for (const modelName of candidateModels) {
       const resp = await fetch(
@@ -7775,21 +7884,13 @@ function tryLocalCommandParser(promptText) {
         return executeActions(actions);
       }
 
-      lastError = await resp.text();
-      // Retry next model automatically if 503 (high demand) or 404 (model unavailable)
+      const errBody = await resp.text();
       if (resp.status !== 503 && resp.status !== 404) {
-        throw new Error(`Gemini API error (${resp.status}): ${lastError}`);
+        throw new Error(`Gemini API error (${resp.status}): ${errBody}`);
       }
     }
 
     throw new Error(`All Gemini models temporarily busy (503). Try a direct command like "find substitute for 1-A Monday P1".`);
-  }
-
-    const data = await resp.json();
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-    const parsed = JSON.parse(rawText);
-    const actions = Array.isArray(parsed) ? parsed : [parsed];
-    return executeActions(actions);
   }
 
   function mountDock() {
@@ -7862,6 +7963,154 @@ if (document.readyState === "loading") {
   KvsAiEngine.mountDock();
 }
 </script>
+<script>
+const KvsMotion3DEngine = (() => {
+  const SUBJECT_VISUALS = {
+    MATH: { icon: "📐", anim: "" },
+    ENG: { icon: "📘", anim: "" },
+    HIN: { icon: "🪷", anim: "" },
+    TWAU: { icon: "🌍", anim: "science" },
+    EVS: { icon: "🌱", anim: "" },
+    PE: { icon: "⚽", anim: "sport" },
+    "K.GAMES": { icon: "🏸", anim: "sport" },
+    "K.YOGA": { icon: "🧘", anim: "" },
+    "V.ART": { icon: "🎨", anim: "" },
+    "P.ART": { icon: "🎭", anim: "" },
+    MUSIC: { icon: "🎵", anim: "" },
+    LIB: { icon: "📚", anim: "" },
+    GDN: { icon: "🌻", anim: "" },
+    CLA: { icon: "✨", anim: "" },
+    DL: { icon: "💻", anim: "" },
+    COMP: { icon: "🖥️", anim: "" }
+  };
 
+  const SLIDE_STICKERS = {
+    1: ["🏫", "👩‍🏫", "👨‍🏫", "📋", "🪪", "🔔"],
+    2: ["📊", "📚", "⚖️", "🧩", "📝", "🎯"],
+    3: ["📐", "🌍", "📘", "🎨", "⚽", "🌻"],
+    4: ["🗓️", "⏰", "🔔", "📖", "✏️", "🎒"],
+    5: ["🧑‍🏫", "🔄", "⭐", "📋", "🏫", "🕒"],
+    6: ["📅", "🌟", "📘", "🎓", "✏️", "🏅"],
+    7: ["🖨️", "📄", "🏫", "✨", "📌", "🕒"]
+  };
+
+  let motionEnabled = localStorage.getItem("kvs_motion_enabled") !== "false";
+
+  function apply3DKeys() {
+    // Upgrade top nav pills, action buttons, and AI buttons into tactile 3D keys
+    const selectors = [
+      "header nav button",
+      "header button",
+      "#slide3-class-pills button",
+      "#slide4-day-pills button",
+      "#slide5-day-pills button",
+      "#slide5-sub-period-pills button",
+      ".kvs-ai-btn"
+    ];
+    document.querySelectorAll(selectors.join(",")).forEach((btn) => {
+      if (!btn.classList.contains("kvs-3d-key")) {
+        btn.classList.add("kvs-3d-key");
+      }
+    });
+
+    // Upgrade period cells into 3D keycaps with suitable moving subject icons
+    document.querySelectorAll(".kvs-slot-cell, #slide3-tables-container td button, #slide4-tables-container td button, #slide5-teachers-tbody td button, #slide6-teacher-grid-body td button").forEach((cell) => {
+      cell.classList.add("kvs-slot-3d");
+
+      // Add moving picture badge above subject code if not already added
+      if (cell.dataset.picApplied === "1") return;
+      const lines = cell.querySelectorAll("div");
+      if (lines.length >= 2) {
+        const subjCode = lines[0].textContent.trim().toUpperCase();
+        const match = SUBJECT_VISUALS[subjCode] || { icon: "📖", anim: "" };
+        const picSpan = document.createElement("span");
+        picSpan.className = `kvs-subj-pic ${match.anim}`;
+        picSpan.textContent = match.icon;
+        cell.prepend(picSpan);
+        cell.dataset.picApplied = "1";
+      }
+    });
+  }
+
+  function renderFloatingBackdrop(slideNum = 1) {
+    let backdrop = document.getElementById("kvs-motion-backdrop");
+    if (!motionEnabled) {
+      if (backdrop) backdrop.remove();
+      return;
+    }
+
+    if (!backdrop) {
+      backdrop = document.createElement("div");
+      backdrop.id = "kvs-motion-backdrop";
+      backdrop.className = "no-print";
+      document.body.prepend(backdrop);
+    }
+
+    const icons = SLIDE_STICKERS[slideNum] || SLIDE_STICKERS[3];
+    backdrop.innerHTML = icons.map((emoji, i) => {
+      const top = 12 + ((i * 17) % 76);
+      const left = 5 + ((i * 19) % 88);
+      const size = 26 + (i % 3) * 10;
+      const dur = 18 + (i % 4) * 5;
+      const dx = (i % 2 === 0 ? 1 : -1) * (25 + i * 6);
+      const dy = (i % 3 === 0 ? -1 : 1) * (20 + i * 5);
+      return `<div class="kvs-floating-sticker" style="top:${top}%;left:${left}%;font-size:${size}px;--dur:${dur}s;--delay:-${i * 2}s;--dx:${dx}px;--dy:${dy}px;">${emoji}</div>`;
+    }).join("");
+  }
+
+  function mountMotionToggle() {
+    const headerActions = document.querySelector("header .flex.items-center.flex-wrap.gap-2");
+    if (!headerActions || document.getElementById("btn-toggle-3d-motion")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "btn-toggle-3d-motion";
+    btn.type = "button";
+    btn.className = "kvs-3d-key px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white transition flex items-center gap-1.5";
+    btn.innerHTML = `<i class="ph-bold ph-cube text-sm"></i><span>${motionEnabled ? "3D Motion: ON" : "3D Motion: OFF"}</span>`;
+    btn.addEventListener("click", () => {
+      motionEnabled = !motionEnabled;
+      localStorage.setItem("kvs_motion_enabled", String(motionEnabled));
+      btn.querySelector("span").textContent = motionEnabled ? "3D Motion: ON" : "3D Motion: OFF";
+      renderFloatingBackdrop(window.state?.activeSlide || 1);
+      apply3DKeys();
+    });
+    headerActions.prepend(btn);
+  }
+
+  function init() {
+    mountMotionToggle();
+    renderFloatingBackdrop(window.state?.activeSlide || 1);
+    apply3DKeys();
+
+    // Automatically re-apply 3D keys & subject pictures whenever grids re-render
+    const mainEl = document.querySelector("main");
+    if (mainEl) {
+      const observer = new MutationObserver(() => {
+        apply3DKeys();
+      });
+      observer.observe(mainEl, { childList: true, subtree: true });
+    }
+
+    // Hook slide navigation so floating pictures match the active slide's theme
+    if (typeof window.goToSlide === "function" && !window.goToSlide._kvs3dWrapped) {
+      const origGoToSlide = window.goToSlide;
+      window.goToSlide = function(slideNum) {
+        origGoToSlide.apply(this, arguments);
+        renderFloatingBackdrop(slideNum);
+        apply3DKeys();
+      };
+      window.goToSlide._kvs3dWrapped = true;
+    }
+  }
+
+  return { init, apply3DKeys, renderFloatingBackdrop };
+})();
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => KvsMotion3DEngine.init());
+} else {
+  KvsMotion3DEngine.init();
+}
+</script>
 </body>
 </html>

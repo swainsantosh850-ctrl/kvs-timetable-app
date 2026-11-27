@@ -8465,31 +8465,31 @@ if (document.readyState === "loading") {
   }
 })();
 </script>
-  <!-- User Self-Declaration & Own-Risk Modal -->
-<div id="user-declaration-modal" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-xs items-center justify-center p-4 no-print">
-  <div class="bg-white rounded-3xl border border-slate-200 w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+<!-- User Self-Declaration & Own-Risk Modal -->
+<div id="user-declaration-modal" style="display: none;" class="fixed inset-0 z-[9999] bg-slate-900/85 backdrop-blur-sm items-center justify-center p-4 no-print">
+  <div class="bg-white rounded-3xl border-2 border-indigo-200 w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
       <div>
         <h3 class="text-base font-extrabold text-slate-900">User Self-Declaration & Own-Risk Notice</h3>
-        <p class="text-xs text-slate-500">Developed & Owned by Mr. Santosh Swain, PRT</p>
+        <p class="text-xs font-bold text-indigo-600">Developed & Owned by Mr. Santosh Swain, PRT</p>
       </div>
-      <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-800">Required</span>
+      <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">Mandatory</span>
     </div>
 
     <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-2 leading-relaxed">
-      <p><strong>1. Own Risk:</strong> You use this application entirely at your own risk and must verify all timetables and substitutions before official use.</p>
-      <p><strong>2. User Details:</strong> You agree to provide your own required details (name, designation, school/workspace info, or keys) whenever prompted and keep your credentials/data safe.</p>
-      <p><strong>3. App Ownership:</strong> This application is developed and owned by <strong>Mr. Santosh Swain, PRT</strong>, provided as-is without liability for user data or schedule outcomes.</p>
+      <p><strong>1. Voluntary Use & Own Risk:</strong> You are accessing and using this application voluntarily and entirely at your own risk. You are solely responsible for verifying all generated timetables, substitutions, allocations, and printouts before official school use.</p>
+      <p><strong>2. User-Provided Details:</strong> You agree to provide accurate details (your name, designation, school/workspace details, pass keys, and schedule inputs) whenever needed by the app and to safeguard your own credentials and data.</p>
+      <p><strong>3. Sole Developer & No Liability:</strong> This application is developed and owned solely by <strong>Mr. Santosh Swain, PRT</strong>, provided as-is without warranty or liability for user-entered data or scheduling outcomes.</p>
     </div>
 
     <div class="space-y-3">
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Your Full Name & Designation (Required)</label>
-        <input type="text" id="ud-user-name" placeholder="Enter your name & designation" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <label class="block text-xs font-bold text-slate-800 mb-1">Your Full Name & Designation <span class="text-rose-600">*</span></label>
+        <input type="text" id="ud-user-name" placeholder="e.g. R. Sharma, PRT / In-Charge" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">School / Workspace Details (Provided when needed)</label>
-        <input type="text" id="ud-user-school" placeholder="Enter school name / session / workspace" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <label class="block text-xs font-bold text-slate-800 mb-1">School / Workspace Details <span class="text-rose-600">*</span></label>
+        <input type="text" id="ud-user-school" placeholder="e.g. PM SHRI KV / Session 2026-27" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
       <label class="flex items-start gap-2.5 pt-1 text-xs font-bold text-slate-800 cursor-pointer">
         <input type="checkbox" id="ud-agree-checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
@@ -8498,13 +8498,16 @@ if (document.readyState === "loading") {
       <p id="ud-error-msg" class="text-xs font-bold text-rose-600 hidden"></p>
     </div>
 
-    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-      <button type="button" onclick="declineUserDeclaration()" class="px-4 py-2 rounded-xl text-xs font-bold border border-slate-200 text-slate-600 hover:bg-slate-100 transition">
-        Decline
-      </button>
-      <button type="button" onclick="submitUserDeclaration()" class="px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
-        Self-Declare & Continue
-      </button>
+    <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+      <span id="ud-status-badge" class="text-[11px] font-semibold text-slate-500">Acceptance required to unlock app</span>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="declineUserDeclaration()" class="kvs-3d-key px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
+          Decline
+        </button>
+        <button type="button" onclick="submitUserDeclaration()" class="kvs-3d-key px-5 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white transition shadow-xs">
+          Self-Declare & Continue
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -8513,79 +8516,32 @@ if (document.readyState === "loading") {
 (() => {
   const DECL_STORAGE_KEY = "kvs_user_self_declaration_v1";
 
-  window.openUserDeclarationModal = function(onAcceptedCallback = null) {
+  function getDeclarationRecord() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DECL_STORAGE_KEY) || "null");
+      return (saved && saved.accepted && saved.name && saved.school) ? saved : null;
+    } catch {
+      return null;
+    }
+  }
+
+  window.hasUserSelfDeclared = function() {
+    return Boolean(getDeclarationRecord());
+  };
+
+  window.openUserDeclarationModal = function(onAcceptedCallback = null, customPromptNote = "") {
     window._kvsOnDeclarationAccepted = typeof onAcceptedCallback === "function" ? onAcceptedCallback : null;
-    const saved = JSON.parse(localStorage.getItem(DECL_STORAGE_KEY) || "null");
+    const saved = getDeclarationRecord();
     if (saved) {
       const nameEl = document.getElementById("ud-user-name");
       const schoolEl = document.getElementById("ud-user-school");
       const chkEl = document.getElementById("ud-agree-checkbox");
-      if (nameEl && saved.name) nameEl.value = saved.name;
-      if (schoolEl && saved.school) schoolEl.value = saved.school;
-      if (chkEl) chkEl.checked = Boolean(saved.accepted);
+      if (nameEl) nameEl.value = saved.name;
+      if (schoolEl) schoolEl.value = saved.school;
+      if (chkEl) chkEl.checked = true;
     }
-    const errEl = document.getElementById("ud-error-msg");
-    if (errEl) errEl.classList.add("hidden");
-    const modal = document.getElementById("user-declaration-modal");
-    if (modal) modal.style.display = "flex";
-  };
-
-  window.closeUserDeclarationModal = function() {
-    const modal = document.getElementById("user-declaration-modal");
-    if (modal) modal.style.display = "none";
-  };
-
-  window.declineUserDeclaration = function() {
-    localStorage.removeItem(DECL_STORAGE_KEY);
-    closeUserDeclarationModal();
-    if (typeof showNotification === "function") {
-      showNotification("Declaration declined. You must self-declare to use the app.", "warning");
-    }
-  };
-
-  window.submitUserDeclaration = function() {
-    const name = (document.getElementById("ud-user-name")?.value || "").trim();
-    const school = (document.getElementById("ud-user-school")?.value || "").trim();
-    const accepted = Boolean(document.getElementById("ud-agree-checkbox")?.checked);
-    const errEl = document.getElementById("ud-error-msg");
-
-    if (!name || !accepted) {
-      if (errEl) {
-        errEl.textContent = "Please enter your name/designation and check the self-declaration box to continue.";
-        errEl.classList.remove("hidden");
-      }
-      return;
-    }
-
-    const record = {
-      name,
-      school,
-      accepted: true,
-      owner: "Mr. Santosh Swain, PRT",
-      declaredAt: new Date().toISOString()
-    };
-    localStorage.setItem(DECL_STORAGE_KEY, JSON.stringify(record));
-    closeUserDeclarationModal();
-
-    if (typeof showNotification === "function") {
-      showNotification(`Self-declaration recorded for ${name} (Own-risk mode).`, "success");
-    }
-    if (window._kvsOnDeclarationAccepted) {
-      const fn = window._kvsOnDeclarationAccepted;
-      window._kvsOnDeclarationAccepted = null;
-      fn(record);
-    }
-  };
-
-  window.hasUserSelfDeclared = function() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(DECL_STORAGE_KEY) || "null");
-      return Boolean(saved && saved.accepted && saved.name);
-    } catch {
-      return false;
-    }
-  };
-})();
-</script>
+    const badgeEl = document.getElementById("ud-status-badge");
+    if (badgeEl) {
+      badgeEl.textContent = customPromptNote || (
 </body>
 </html>

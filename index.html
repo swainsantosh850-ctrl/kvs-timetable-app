@@ -8112,5 +8112,41 @@ if (document.readyState === "loading") {
   KvsMotion3DEngine.init();
 }
 </script>
+  <script>
+(() => {
+  const OWNER_CREDIT = "Developed by Mr. Santosh Swain, PRT";
+
+  function mountOwnerFooter() {
+    if (document.getElementById("kvs-owner-footer")) return;
+    const footer = document.createElement("footer");
+    footer.id = "kvs-owner-footer";
+    footer.className = "no-print mt-8 py-3 px-4 border-t border-slate-200 bg-white/80 text-center text-xs font-bold text-slate-600";
+    footer.textContent = OWNER_CREDIT;
+    document.body.appendChild(footer);
+  }
+
+  function enforceOwnerCreditInPrints() {
+    if (typeof window.renderOfficialFooter === "function" && !window.renderOfficialFooter._ownerWrapped) {
+      const origFooter = window.renderOfficialFooter;
+      window.renderOfficialFooter = function(showClassTeacher = true) {
+        let html = origFooter.apply(this, arguments);
+        html = html.replace(/Prepared By\s*\([^)]*\)/gi, "Prepared By (Mr. Santosh Swain, PRT)");
+        return html;
+      };
+      window.renderOfficialFooter._ownerWrapped = true;
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      mountOwnerFooter();
+      enforceOwnerCreditInPrints();
+    });
+  } else {
+    mountOwnerFooter();
+    enforceOwnerCreditInPrints();
+  }
+})();
+</script>
 </body>
 </html>

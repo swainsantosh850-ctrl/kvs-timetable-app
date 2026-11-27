@@ -8765,14 +8765,13 @@ if (document.readyState === "loading") {
   setTimeout(bootGate, 400);
 })();
 </script>
-  <!-- Realistic 3D Animated KVS Campus Background (Runs Directly via Three.js CDN) -->
+ <!-- Upgraded Realistic-Style 3D Animated KVS Campus Background -->
 <script type="module">
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
 (() => {
   if (document.getElementById("kvs-three-campus-bg")) return;
 
-  // 1. Fixed background container (hidden during @media print)
   const container = document.createElement("div");
   container.id = "kvs-three-campus-bg";
   container.className = "no-print";
@@ -8782,388 +8781,542 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
     zIndex: "0",
     pointerEvents: "none",
     overflow: "hidden",
-    background: "linear-gradient(180deg, #bae6fd 0%, #e0f2fe 52%, #dcfce7 100%)"
+    background: "linear-gradient(180deg, #7dd3fc 0%, #e0f2fe 48%, #fef9c3 82%, #dcfce7 100%)"
   });
   document.body.prepend(container);
 
-  // Ensure print hides the 3D canvas cleanly
   const printStyle = document.createElement("style");
   printStyle.textContent = `@media print { #kvs-three-campus-bg { display: none !important; } }`;
   document.head.appendChild(printStyle);
 
-  // 2. Renderer, Scene & Camera
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.08;
+  renderer.toneMappingExposure = 1.12;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0xdbeafe, 0.014);
+  scene.fog = new THREE.FogExp2(0xe0f2fe, 0.011);
 
-  const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.1, 140);
-  camera.position.set(-4.5, 3.6, 17.5);
-  camera.lookAt(0.5, 2.8, -4);
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 160);
+  camera.position.set(-4.2, 3.1, 16.5);
+  camera.lookAt(0.6, 2.4, -4.5);
 
-  // 3. Morning Sunlight & Sky Hemisphere Lighting
-  const hemiLight = new THREE.HemisphereLight(0xf0f9ff, 0x4d7c0f, 0.95);
+  // Warm Morning Sun + Sky/Ground Bounce Light + Rim Light
+  const hemiLight = new THREE.HemisphereLight(0xf0f9ff, 0x65a30d, 1.05);
   scene.add(hemiLight);
 
-  const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.85);
-  sunLight.position.set(14, 22, 16);
+  const sunLight = new THREE.DirectionalLight(0xfffbeb, 2.2);
+  sunLight.position.set(16, 20, 14);
   sunLight.castShadow = true;
-  sunLight.shadow.mapSize.set(1024, 1024);
+  sunLight.shadow.mapSize.set(2048, 2048);
+  sunLight.shadow.bias = -0.0005;
+  const sCam = 18;
+  sunLight.shadow.camera.left = -sCam;
+  sunLight.shadow.camera.right = sCam;
+  sunLight.shadow.camera.top = sCam;
+  sunLight.shadow.camera.bottom = -sCam;
   sunLight.shadow.camera.near = 2;
   sunLight.shadow.camera.far = 65;
-  const d = 18;
-  sunLight.shadow.camera.left = -d;
-  sunLight.shadow.camera.right = d;
-  sunLight.shadow.camera.top = d;
-  sunLight.shadow.camera.bottom = -d;
   scene.add(sunLight);
 
-  // 4. Procedural Canvas Textures (Brick, KVS Arch Sign, Checkered Shirt, Flag)
-  function makeBrickTexture() {
-    const c = document.createElement("canvas");
-    c.width = 256; c.height = 256;
-    const ctx = c.getContext("2d");
-    ctx.fillStyle = "#b4533c";
-    ctx.fillRect(0, 0, 256, 256);
-    const rows = 8, cols = 4;
-    const rh = 256 / rows, cw = 256 / cols;
+  const rimLight = new THREE.DirectionalLight(0x93c5fd, 0.65);
+  rimLight.position.set(-12, 9, -14);
+  scene.add(rimLight);
+
+  // Detailed Canvas Textures (Brick + Bump/Roughness, Stone Tiles, Plaid Uniforms, Arch Sign, KVS Flag)
+  function makeBrickMaps() {
+    const colorCanvas = document.createElement("canvas");
+    colorCanvas.width = 512; colorCanvas.height = 512;
+    const ctx = colorCanvas.getContext("2d");
+
+    const bumpCanvas = document.createElement("canvas");
+    bumpCanvas.width = 512; bumpCanvas.height = 512;
+    const bctx = bumpCanvas.getContext("2d");
+
+    ctx.fillStyle = "#d6d3d1";
+    ctx.fillRect(0, 0, 512, 512);
+    bctx.fillStyle = "#303030";
+    bctx.fillRect(0, 0, 512, 512);
+
+    const rows = 14, cols = 6;
+    const rh = 512 / rows, cw = 512 / cols;
+    const tones = ["#a83824", "#b8432c", "#9e321e", "#c24b33"];
+
     for (let r = 0; r < rows; r++) {
-      const offset = (r % 2) * (cw / 2);
-      for (let col = -1; col <= cols; col++) {
-        ctx.fillStyle = (r + col) % 2 === 0 ? "#a9442e" : "#c2593f";
-        ctx.fillRect(col * cw + offset + 2, r * rh + 2, cw - 4, rh - 4);
+      const shift = (r % 2) * (cw * 0.5);
+      for (let c = -1; c <= cols; c++) {
+        const x = c * cw + shift + 3;
+        const y = r * rh + 3;
+        const w = cw - 6;
+        const h = rh - 6;
+        ctx.fillStyle = tones[(r * 3 + c + 12) % tones.length];
+        ctx.fillRect(x, y, w, h);
+
+        bctx.fillStyle = "#d8d8d8";
+        bctx.fillRect(x, y, w, h);
+      }
+    }
+
+    const map = new THREE.CanvasTexture(colorCanvas);
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.wrapS = map.wrapT = THREE.RepeatWrapping;
+    map.repeat.set(2, 3);
+
+    const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+    bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+    bumpMap.repeat.set(2, 3);
+
+    return { map, bumpMap };
+  }
+
+  function makeStonePaverTexture() {
+    const c = document.createElement("canvas");
+    c.width = 512; c.height = 512;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#c7c2b8";
+    ctx.fillRect(0, 0, 512, 512);
+
+    const tilesX = 4, tilesY = 8;
+    const tw = 512 / tilesX, th = 512 / tilesY;
+    for (let y = 0; y < tilesY; y++) {
+      for (let x = 0; x < tilesX; x++) {
+        ctx.fillStyle = (x + y) % 2 === 0 ? "#e7e5e4" : "#dcd6ce";
+        ctx.fillRect(x * tw + 2, y * th + 2, tw - 4, th - 4);
       }
     }
     const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(3, 4);
+    tex.repeat.set(2, 12);
     return tex;
   }
 
-  function makeArchSignTexture() {
+  function makePlaidTexture(bgHex, lineA, lineB) {
     const c = document.createElement("canvas");
-    c.width = 1024; c.height = 220;
+    c.width = 128; c.height = 128;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#1e3a8a";
-    ctx.fillRect(0, 0, 1024, 220);
+    ctx.fillStyle = bgHex;
+    ctx.fillRect(0, 0, 128, 128);
+
+    ctx.fillStyle = lineA;
+    for (let i = 0; i < 128; i += 32) {
+      ctx.fillRect(i, 0, 7, 128);
+      ctx.fillRect(0, i, 128, 7);
+    }
+    ctx.fillStyle = lineB;
+    for (let i = 16; i < 128; i += 32) {
+      ctx.fillRect(i, 0, 3, 128);
+      ctx.fillRect(0, i, 128, 3);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2, 2);
+    return tex;
+  }
+
+  function makeArchBannerTexture() {
+    const c = document.createElement("canvas");
+    c.width = 1280; c.height = 256;
+    const ctx = c.getContext("2d");
+    const grad = ctx.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0, "#1e3a8a");
+    grad.addColorStop(1, "#172554");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1280, 256);
+
     ctx.strokeStyle = "#facc15";
     ctx.lineWidth = 8;
-    ctx.strokeRect(10, 10, 1004, 200);
+    ctx.strokeRect(12, 12, 1256, 232);
 
     ctx.fillStyle = "#fde047";
-    ctx.font = "bold 62px Georgia, serif";
+    ctx.font = "bold 72px Georgia, serif";
     ctx.textAlign = "center";
-    ctx.fillText("KENDRIYA VIDYALAYA", 512, 104);
+    ctx.fillText("KENDRIYA VIDYALAYA", 640, 118);
 
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 30px sans-serif";
-    ctx.fillText("तत् त्वं पूषन् अपावृणु", 512, 162);
-    return new THREE.CanvasTexture(c);
+    ctx.fillStyle = "#f8fafc";
+    ctx.font = "bold 36px sans-serif";
+    ctx.fillText("तत् त्वं पूषन् अपावृणु", 640, 184);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
   }
 
   function makeFlagTexture() {
     const c = document.createElement("canvas");
     c.width = 512; c.height = 320;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#38bdf8";
+    ctx.fillStyle = "#0ea5e9";
     ctx.fillRect(0, 0, 512, 320);
+
     ctx.beginPath();
-    ctx.arc(256, 150, 74, 0, Math.PI * 2);
+    ctx.arc(256, 160, 78, 0, Math.PI * 2);
     ctx.fillStyle = "#ffffff";
     ctx.fill();
-    ctx.fillStyle = "#1e3a8a";
-    ctx.font = "bold 36px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("KVS", 256, 162);
-    return new THREE.CanvasTexture(c);
-  }
 
-  function makePlaidTexture(baseColor, stripeColor) {
-    const c = document.createElement("canvas");
-    c.width = 64; c.height = 64;
-    const ctx = c.getContext("2d");
-    ctx.fillStyle = baseColor;
-    ctx.fillRect(0, 0, 64, 64);
-    ctx.fillStyle = stripeColor;
-    for (let i = 0; i < 64; i += 16) {
-      ctx.fillRect(i, 0, 4, 64);
-      ctx.fillRect(0, i, 64, 4);
-    }
+    ctx.strokeStyle = "#1e3a8a";
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#1e3a8a";
+    ctx.font = "bold 38px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("KVS", 256, 174);
+
     const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
     return tex;
   }
 
-  const brickTex = makeBrickTexture();
-  const kvsPlaidTex = makePlaidTexture("#f8fafc", "#dc2626");
-  const bulbulPlaidTex = makePlaidTexture("#93c5fd", "#ffffff");
+  const brickMaps = makeBrickMaps();
+  const stoneTex = makeStonePaverTexture();
+  const kvsCheckTex = makePlaidTexture("#ffffff", "#dc2626", "#1e3a8a");
+  const bulbulCheckTex = makePlaidTexture("#bae6fd", "#1d4ed8", "#ffffff");
 
-  // 5. Ground, Paved Walkway & Lush Campus Lawns
-  const lawnMat = new THREE.MeshStandardMaterial({ color: 0x65a30d, roughness: 0.9 });
-  const lawn = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), lawnMat);
+  // Campus Lawn & Paved Walkway
+  const lawn = new THREE.Mesh(
+    new THREE.PlaneGeometry(140, 140),
+    new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.92 })
+  );
   lawn.rotation.x = -Math.PI / 2;
   lawn.receiveShadow = true;
   scene.add(lawn);
 
-  const pathMat = new THREE.MeshStandardMaterial({ color: 0xd6d3d1, roughness: 0.85 });
-  const walkway = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.06, 46), pathMat);
-  walkway.position.set(1.2, 0.03, 2);
+  const walkway = new THREE.Mesh(
+    new THREE.BoxGeometry(7.6, 0.08, 48),
+    new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.78 })
+  );
+  walkway.position.set(1.2, 0.04, 2);
   walkway.receiveShadow = true;
   scene.add(walkway);
 
-  // 6. Grand KENDRIYA VIDYALAYA Entrance Arch & Gate
+  // Decorative Garden Borders & Shrubs
+  const bushMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.85 });
+  const flowerMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.6 });
+  for (let i = -4; i <= 10; i += 2.2) {
+    const bush = new THREE.Mesh(new THREE.SphereGeometry(0.55, 14, 12), bushMat);
+    bush.scale.set(1.2, 0.75, 1.0);
+    bush.position.set(5.2, 0.35, i);
+    bush.castShadow = true;
+    scene.add(bush);
+
+    if (Math.abs(i) % 4 < 2) {
+      const bloom = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), flowerMat);
+      bloom.position.set(5.05, 0.55, i + 0.25);
+      scene.add(bloom);
+    }
+  }
+
+  // Grand Brick Entrance Arch & Iron Gate Frames
   const archGroup = new THREE.Group();
-  archGroup.position.set(1.4, 0, -6.5);
-  const brickMat = new THREE.MeshStandardMaterial({ map: brickTex, roughness: 0.78 });
+  archGroup.position.set(1.3, 0, -6.5);
+  const brickMat = new THREE.MeshStandardMaterial({
+    map: brickMaps.map,
+    bumpMap: brickMaps.bumpMap,
+    bumpScale: 0.04,
+    roughness: 0.76
+  });
+  const trimMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f4, roughness: 0.65 });
 
-  const leftPillar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 6.2, 1.5), brickMat);
-  leftPillar.position.set(-3.4, 3.1, 0);
-  leftPillar.castShadow = true;
-  leftPillar.receiveShadow = true;
-  archGroup.add(leftPillar);
+  [-3.5, 3.5].forEach((px) => {
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.55, 6.4, 1.55), brickMat);
+    pillar.position.set(px, 3.2, 0);
+    pillar.castShadow = true;
+    pillar.receiveShadow = true;
+    archGroup.add(pillar);
 
-  const rightPillar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 6.2, 1.5), brickMat);
-  rightPillar.position.set(3.4, 3.1, 0);
-  rightPillar.castShadow = true;
-  rightPillar.receiveShadow = true;
-  archGroup.add(rightPillar);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.28, 1.78), trimMat);
+    cap.position.set(px, 6.48, 0);
+    cap.castShadow = true;
+    archGroup.add(cap);
+  });
 
-  const topBeam = new THREE.Mesh(new THREE.BoxGeometry(8.8, 1.7, 1.7), brickMat);
-  topBeam.position.set(0, 6.4, 0);
-  topBeam.castShadow = true;
-  archGroup.add(topBeam);
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(9.0, 1.85, 1.75), brickMat);
+  lintel.position.set(0, 6.55, 0);
+  lintel.castShadow = true;
+  archGroup.add(lintel);
 
-  const signBoard = new THREE.Mesh(
-    new THREE.BoxGeometry(7.6, 1.35, 0.14),
-    new THREE.MeshStandardMaterial({ map: makeArchSignTexture(), roughness: 0.4 })
+  const banner = new THREE.Mesh(
+    new THREE.BoxGeometry(7.8, 1.48, 0.14),
+    new THREE.MeshStandardMaterial({ map: makeArchBannerTexture(), roughness: 0.38 })
   );
-  signBoard.position.set(0, 6.4, 0.88);
-  archGroup.add(signBoard);
+  banner.position.set(0, 6.55, 0.92);
+  archGroup.add(banner);
+
+  // Open Wrought-Iron Gate Leaves
+  const ironMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.35 });
+  [-2.65, 2.65].forEach((gx, idx) => {
+    const leaf = new THREE.Group();
+    leaf.position.set(gx, 0, -0.1);
+    leaf.rotation.y = idx === 0 ? -0.65 : 0.65;
+    for (let b = -0.8; b <= 0.8; b += 0.32) {
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 3.2, 8), ironMat);
+      bar.position.set(b, 1.6, 0);
+      leaf.add(bar);
+    }
+    const topRail = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.08, 0.08), ironMat);
+    topRail.position.set(0, 3.15, 0);
+    leaf.add(topRail);
+    archGroup.add(leaf);
+  });
   scene.add(archGroup);
 
-  // 7. School Building Behind the Arch
-  const buildingGroup = new THREE.Group();
-  buildingGroup.position.set(-5.5, 0, -17);
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.7 });
-  const mainBlock = new THREE.Mesh(new THREE.BoxGeometry(14, 7.5, 6), wallMat);
-  mainBlock.position.set(0, 3.75, 0);
-  mainBlock.castShadow = true;
-  mainBlock.receiveShadow = true;
-  buildingGroup.add(mainBlock);
-
-  const brickWing = new THREE.Mesh(new THREE.BoxGeometry(4.5, 7.6, 6.2), brickMat);
-  brickWing.position.set(4.5, 3.8, 0);
-  buildingGroup.add(brickWing);
-  scene.add(buildingGroup);
-
-  // 8. Fluttering KVS Flag
-  const pole = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.06, 0.08, 8.8, 12),
-    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.6, roughness: 0.3 })
+  // School Building Behind Arch
+  const schoolBldg = new THREE.Group();
+  schoolBldg.position.set(-4.8, 0, -17.5);
+  const bldgMain = new THREE.Mesh(
+    new THREE.BoxGeometry(15, 7.8, 6.5),
+    new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.72 })
   );
-  pole.position.set(-3.2, 4.4, -7.2);
-  scene.add(pole);
+  bldgMain.position.set(0, 3.9, 0);
+  bldgMain.castShadow = true;
+  bldgMain.receiveShadow = true;
+  schoolBldg.add(bldgMain);
 
-  const flagGeo = new THREE.PlaneGeometry(2.3, 1.4, 16, 8);
-  const flagMat = new THREE.MeshStandardMaterial({
-    map: makeFlagTexture(),
-    side: THREE.DoubleSide,
-    roughness: 0.6
-  });
-  const flagMesh = new THREE.Mesh(flagGeo, flagMat);
-  flagMesh.position.set(-2.0, 7.9, -7.2);
+  const bldgBrick = new THREE.Mesh(new THREE.BoxGeometry(4.8, 7.9, 6.7), brickMat);
+  bldgBrick.position.set(5.2, 3.95, 0);
+  bldgBrick.castShadow = true;
+  schoolBldg.add(bldgBrick);
+  scene.add(schoolBldg);
+
+  // Fluttering KVS Flag
+  const flagPole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.055, 0.075, 9.2, 12),
+    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.7, roughness: 0.25 })
+  );
+  flagPole.position.set(-3.1, 4.6, -7.2);
+  scene.add(flagPole);
+
+  const flagGeo = new THREE.PlaneGeometry(2.4, 1.5, 24, 12);
+  const flagMesh = new THREE.Mesh(
+    flagGeo,
+    new THREE.MeshStandardMaterial({ map: makeFlagTexture(), side: THREE.DoubleSide, roughness: 0.55 })
+  );
+  flagMesh.position.set(-1.85, 8.2, -7.2);
   scene.add(flagMesh);
 
-  // 9. Stylized Trees Along the Campus
-  function addTree(x, z, scale = 1) {
-    const t = new THREE.Group();
+  // Full-Canopy Trees
+  function addCanopyTree(x, z, scale = 1) {
+    const g = new THREE.Group();
     const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.22 * scale, 0.32 * scale, 2.4 * scale, 8),
-      new THREE.MeshStandardMaterial({ color: 0x78350f })
+      new THREE.CylinderGeometry(0.18 * scale, 0.34 * scale, 2.5 * scale, 12),
+      new THREE.MeshStandardMaterial({ color: 0x6b3e26, roughness: 0.9 })
     );
-    trunk.position.y = 1.2 * scale;
+    trunk.position.y = 1.25 * scale;
     trunk.castShadow = true;
-    t.add(trunk);
+    g.add(trunk);
 
-    const crown = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(1.55 * scale, 1),
-      new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.85 })
-    );
-    crown.position.y = 3.1 * scale;
-    crown.castShadow = true;
-    t.add(crown);
+    const puffOffsets = [
+      [0, 3.2, 0, 1.35],
+      [-0.85, 2.8, 0.3, 1.05],
+      [0.85, 2.9, -0.2, 1.1],
+      [0.1, 3.8, -0.3, 0.95]
+    ];
+    puffOffsets.forEach(([px, py, pz, r], idx) => {
+      const leafPuff = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(r * scale, 2),
+        new THREE.MeshStandardMaterial({
+          color: idx % 2 === 0 ? 0x15803d : 0x16a34a,
+          roughness: 0.82
+        })
+      );
+      leafPuff.position.set(px * scale, py * scale, pz * scale);
+      leafPuff.castShadow = true;
+      g.add(leafPuff);
+    });
 
-    t.position.set(x, 0, z);
-    scene.add(t);
+    g.position.set(x, 0, z);
+    scene.add(g);
   }
-  addTree(-5.2, 4, 1.15);
-  addTree(-4.8, -2.5, 1.25);
-  addTree(6.8, 2.5, 1.2);
-  addTree(7.2, -4.5, 1.3);
+  addCanopyTree(-5.4, 4.2, 1.2);
+  addCanopyTree(-5.0, -2.2, 1.3);
+  addCanopyTree(6.8, 3.0, 1.25);
+  addCanopyTree(7.4, -4.2, 1.35);
 
-  // 10. Articulated 3D Walking Students (KVS Uniforms + Cubs & Bulbuls)
+  // Sculpted Multi-Part 3D Student & Cubs/Bulbuls Rig
   const walkers = [];
 
-  function createStudent(type, x, z, phaseOffset) {
+  function buildStudent(kind, x, z, phase) {
     const root = new THREE.Group();
     root.position.set(x, 0, z);
-    // Face toward the school arch (-Z direction)
-    root.rotation.y = Math.PI;
+    root.rotation.y = Math.PI; // Walk toward school arch (-Z)
 
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xd99b66, roughness: 0.65 });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1e1b18, roughness: 0.8 });
-    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.5 });
+    const hipGroup = new THREE.Group();
+    hipGroup.position.y = 0.82;
+    root.add(hipGroup);
 
-    let shirtMat, bottomMat, sockMat, hasScarf = false, hasCap = false, isSkirt = false;
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xd99b66, roughness: 0.58 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.75 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.42 });
 
-    if (type === "cub") {
-      shirtMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.75 });
-      bottomMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.75 });
-      sockMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.8 });
-      hasScarf = true;
-      hasCap = true;
-    } else if (type === "bulbul") {
-      shirtMat = new THREE.MeshStandardMaterial({ map: bulbulPlaidTex, roughness: 0.75 });
-      bottomMat = new THREE.MeshStandardMaterial({ map: bulbulPlaidTex, roughness: 0.75 });
-      sockMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.8 });
-      hasScarf = true;
-      isSkirt = true;
-    } else if (type === "kvs_girl") {
-      shirtMat = new THREE.MeshStandardMaterial({ map: kvsPlaidTex, roughness: 0.75 });
-      bottomMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.75 });
-      sockMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.8 });
-      isSkirt = true;
+    let topMat, bottomMat, sockMat;
+    let isGirl = kind === "kvs_girl" || kind === "bulbul";
+    let hasYellowScarf = kind === "cub" || kind === "bulbul";
+    let hasBeret = kind === "cub";
+
+    if (kind === "cub") {
+      topMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.68 });
+      bottomMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.68 });
+      sockMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.78 });
+    } else if (kind === "bulbul") {
+      topMat = new THREE.MeshStandardMaterial({ map: bulbulCheckTex, roughness: 0.68 });
+      bottomMat = new THREE.MeshStandardMaterial({ map: bulbulCheckTex, roughness: 0.68 });
+      sockMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.78 });
     } else {
-      shirtMat = new THREE.MeshStandardMaterial({ map: kvsPlaidTex, roughness: 0.75 });
-      bottomMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.75 });
-      sockMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.8 });
+      topMat = new THREE.MeshStandardMaterial({ map: kvsCheckTex, roughness: 0.68 });
+      bottomMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.68 });
+      sockMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.78 });
     }
 
-    // Torso
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.58, 0.26), shirtMat);
-    torso.position.y = 1.08;
-    torso.castShadow = true;
-    root.add(torso);
+    // Rounded Torso + Collar
+    const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.22, 8, 14), topMat);
+    chest.position.y = 0.28;
+    chest.scale.set(1.18, 1.0, 0.85);
+    chest.castShadow = true;
+    hipGroup.add(chest);
 
-    // Backpack
-    const bag = new THREE.Mesh(
-      new THREE.BoxGeometry(0.36, 0.44, 0.16),
-      new THREE.MeshStandardMaterial({ color: type === "kvs_girl" ? 0xec4899 : 0x1d4ed8 })
-    );
-    bag.position.set(0, 1.08, -0.2);
-    bag.castShadow = true;
-    root.add(bag);
+    if (isGirl) {
+      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 0.32, 16), bottomMat);
+      skirt.position.y = 0.02;
+      skirt.castShadow = true;
+      hipGroup.add(skirt);
+    }
 
-    // Yellow Cubs/Bulbuls Scarf
-    if (hasScarf) {
+    if (hasYellowScarf) {
       const scarf = new THREE.Mesh(
-        new THREE.ConeGeometry(0.24, 0.34, 4),
-        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.5 })
+        new THREE.ConeGeometry(0.19, 0.28, 4),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.45 })
       );
       scarf.rotation.x = Math.PI;
       scarf.rotation.y = Math.PI / 4;
-      scarf.position.set(0, 1.24, 0.14);
-      root.add(scarf);
+      scarf.position.set(0, 0.41, 0.11);
+      hipGroup.add(scarf);
     }
 
-    // Skirt / Shorts waist piece
-    if (isSkirt) {
-      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.31, 0.34, 12), bottomMat);
-      skirt.position.y = 0.72;
-      skirt.castShadow = true;
-      root.add(skirt);
-    }
+    // Rounded School Bag
+    const bag = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.13, 0.18, 6, 12),
+      new THREE.MeshStandardMaterial({ color: isGirl ? 0xdb2777 : 0x1d4ed8, roughness: 0.6 })
+    );
+    bag.position.set(0, 0.28, -0.17);
+    bag.scale.set(1.1, 1.0, 0.72);
+    bag.castShadow = true;
+    hipGroup.add(bag);
 
-    // Head & Hair / Cap
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 16, 16), skinMat);
-    head.position.y = 1.62;
+    // Head, Hair & Optional Cub Beret
+    const headGroup = new THREE.Group();
+    headGroup.position.y = 0.76;
+    hipGroup.add(headGroup);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.185, 20, 20), skinMat);
+    head.scale.set(0.95, 1.04, 0.98);
     head.castShadow = true;
-    root.add(head);
+    headGroup.add(head);
 
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat);
-    hair.position.y = 1.64;
-    root.add(hair);
+    const hairCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.195, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.58),
+      hairMat
+    );
+    hairCap.position.y = 0.015;
+    headGroup.add(hairCap);
 
-    if (hasCap) {
-      const cap = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.23, 0.21, 0.11, 16),
-        new THREE.MeshStandardMaterial({ color: 0x1e3a8a })
+    if (isGirl) {
+      [-0.17, 0.17].forEach((px) => {
+        const braid = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.18, 6, 8), hairMat);
+        braid.position.set(px, -0.09, -0.03);
+        braid.rotation.z = px < 0 ? 0.14 : -0.14;
+        headGroup.add(braid);
+      });
+    }
+
+    if (hasBeret) {
+      const beret = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.19, 0.17, 0.09, 18),
+        new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.65 })
       );
-      cap.position.set(0.02, 1.81, 0);
-      cap.rotation.z = -0.15;
-      root.add(cap);
+      beret.position.set(0.02, 0.18, 0);
+      beret.rotation.z = -0.14;
+      headGroup.add(beret);
     }
 
-    // Pivoting Arms
-    function makeArm(side) {
-      const pivot = new THREE.Group();
-      pivot.position.set(side * 0.31, 1.32, 0);
-      const sleeve = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.22, 0.14), shirtMat);
-      sleeve.position.y = -0.11;
-      const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.28, 0.11), skinMat);
-      forearm.position.y = -0.34;
-      pivot.add(sleeve, forearm);
-      root.add(pivot);
-      return pivot;
-    }
-    const leftArm = makeArm(-1);
-    const rightArm = makeArm(1);
+    // Articulated Limbs
+    function makeLimb(xPos, yPos, upperLen, lowerLen, upperMat, lowerMat, isArm) {
+      const shoulderOrHip = new THREE.Group();
+      shoulderOrHip.position.set(xPos, yPos, 0);
 
-    // Pivoting Legs
-    function makeLeg(side) {
-      const pivot = new THREE.Group();
-      pivot.position.set(side * 0.13, 0.8, 0);
-      const upper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.34, 0.17), bottomMat);
-      upper.position.y = -0.17;
+      const upper = new THREE.Mesh(
+        new THREE.CapsuleGeometry(isArm ? 0.052 : 0.072, upperLen, 6, 10),
+        upperMat
+      );
+      upper.position.y = -upperLen * 0.5 - 0.04;
       upper.castShadow = true;
-      const sock = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.34, 0.14), sockMat);
-      sock.position.y = -0.51;
-      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.11, 0.24), shoeMat);
-      shoe.position.set(0, -0.72, 0.04);
-      pivot.add(upper, sock, shoe);
-      root.add(pivot);
-      return pivot;
-    }
-    const leftLeg = makeLeg(-1);
-    const rightLeg = makeLeg(1);
+      shoulderOrHip.add(upper);
 
+      const joint = new THREE.Group();
+      joint.position.y = -upperLen - 0.05;
+      shoulderOrHip.add(joint);
+
+      const lower = new THREE.Mesh(
+        new THREE.CapsuleGeometry(isArm ? 0.045 : 0.058, lowerLen, 6, 10),
+        lowerMat
+      );
+      lower.position.y = -lowerLen * 0.5;
+      lower.castShadow = true;
+      joint.add(lower);
+
+      if (!isArm) {
+        const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.22), shoeMat);
+        shoe.position.set(0, -lowerLen - 0.03, 0.04);
+        shoe.castShadow = true;
+        joint.add(shoe);
+      }
+
+      return { pivot: shoulderOrHip, joint };
+    }
+
+    const leftArm = makeLimb(-0.24, 0.46, 0.16, 0.18, topMat, skinMat, true);
+    const rightArm = makeLimb(0.24, 0.46, 0.16, 0.18, topMat, skinMat, true);
+    const leftLeg = makeLimb(-0.1, -0.04, 0.22, 0.24, bottomMat, sockMat, false);
+    const rightLeg = makeLimb(0.1, -0.04, 0.22, 0.24, bottomMat, sockMat, false);
+
+    hipGroup.add(leftArm.pivot, rightArm.pivot, leftLeg.pivot, rightLeg.pivot);
     scene.add(root);
+
     walkers.push({
       root,
+      hipGroup,
+      headGroup,
       leftArm,
       rightArm,
       leftLeg,
       rightLeg,
-      phase: phaseOffset,
-      speed: 1.35 + (phaseOffset % 3) * 0.12
+      phase,
+      speed: 1.25 + (phase % 3) * 0.12
     });
   }
 
-  // Spawn a lively group of KVS Boys, Girls, Cubs, and Bulbuls walking into school
-  createStudent("cub", 1.7, 9.5, 0.0);
-  createStudent("cub", 2.7, 10.6, 1.3);
-  createStudent("bulbul", 0.2, 9.0, 2.2);
-  createStudent("bulbul", -0.8, 10.1, 0.7);
-  createStudent("kvs_girl", -1.6, 6.2, 1.8);
-  createStudent("kvs_boy", -0.5, 5.4, 2.9);
-  createStudent("kvs_girl", 1.9, 4.8, 0.4);
-  createStudent("kvs_boy", 0.9, 2.5, 1.5);
-  createStudent("kvs_girl", -1.1, 1.2, 2.6);
-  createStudent("cub", 2.2, -0.5, 0.9);
-  createStudent("bulbul", 0.3, -2.0, 2.1);
+  buildStudent("cub", 1.8, 9.2, 0.0);
+  buildStudent("cub", 2.8, 10.4, 1.2);
+  buildStudent("bulbul", 0.3, 8.8, 2.1);
+  buildStudent("bulbul", -0.7, 10.0, 0.6);
+  buildStudent("kvs_girl", -1.5, 6.0, 1.7);
+  buildStudent("kvs_boy", -0.4, 5.1, 2.8);
+  buildStudent("kvs_girl", 1.9, 4.5, 0.4);
+  buildStudent("kvs_boy", 0.9, 2.2, 1.4);
+  buildStudent("kvs_girl", -1.1, 0.9, 2.5);
+  buildStudent("cub", 2.2, -0.8, 0.9);
+  buildStudent("bulbul", 0.4, -2.3, 2.0);
 
-  // 11. Subtle Mouse Parallax & Resize Handling
-  let pointerX = 0, pointerY = 0;
+  let px = 0, py = 0;
   window.addEventListener("pointermove", (e) => {
-    pointerX = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 1.4;
-    pointerY = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 0.7;
+    px = (e.clientX / Math.max(1, window.innerWidth) - 0.5) * 1.2;
+    py = (e.clientY / Math.max(1, window.innerHeight) - 0.5) * 0.6;
   }, { passive: true });
 
   window.addEventListener("resize", () => {
@@ -9172,40 +9325,50 @@ import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
 
-  // 12. Real-Time Animation Loop
   const clock = new THREE.Clock();
   function animate() {
     requestAnimationFrame(animate);
     const dt = Math.min(clock.getDelta(), 0.05);
-    const elapsed = clock.getElapsedTime();
+    const t = clock.getElapsedTime();
 
-    // Animate students walking forward into the school gate and looping seamlessly
     for (const w of walkers) {
       w.root.position.z -= w.speed * dt;
-      if (w.root.position.z < -7.5) {
+      if (w.root.position.z < -7.2) {
         w.root.position.z = 13.5;
       }
-      const stride = Math.sin(elapsed * 5.2 + w.phase);
-      w.leftLeg.rotation.x = stride * 0.52;
-      w.rightLeg.rotation.x = -stride * 0.52;
-      w.leftArm.rotation.x = -stride * 0.42;
-      w.rightArm.rotation.x = stride * 0.42;
-      w.root.position.y = Math.abs(Math.cos(elapsed * 5.2 + w.phase)) * 0.05;
+
+      const cycle = t * 5.0 + w.phase;
+      const s = Math.sin(cycle);
+      const c = Math.cos(cycle);
+
+      // Smooth walking stride + knee bend + hip sway + subtle head bob
+      w.leftLeg.pivot.rotation.x = s * 0.55;
+      w.rightLeg.pivot.rotation.x = -s * 0.55;
+      w.leftLeg.joint.rotation.x = Math.max(0, -c) * 0.65;
+      w.rightLeg.joint.rotation.x = Math.max(0, c) * 0.65;
+
+      w.leftArm.pivot.rotation.x = -s * 0.45;
+      w.rightArm.pivot.rotation.x = s * 0.45;
+      w.leftArm.joint.rotation.x = -0.25;
+      w.rightArm.joint.rotation.x = -0.25;
+
+      w.hipGroup.position.y = 0.82 + Math.abs(c) * 0.045;
+      w.hipGroup.rotation.z = s * 0.04;
+      w.headGroup.rotation.x = Math.sin(cycle * 2) * 0.03;
     }
 
-    // Ripple KVS flag in the breeze
+    // Wind ripple on KVS flag
     const pos = flagGeo.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const vx = pos.getX(i);
-      const wave = Math.sin(vx * 2.6 + elapsed * 4.5) * 0.14 * ((vx + 1.15) / 2.3);
+      const wave = Math.sin(vx * 2.8 + t * 4.6) * 0.15 * ((vx + 1.2) / 2.4);
       pos.setZ(i, wave);
     }
     pos.needsUpdate = true;
 
-    // Smooth camera parallax
-    camera.position.x += (-4.5 + pointerX - camera.position.x) * 0.04;
-    camera.position.y += (3.6 - pointerY - camera.position.y) * 0.04;
-    camera.lookAt(0.5, 2.8, -4);
+    camera.position.x += (-4.2 + px - camera.position.x) * 0.04;
+    camera.position.y += (3.1 - py - camera.position.y) * 0.04;
+    camera.lookAt(0.6, 2.4, -4.5);
 
     renderer.render(scene, camera);
   }

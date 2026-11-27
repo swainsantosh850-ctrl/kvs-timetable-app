@@ -8479,7 +8479,7 @@ if (document.readyState === "loading") {
   }
 })();
 </script>
-<!-- User Self-Declaration & Own-Risk Modal -->
+<!-- User Self-Declaration & Own-Risk Modal (No Email Required) -->
 <div id="user-declaration-modal" style="display: none;" class="fixed inset-0 z-[99999] bg-slate-900/85 backdrop-blur-sm items-center justify-center p-4 no-print">
   <div class="bg-white rounded-3xl border-2 border-indigo-200 w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -8487,33 +8487,33 @@ if (document.readyState === "loading") {
         <h3 class="text-base font-extrabold text-slate-900">User Self-Declaration & Own-Risk Notice</h3>
         <p class="text-xs font-bold text-indigo-600">Developed & Owned by Mr. Santosh Swain, PRT</p>
       </div>
-      <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">Mandatory</span>
+      <span class="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">Staff & Admin</span>
     </div>
 
     <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-2 leading-relaxed">
-      <p><strong>1. Voluntary Use & Own Risk:</strong> You are accessing and using this application voluntarily and entirely at your own risk. You are solely responsible for verifying all generated timetables, substitutions, allocations, and printouts before official school use.</p>
-      <p><strong>2. User-Provided Details:</strong> You agree to provide accurate details (your name, designation, school/workspace details, pass keys, and schedule inputs) whenever needed by the app and to safeguard your own credentials and data.</p>
-      <p><strong>3. Sole Developer & No Liability:</strong> This application is developed and owned solely by <strong>Mr. Santosh Swain, PRT</strong>, provided as-is without warranty or liability for user-entered data or scheduling outcomes.</p>
+      <p><strong>1. Own Risk:</strong> You use this application voluntarily and entirely at your own risk, and you must verify all timetables, substitutions, and printouts before official school use.</p>
+      <p><strong>2. Details When Needed:</strong> You agree to provide your details whenever required by the app and protect your own credentials and data.</p>
+      <p><strong>3. Sole Developer:</strong> Developed and owned by <strong>Mr. Santosh Swain, PRT</strong>, provided as-is without liability for user data or schedule outcomes.</p>
     </div>
 
     <div class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-slate-800 mb-1">Your Full Name & Designation <span class="text-rose-600">*</span></label>
-        <input type="text" id="ud-user-name" placeholder="e.g. R. Sharma, PRT / In-Charge" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <input type="text" id="ud-user-name" placeholder="Enter your name & designation" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
       <div>
         <label class="block text-xs font-bold text-slate-800 mb-1">School / Workspace Details <span class="text-rose-600">*</span></label>
-        <input type="text" id="ud-user-school" placeholder="e.g. PM SHRI KV / Session 2026-27" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <input type="text" id="ud-user-school" placeholder="Enter school / workspace details" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
       <label class="flex items-start gap-2.5 pt-1 text-xs font-bold text-slate-800 cursor-pointer">
         <input type="checkbox" id="ud-agree-checkbox" class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-        <span>I self-declare that I want to use this app at my own risk and will provide accurate details whenever needed.</span>
+        <span>I self-declare that I want to use this app at my own risk and will provide my details whenever needed.</span>
       </label>
       <p id="ud-error-msg" class="text-xs font-bold text-rose-600 hidden"></p>
     </div>
 
     <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-      <span id="ud-status-badge" class="text-[11px] font-semibold text-slate-500">Acceptance required to unlock app</span>
+      <span id="ud-status-badge" class="text-[11px] font-semibold text-slate-500">Tick required before login</span>
       <div class="flex items-center gap-2">
         <button type="button" onclick="declineUserDeclaration()" class="kvs-3d-key px-4 py-2 rounded-xl text-xs font-bold border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
           Decline
@@ -8525,7 +8525,6 @@ if (document.readyState === "loading") {
     </div>
   </div>
 </div>
-
 <script>
 (() => {
   const DECL_STORAGE_KEY = "kvs_user_self_declaration_v1";
@@ -8543,6 +8542,14 @@ if (document.readyState === "loading") {
     return Boolean(getDeclarationRecord());
   };
 
+  function isSuperAdminContext() {
+    const roleSelect = document.querySelector("#login-role, #access-role, select[id*='role']");
+    const roleText = (roleSelect?.value || roleSelect?.selectedOptions?.[0]?.textContent || "").toLowerCase();
+    if (roleText.includes("super")) return true;
+    if (window.state && String(window.state.currentRole || "").toLowerCase().includes("super")) return true;
+    return false;
+  }
+
   window.openUserDeclarationModal = function(onAcceptedCallback = null, customPromptNote = "") {
     const modal = document.getElementById("user-declaration-modal");
     if (!modal) return;
@@ -8551,18 +8558,24 @@ if (document.readyState === "loading") {
     modal.style.zIndex = "99999";
 
     const saved = getDeclarationRecord();
+    const nameEl = document.getElementById("ud-user-name");
+    const schoolEl = document.getElementById("ud-user-school");
+    const chkEl = document.getElementById("ud-agree-checkbox");
+
     if (saved) {
-      const nameEl = document.getElementById("ud-user-name");
-      const schoolEl = document.getElementById("ud-user-school");
-      const chkEl = document.getElementById("ud-agree-checkbox");
       if (nameEl) nameEl.value = saved.name;
       if (schoolEl) schoolEl.value = saved.school;
       if (chkEl) chkEl.checked = true;
+    } else {
+      const inlineDetails = (document.getElementById("login-decl-user-details")?.value || "").trim();
+      if (inlineDetails && nameEl && !nameEl.value) nameEl.value = inlineDetails;
+      if (inlineDetails && schoolEl && !schoolEl.value) schoolEl.value = inlineDetails;
+      if (chkEl) chkEl.checked = Boolean(document.getElementById("login-decl-checkbox")?.checked);
     }
 
     const badgeEl = document.getElementById("ud-status-badge");
     if (badgeEl) {
-      badgeEl.textContent = customPromptNote || (saved ? `Declared by: ${saved.name}` : "Acceptance required to unlock app");
+      badgeEl.textContent = customPromptNote || "Tick & details required for Staff / Admin";
     }
 
     const errEl = document.getElementById("ud-error-msg");
@@ -8578,10 +8591,15 @@ if (document.readyState === "loading") {
 
   window.declineUserDeclaration = function() {
     localStorage.removeItem(DECL_STORAGE_KEY);
+    const chkEl = document.getElementById("ud-agree-checkbox");
+    const inlineChk = document.getElementById("login-decl-checkbox");
+    if (chkEl) chkEl.checked = false;
+    if (inlineChk) inlineChk.checked = false;
     updateDeclarationHeaderPill();
+
     const errEl = document.getElementById("ud-error-msg");
     if (errEl) {
-      errEl.textContent = "Access blocked: Please enter your details and accept the own-risk self-declaration to continue.";
+      errEl.textContent = "Login blocked: You must enter your details and tick the self-declaration box first.";
       errEl.classList.remove("hidden");
     }
   };
@@ -8594,7 +8612,7 @@ if (document.readyState === "loading") {
 
     if (!name || !school || !accepted) {
       if (errEl) {
-        errEl.textContent = "Please enter your Name/Designation, School/Workspace details, and check the self-declaration box.";
+        errEl.textContent = "Please enter your Name/Designation, School/Workspace details, and tick the checkbox first.";
         errEl.classList.remove("hidden");
       }
       return;
@@ -8608,11 +8626,17 @@ if (document.readyState === "loading") {
       declaredAt: new Date().toISOString()
     };
     localStorage.setItem(DECL_STORAGE_KEY, JSON.stringify(record));
+
+    const inlineDetails = document.getElementById("login-decl-user-details");
+    const inlineChk = document.getElementById("login-decl-checkbox");
+    if (inlineDetails) inlineDetails.value = `${name} (${school})`;
+    if (inlineChk) inlineChk.checked = true;
+
     closeUserDeclarationModal();
     updateDeclarationHeaderPill();
 
     if (typeof showNotification === "function") {
-      showNotification(`Self-declaration recorded for ${name} (Own-risk use).`, "success");
+      showNotification(`Self-declaration completed by ${name}. You can now log in.`, "success");
     }
     if (window._kvsOnDeclarationAccepted) {
       const fn = window._kvsOnDeclarationAccepted;
@@ -8632,21 +8656,16 @@ if (document.readyState === "loading") {
       btn.type = "button";
       btn.className = "kvs-3d-key px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition flex items-center gap-1.5";
       btn.addEventListener("click", () => {
-        window.openUserDeclarationModal(null, "Review own-risk declaration or update your details");
+        window.openUserDeclarationModal(null, "Review or update your self-declaration details");
       });
       headerActions.prepend(btn);
     }
 
     const rec = getDeclarationRecord();
-    btn.innerHTML = `<i class="ph-bold ph-shield-check text-sm"></i><span>${rec ? `User: ${rec.name}` : "Self-Declare"}</span>`;
+    btn.innerHTML = `<i class="ph-bold ph-shield-check text-sm"></i><span>${rec ? `Declared: ${rec.name}` : "Self-Declare"}</span>`;
   }
 
-function updateDeclarationHeaderPill() {
-    // ... existing header pill code ...
-  }
-
-  // PASTE syncLoginDeclarationBox() AND ITS TWO setTimeout CALLS RIGHT HERE
-  function syncLoginDeclarationBox() {
+  function syncInlineBox() {
     const box = document.getElementById("portal-inline-declaration");
     const enterBtn = Array.from(document.querySelectorAll("button")).find(
       (b) => b.textContent && b.textContent.trim().includes("Enter Timetable Studio")
@@ -8658,6 +8677,7 @@ function updateDeclarationHeaderPill() {
     const saved = getDeclarationRecord();
     const detailInput = document.getElementById("login-decl-user-details");
     const chkInput = document.getElementById("login-decl-checkbox");
+
     if (saved && detailInput && !detailInput.value) {
       detailInput.value = `${saved.name} (${saved.school})`;
     }
@@ -8665,21 +8685,16 @@ function updateDeclarationHeaderPill() {
       chkInput.checked = true;
     }
 
-    if (detailInput && !detailInput._syncBound) {
-      detailInput._syncBound = true;
-      detailInput.addEventListener("input", () => {
-        const udName = document.getElementById("ud-user-name");
-        const udSchool = document.getElementById("ud-user-school");
-        if (udName) udName.value = detailInput.value.trim();
-        if (udSchool && !udSchool.value.trim()) udSchool.value = detailInput.value.trim();
-      });
-    }
-
-    if (chkInput && !chkInput._syncBound) {
-      chkInput._syncBound = true;
+    if (chkInput && !chkInput._declChangeBound) {
+      chkInput._declChangeBound = true;
       chkInput.addEventListener("change", () => {
         const details = (detailInput?.value || "").trim();
-        if (chkInput.checked && details) {
+        if (chkInput.checked) {
+          if (!details) {
+            chkInput.checked = false;
+            window.openUserDeclarationModal(null, "Enter your name/designation & school details and tick to declare");
+            return;
+          }
           const record = {
             name: details,
             school: details,
@@ -8689,7 +8704,7 @@ function updateDeclarationHeaderPill() {
           };
           localStorage.setItem(DECL_STORAGE_KEY, JSON.stringify(record));
           updateDeclarationHeaderPill();
-        } else if (!chkInput.checked) {
+        } else {
           localStorage.removeItem(DECL_STORAGE_KEY);
           updateDeclarationHeaderPill();
         }
@@ -8697,30 +8712,58 @@ function updateDeclarationHeaderPill() {
     }
   }
 
-  setTimeout(syncLoginDeclarationBox, 200);
-  setTimeout(syncLoginDeclarationBox, 800);
+  // Block login / sign-up / admin registration if not Super Admin and not self-declared with tick
+  document.addEventListener("click", (e) => {
+    const targetBtn = e.target.closest("button");
+    if (!targetBtn) return;
 
-  function bootDeclarationGate() {
-    updateDeclarationHeaderPill();
-    syncLoginDeclarationBox();
-    if (!window.hasUserSelfDeclared()) {
-      window.openUserDeclarationModal(null, "Mandatory first-time user declaration");
+    const modal = document.getElementById("user-declaration-modal");
+    if (modal && modal.contains(targetBtn)) return;
+
+    const label = (targetBtn.textContent || "").trim().toLowerCase();
+    const isAuthSubmit =
+      label.includes("enter timetable studio") ||
+      label.includes("send otp & register") ||
+      label.includes("send verification otp");
+
+    if (!isAuthSubmit) return;
+    if (isSuperAdminContext()) return;
+
+    // Also allow if inline details + checkbox are ticked right on the login card
+    const inlineDetails = (document.getElementById("login-decl-user-details")?.value || "").trim();
+    const inlineChecked = Boolean(document.getElementById("login-decl-checkbox")?.checked);
+    if (!window.hasUserSelfDeclared() && inlineDetails && inlineChecked) {
+      localStorage.setItem(DECL_STORAGE_KEY, JSON.stringify({
+        name: inlineDetails,
+        school: inlineDetails,
+        accepted: true,
+        owner: "Mr. Santosh Swain, PRT",
+        declaredAt: new Date().toISOString()
+      }));
+      updateDeclarationHeaderPill();
     }
-  }
-  function bootDeclarationGate() {
-    updateDeclarationHeaderPill();
-    syncLoginDeclarationBox();
+
     if (!window.hasUserSelfDeclared()) {
-      window.openUserDeclarationModal(null, "Mandatory first-time user declaration");
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      window.openUserDeclarationModal(() => {
+        targetBtn.click();
+      }, "Mandatory: Self-declare & tick before logging in (Staff & Admin)");
     }
+  }, true);
+
+  function bootGate() {
+    updateDeclarationHeaderPill();
+    syncInlineBox();
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bootDeclarationGate);
+    document.addEventListener("DOMContentLoaded", bootGate);
   } else {
-    bootDeclarationGate();
+    bootGate();
   }
-  setTimeout(bootDeclarationGate, 400);
+  setTimeout(bootGate, 400);
 })();
 </script>
 </body>

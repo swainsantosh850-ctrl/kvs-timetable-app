@@ -515,6 +515,89 @@ header, main {
     display: none !important;
   }
 } 
+    /* === Slide 1: Colorful Transparent 3D Cards with Subtle Motion === */
+@keyframes kvsSlide1FloatA {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotateX(0.4deg) rotateY(-0.5deg);
+  }
+  50% {
+    transform: translate3d(0, -4px, 8px) rotateX(-0.4deg) rotateY(0.5deg);
+  }
+}
+
+@keyframes kvsSlide1FloatB {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotateX(-0.35deg) rotateY(0.45deg);
+  }
+  50% {
+    transform: translate3d(0, -3px, 6px) rotateX(0.35deg) rotateY(-0.45deg);
+  }
+}
+
+#slide-panel-1 .kvs-s1-3d-school {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(224, 231, 255, 0.56) 55%, rgba(254, 243, 199, 0.58) 100%) !important;
+  backdrop-filter: blur(12px) saturate(135%);
+  -webkit-backdrop-filter: blur(12px) saturate(135%);
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    0 6px 0 rgba(79, 70, 229, 0.14),
+    0 18px 32px rgba(30, 58, 138, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  animation: kvsSlide1FloatA 7.5s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.25s ease;
+}
+
+#slide-panel-1 .kvs-s1-3d-teachers {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.68) 0%, rgba(204, 251, 241, 0.54) 52%, rgba(239, 246, 255, 0.62) 100%) !important;
+  backdrop-filter: blur(12px) saturate(135%);
+  -webkit-backdrop-filter: blur(12px) saturate(135%);
+  border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    0 6px 0 rgba(13, 148, 136, 0.14),
+    0 18px 32px rgba(15, 118, 110, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  animation: kvsSlide1FloatB 8.5s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.25s ease;
+}
+
+#slide-panel-1 .kvs-s1-teacher-item {
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.72) 0%, rgba(248, 250, 252, 0.56) 65%, rgba(224, 242, 254, 0.52) 100%) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.82) !important;
+  box-shadow:
+    0 4px 0 rgba(99, 102, 241, 0.12),
+    0 10px 20px rgba(15, 23, 42, 0.08) !important;
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, background-color 0.2s ease;
+}
+
+#slide-panel-1 .kvs-s1-teacher-item:hover {
+  transform: translateY(-3px) scale(1.008);
+  box-shadow:
+    0 7px 0 rgba(79, 70, 229, 0.18),
+    0 14px 24px rgba(30, 58, 138, 0.14) !important;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.86) 0%, rgba(254, 249, 195, 0.62) 60%, rgba(209, 250, 229, 0.62) 100%) !important;
+}
+
+#slide-panel-1 .kvs-s1-3d-school input,
+#slide-panel-1 .kvs-s1-3d-school select,
+#slide-panel-1 .kvs-s1-teacher-item input,
+#slide-panel-1 .kvs-s1-teacher-item select {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(4px);
+}
+
+@media print {
+  #slide-panel-1 .kvs-s1-3d-school,
+  #slide-panel-1 .kvs-s1-3d-teachers,
+  #slide-panel-1 .kvs-s1-teacher-item {
+    animation: none !important;
+    transform: none !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-indigo-100 selection:text-indigo-800">
@@ -8395,6 +8478,43 @@ if (document.readyState === "loading") {
 } else {
   KvsCartoon3DBackground.init();
 }
+</script>
+  <script>
+(() => {
+  function enhanceSlide1Glass3D() {
+    const slide1 = document.getElementById("slide-panel-1");
+    if (!slide1) return;
+
+    const cards = slide1.querySelectorAll(":scope > div.bg-white.rounded-2xl");
+    if (cards[0]) cards[0].classList.add("kvs-s1-3d-school");
+    if (cards[1]) cards[1].classList.add("kvs-s1-3d-teachers");
+
+    slide1.querySelectorAll("#teachers-list-container > div").forEach((row, idx) => {
+      row.classList.add("kvs-s1-teacher-item");
+      row.style.animation = `kvsSlide1FloatB ${8 + (idx % 3)}s ease-in-out ${-(idx * 0.9)}s infinite`;
+    });
+  }
+
+  const teachersList = document.getElementById("teachers-list-container");
+  if (teachersList) {
+    new MutationObserver(enhanceSlide1Glass3D).observe(teachersList, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", enhanceSlide1Glass3D);
+  } else {
+    enhanceSlide1Glass3D();
+  }
+
+  if (typeof window.renderSlide1Teachers === "function" && !window.renderSlide1Teachers._s1GlassWrapped) {
+    const origRenderS1 = window.renderSlide1Teachers;
+    window.renderSlide1Teachers = function() {
+      origRenderS1.apply(this, arguments);
+      enhanceSlide1Glass3D();
+    };
+    window.renderSlide1Teachers._s1GlassWrapped = true;
+  }
+})();
 </script>
 </body>
 </html>

@@ -3366,203 +3366,208 @@ function autoGenerateSingleClass(cls) {
       refreshAllScheduleViews();
       showNotification("Cleared all slots for selected teacher.", "info");
     }
-   function createClassTimetableCard(cls) {
-      const card = document.createElement("div");
-      card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
+  function createClassTimetableCard(cls) {
+  const card = document.createElement("div");
+  card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto space-y-4";
 
-      const [cNum, cSec] = cls.split("-");
-      const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
-      const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
+  const [cNum, cSec] = cls.split("-");
+  const ct = state.teachers.find(t => t.isClassTeacher && t.classNum === cNum && t.section === cSec);
+  const coCt = state.teachers.find(t => t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec);
 
-      let teacherBadges = "";
-      if (ct) {
-        teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">कक्षा अध्यापक / Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
+  let teacherBadges = "";
+  if (ct) {
+    teacherBadges += `<span class="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">कक्षा अध्यापक / Class Teacher: ${ct.name} (${ct.shortName || ct.name})</span>`;
+  }
+  if (coCt) {
+    teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
+  }
+  if (!ct && !coCt) {
+    teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">कक्षा अध्यापक / Class Teacher: Not Assigned</span>`;
+  }
+
+  let filledCount = 0;
+  const scheduledCounts = {};
+  DAYS.forEach(d => {
+    PERIODS.forEach(p => {
+      const slot = state.schedules[cls]?.[d]?.[p];
+      if (slot) {
+        filledCount++;
+        scheduledCounts[slot.subject] = (scheduledCounts[slot.subject] || 0) + 1;
       }
-      if (coCt) {
-        teacherBadges += `<span class="text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">सह-कक्षा अध्यापक / Co-Class Teacher: ${coCt.name} (${coCt.shortName || coCt.name})</span>`;
-      }
-      if (!ct && !coCt) {
-        teacherBadges = `<span class="text-[11px] font-semibold text-slate-400">कक्षा अध्यापक / Class Teacher: Not Assigned</span>`;
-      }
+    });
+  });
 
-      let filledCount = 0;
-      const scheduledCounts = {};
-      DAYS.forEach(d => {
-        PERIODS.forEach(p => {
-          const slot = state.schedules[cls]?.[d]?.[p];
-          if (slot) {
-            filledCount++;
-            scheduledCounts[slot.subject] = (scheduledCounts[slot.subject] || 0) + 1;
-          }
-        });
-      });
+  const classKey = `Class ${cNum}`;
+  const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
 
-      const classKey = `Class ${cNum}`;
-      const limits = state.subjectLimits[classKey] || state.subjectLimits["Class 1"] || {};
+  const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
+  const allottedTotals = {};
+  classAllots.forEach(a => {
+    allottedTotals[a.subject] = (allottedTotals[a.subject] || 0) + parseInt(a.periods || 0);
+  });
 
-      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
-      const allottedTotals = {};
-      classAllots.forEach(a => {
-        allottedTotals[a.subject] = (allottedTotals[a.subject] || 0) + parseInt(a.periods || 0);
-      });
+  const completedList = [];
+  const pendingList = [];
+  const unassignedList = [];
 
-      const completedList = [];
-      const pendingList = [];
-      const unassignedList = [];
+  const allSubjects = Array.from(new Set([...Object.keys(limits), ...Object.keys(allottedTotals)]));
 
-      const allSubjects = Array.from(new Set([...Object.keys(limits), ...Object.keys(allottedTotals)]));
+  allSubjects.forEach(subj => {
+    const required = limits[subj] !== undefined ? limits[subj] : (allottedTotals[subj] || 0);
+    const assigned = scheduledCounts[subj] || 0;
+    const hasAllotment = allottedTotals[subj] > 0;
 
-      allSubjects.forEach(subj => {
-        const required = limits[subj] !== undefined ? limits[subj] : (allottedTotals[subj] || 0);
-        const assigned = scheduledCounts[subj] || 0;
-        const hasAllotment = allottedTotals[subj] > 0;
-
-        if (assigned >= required && required > 0) {
-          completedList.push({ subject: subj, count: assigned, total: required });
-        } else if (hasAllotment) {
-          pendingList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
-        } else {
-          unassignedList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
-        }
-      });
-
-      let statusSummaryHtml = `
-        <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <i class="ph-bold ph-chart-pie text-indigo-600 text-sm"></i> Class Subjects Allocation Status:
-            </span>
-            <span class="text-[10px] font-bold text-slate-400">Total Periods: ${filledCount}/48</span>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-1.5">
-            ${completedList.map(item => `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
-                <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
-                <span>${item.subject}: ${item.count}/${item.total} (Done)</span>
-              </span>
-            `).join("")}
-
-            ${pendingList.map(item => `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
-                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span>${item.subject}:${item.assigned}/${item.total} (${item.left} left)</span>
-              </span>
-            `).join("")}
-
-            ${unassignedList.map(item => `
-              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
-                <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
-                <span>${item.subject}: Unassigned (${item.left} left)</span>
-              </span>
-            `).join("")}
-          </div>
-        </div>
-      `;
-
-let tbodyRows = "";
-      DAYS.forEach((d, index) => {
-        const dayCol = getUniqueColor("DAY", d);
-        let rowHtml = `
-          <tr class="hover:bg-slate-50/50 transition">
-            <td class="py-2.5 px-3 text-left font-extrabold"
-                style="background: ${dayCol.bg}; color: ${dayCol.text}; border-left: 4px solid ${dayCol.border};">
-              ${d}
-            </td>`;
-
-        PERIODS.forEach(p => {
-          const slot = state.schedules[cls]?.[d]?.[p];
-          if (slot) {
-            const teacher = state.teachers.find(t => t.id === slot.teacherId);
-            const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
-
-            let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
-            if (coTeacher) {
-              teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
-            }
-
-            const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
-            const subCol = getSubjectColor(slot.subject);
-            const cellStyle = hasConflict
-              ? ""
-              : `style="background: ${subCol.bg}; border-color: ${subCol.border}; color: ${subCol.text};"`;
-
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${d}', ${p})"
-                        ${cellStyle}
-                        class="w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : ''} hover:shadow-xs transition text-center group">
-                  <div class="font-extrabold text-[11px]">${slot.subject}</div>
-                  <div class="text-[10px] font-semibold truncate" style="${hasConflict ? '' : `color: ${subCol.sub};`}">${teacherName}</div>
-                </button>
-              </td>
-            `;
-          } else {
-            rowHtml += `
-              <td class="p-1">
-                <button onclick="openSlotModal('${cls}', '${d}', ${p})" class="w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
-                  <i class="ph-bold ph-plus text-xs"></i>
-                </button>
-              </td>
-            `;
-          }
-
-          if (p === 4 && index === 0) {
-            rowHtml += `
-              <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
-                LUNCH BREAK
-              </td>
-            `;
-          }
-        });
-
-        rowHtml += `</tr>`;
-        tbodyRows += rowHtml;
-      });
- 
-      card.innerHTML = `
-        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-sm font-extrabold text-slate-900">Class ${cls} Timetable</h3>
-              ${teacherBadges}
-            </div>
-            <p class="text-[11px] text-slate-400">Click any period slot to assign, edit, or swap subjects with live collision detection</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button onclick="printClassTimetable('${cls}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
-              <i class="ph-bold ph-printer text-xs"></i>
-              <span>Print This Class</span>
-            </button>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${filledCount === 48 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${filledCount}/48</span>
-          </div>
-        </div>
-
-        ${statusSummaryHtml}
-
-        <table class="w-full border-collapse text-center text-xs">
-          <thead>
-            <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
-              <th class="py-2.5 px-3 text-left w-20">Day</th>
-              <th class="py-2.5 px-2">P1</th>
-              <th class="py-2.5 px-2">P2</th>
-              <th class="py-2.5 px-2">P3</th>
-              <th class="py-2.5 px-2">P4</th>
-              <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="6"></th>
-              <th class="py-2.5 px-2">P5</th>
-              <th class="py-2.5 px-2">P6</th>
-              <th class="py-2.5 px-2">P7</th>
-              <th class="py-2.5 px-2">P8</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            ${tbodyRows}
-          </tbody>
-        </table>
-      `;
-
-      return card;
+    if (assigned >= required && required > 0) {
+      completedList.push({ subject: subj, count: assigned, total: required });
+    } else if (hasAllotment) {
+      pendingList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
+    } else {
+      unassignedList.push({ subject: subj, assigned: assigned, total: required, left: required - assigned });
     }
+  });
+
+  let statusSummaryHtml = `
+    <div class="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <i class="ph-bold ph-chart-pie text-indigo-600 text-sm"></i> Class Subjects Allocation Status:
+        </span>
+        <span class="text-[10px] font-bold text-slate-400">Total Periods: ${filledCount}/48</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5">
+        ${completedList.map(item => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+            <i class="ph-bold ph-check-circle text-xs text-emerald-600"></i>
+            <span>${item.subject}: ${item.count}/${item.total} (Done)</span>
+          </span>
+        `).join("")}
+
+        ${pendingList.map(item => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>${item.subject}:${item.assigned}/${item.total} (${item.left} left)</span>
+          </span>
+        `).join("")}
+
+        ${unassignedList.map(item => `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50/70 text-rose-800 border border-dashed border-rose-300">
+            <i class="ph-bold ph-warning-circle text-xs text-rose-500"></i>
+            <span>${item.subject}: Unassigned (${item.left} left)</span>
+          </span>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  let tbodyRows = "";
+  DAYS.forEach((d, index) => {
+    const dayCol = getUniqueColor("DAY", d);
+    let rowHtml = `
+      <tr class="hover:bg-slate-50/50 transition">
+        <td class="py-2.5 px-3 text-left font-extrabold"
+            style="background: ${dayCol.bg}; color: ${dayCol.text}; border-left: 4px solid ${dayCol.border};">
+          ${d}
+        </td>`;
+
+    PERIODS.forEach(p => {
+      const slot = state.schedules[cls]?.[d]?.[p];
+      if (slot) {
+        const teacher = state.teachers.find(t => t.id === slot.teacherId);
+        const coTeacher = state.teachers.find(t => t.id === slot.coTeacherId);
+
+        let teacherName = teacher ? (teacher.shortName || teacher.name) : "N/A";
+        if (coTeacher) {
+          teacherName += ` + ${coTeacher.shortName || coTeacher.name}`;
+        }
+
+        const hasConflict = isTeacherConflicted(slot.teacherId, d, p);
+        const subCol = getSubjectColor(slot.subject);
+        const cellStyle = hasConflict
+          ? ""
+          : `style="background: ${subCol.bg}; border-color: ${subCol.border}; color: ${subCol.text};"`;
+
+        // === CHANGE 1 (Filled Slot): added kvs-slot-cell and data-slot-key ===
+        rowHtml += `
+          <td class="p-1">
+            <button onclick="openSlotModal('${cls}', '${d}', ${p})"
+                    data-slot-key="${cls}|${d}|${p}"
+                    ${cellStyle}
+                    class="kvs-slot-cell w-full p-1.5 rounded-xl border ${hasConflict ? 'bg-rose-50 border-rose-300 text-rose-800 animate-pulse' : ''} hover:shadow-xs transition text-center group">
+              <div class="font-extrabold text-[11px]">${slot.subject}</div>
+              <div class="text-[10px] font-semibold truncate" style="${hasConflict ? '' : `color: ${subCol.sub};`}">${teacherName}</div>
+            </button>
+          </td>
+        `;
+      } else {
+        // === CHANGE 1 (Empty Slot): added kvs-slot-cell and data-slot-key ===
+        rowHtml += `
+          <td class="p-1">
+            <button onclick="openSlotModal('${cls}', '${d}', ${p})"
+                    data-slot-key="${cls}|${d}|${p}"
+                    class="kvs-slot-cell w-full py-3 rounded-xl border border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 text-slate-300 hover:text-indigo-600 transition flex items-center justify-center">
+              <i class="ph-bold ph-plus text-xs"></i>
+            </button>
+          </td>
+        `;
+      }
+
+      if (p === 4 && index === 0) {
+        rowHtml += `
+          <td class="bg-amber-50/60 text-amber-900 font-bold text-[10px] tracking-wider align-middle text-center" rowspan="6" style="writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); padding: 4px 1px;">
+            LUNCH BREAK
+          </td>
+        `;
+      }
+    });
+
+    rowHtml += `</tr>`;
+    tbodyRows += rowHtml;
+  });
+
+  card.innerHTML = `
+    <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-2">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="text-sm font-extrabold text-slate-900">Class ${cls} Timetable</h3>
+          ${teacherBadges}
+        </div>
+        <p class="text-[11px] text-slate-400">Click any period slot to assign, edit, or swap subjects with live collision detection</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="printClassTimetable('${cls}')" class="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 hover:bg-slate-50 text-slate-600 transition flex items-center gap-1">
+          <i class="ph-bold ph-printer text-xs"></i>
+          <span>Print This Class</span>
+        </button>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${filledCount === 48 ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700'}">${filledCount}/48</span>
+      </div>
+    </div>
+
+    ${statusSummaryHtml}
+
+    <table class="w-full border-collapse text-center text-xs">
+      <thead>
+        <tr class="bg-slate-50 text-slate-600 font-extrabold border-b border-slate-200">
+          <th class="py-2.5 px-3 text-left w-20">Day</th>
+          <th class="py-2.5 px-2">P1</th>
+          <th class="py-2.5 px-2">P2</th>
+          <th class="py-2.5 px-2">P3</th>
+          <th class="py-2.5 px-2">P4</th>
+          <th class="py-2.5 px-1 bg-amber-50/40 text-amber-800 w-6" rowspan="6"></th>
+          <th class="py-2.5 px-2">P5</th>
+          <th class="py-2.5 px-2">P6</th>
+          <th class="py-2.5 px-2">P7</th>
+          <th class="py-2.5 px-2">P8</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        ${tbodyRows}
+      </tbody>
+    </table>
+  `;
+
+  return card;
+}
     function renderSlide3Grid() {
       const container = document.getElementById("slide3-tables-container");
       if (!container) return;
@@ -4543,43 +4548,69 @@ function printAllSlide7Teachers() {
     }
 
     function renderSubstitutionAssistant() {
-      const container = document.getElementById("slide5-free-teachers-chips");
-      if (!container) return;
-      container.innerHTML = "";
+  const container = document.getElementById("slide5-free-teachers-chips");
+  if (!container) return;
+  container.innerHTML = "";
 
-      const day = state.selectedDaySlide5;
-      const period = state.subPeriodSlide5;
+  const day = state.selectedDaySlide5;
+  const period = state.subPeriodSlide5;
 
-      const freeTeachers = [];
-      state.teachers.forEach(t => {
-        const isSecondaryBusy = (t.secondaryBusySlots && t.secondaryBusySlots[day] && t.secondaryBusySlots[day].includes(period));
-        let isBusy = isSecondaryBusy;
-
-        if (!isBusy) {
-          CLASSES.forEach(c => {
-            if (state.schedules[c]?.[day]?.[period]?.teacherId === t.id) {
-              isBusy = true;
+  // Score and rank available staff using KvsAiEngine rules (honors personalOffSlots, secondaryBusySlots & workload)
+  const rankedStaff = state.teachers
+    .filter(t => {
+      const isSecBusy = t.secondaryBusySlots?.[day]?.includes(period);
+      const isPersonalOff = t.personalOffSlots?.[day]?.includes(period);
+      if (isSecBusy || isPersonalOff) return false;
+      return !CLASSES.some(c => {
+        const s = state.schedules[c]?.[day]?.[period];
+        return s && (s.teacherId === t.id || s.coTeacherId === t.id);
+      });
+    })
+    .map(t => {
+      let dayLoad = 0;
+      let weekLoad = 0;
+      CLASSES.forEach(c => {
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            const s = state.schedules[c]?.[d]?.[p];
+            if (s && (s.teacherId === t.id || s.coTeacherId === t.id)) {
+              weekLoad++;
+              if (d === day) dayLoad++;
             }
           });
-        }
-        if (!isBusy) freeTeachers.push(t);
+        });
       });
+      return { teacher: t, dayLoad, weekLoad };
+    })
+    .sort((a, b) => a.dayLoad - b.dayLoad || a.weekLoad - b.weekLoad);
 
-      if (freeTeachers.length === 0) {
-        container.innerHTML = `<span class="text-xs text-rose-700 font-bold p-1">No free staff available during Period ${period} on ${day}.</span>`;
-        return;
-      }
+  if (rankedStaff.length === 0) {
+    container.innerHTML = `<span class="text-xs text-rose-700 font-bold p-1">No free staff available during Period ${period} on ${day}.</span>`;
+    return;
+  }
 
-      freeTeachers.forEach(t => {
-        const chip = document.createElement("div");
-        chip.className = "px-2.5 py-1 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-1.5 shadow-xs";
-        chip.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>${t.name} (${t.shortName})</span>
-        `;
-        container.appendChild(chip);
-      });
-    }
+  rankedStaff.forEach((item, idx) => {
+    const t = item.teacher;
+    const isTopPick = idx < 3;
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.onclick = () => openTeacherSlotModal(t.id, day, period);
+    chip.className = `kvs-slot-cell px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-xs transition ${
+      isTopPick
+        ? "bg-emerald-50 border-emerald-400 text-emerald-950 hover:bg-emerald-100"
+        : "bg-white border-emerald-200 text-emerald-900 hover:bg-emerald-50"
+    }`;
+    chip.innerHTML = `
+      <span class="w-2 h-2 rounded-full ${isTopPick ? "bg-emerald-600 animate-ping" : "bg-emerald-500"}"></span>
+      <span>${t.name} (${t.shortName})</span>
+      <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-white border border-emerald-200 text-emerald-700">
+        ${item.dayLoad}P today
+      </span>
+      ${isTopPick ? '<span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-600 text-white">AI Best</span>' : ""}
+    `;
+    container.appendChild(chip);
+  });
+}
 
    function renderSlide5DayWiseTeachers() {
   const tbody = document.getElementById("slide5-teachers-tbody");
@@ -7408,18 +7439,33 @@ syncAdminRegistryFromCloud();
 const KvsAiEngine = (() => {
   const STORAGE_KEY_API = "kvs_tt_gemini_api_key";
 
-  ffunction getState() {
-  // Replace `window.appState` with your actual global state object if named differently
-  const src = window.appState || window.timetableState || window.state || {};
-  return {
-    classes: Array.isArray(src.classes) ? src.classes : [],
-    teachers: Array.isArray(src.teachers) ? src.teachers : [],
-    allocations: Array.isArray(src.allocations) ? src.allocations : []
-  };
-}
+  function normalizeClass(raw) {
+    const clean = String(raw || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (CLASSES.includes(clean)) return clean;
+    const m = clean.match(/^([1-5])-?([A-J])$/);
+    if (m) {
+      const candidate = `${m[1]}-${m[2]}`;
+      if (CLASSES.includes(candidate)) return candidate;
+    }
+    return clean;
+  }
 
-  function applyStaggeredCardAnimations(selector = ".timetable-card, .pill-card-table, .multi-class-print-card, .multi-teacher-print-card") {
-    const cards = document.querySelectorAll(selector);
+  function normalizeDay(raw) {
+    const clean = String(raw || "").trim().toUpperCase();
+    const found = DAYS.find(d => d.toUpperCase() === clean || d.toUpperCase().includes(clean));
+    return found || raw;
+  }
+
+  function resolveTeacher(codeOrName) {
+    const q = String(codeOrName || "").trim().toUpperCase();
+    return state.teachers.find(
+      t => String(t.shortName || "").trim().toUpperCase() === q ||
+           String(t.name || "").trim().toUpperCase().includes(q)
+    );
+  }
+
+  function applyStaggeredCardAnimations() {
+    const cards = document.querySelectorAll("#slide3-tables-container > div, #slide4-tables-container > div, .pill-card-table");
     cards.forEach((card, idx) => {
       card.classList.remove("kvs-anim-card");
       card.style.setProperty("--card-index", Math.min(idx, 20));
@@ -7438,138 +7484,87 @@ const KvsAiEngine = (() => {
     });
   }
 
-  function triggerConflictAnimation(elementOrKey) {
-    const el =
-      typeof elementOrKey === "string"
-        ? document.querySelector(`[data-slot-key="${CSS.escape(elementOrKey)}"]`)
-        : elementOrKey;
+  function triggerConflictAnimation(slotKey) {
+    const el = document.querySelector(`[data-slot-key="${CSS.escape(slotKey)}"]`);
     if (!el) return;
     el.classList.remove("kvs-slot-conflict");
     void el.offsetWidth;
     el.classList.add("kvs-slot-conflict");
   }
 
- function persistAndRefresh(touchedKeys = []) {
-  // 1. Replace with your actual save / Firebase sync function name:
-  // e.g., if your function is `saveWorkspaceData()`, call `window.saveWorkspaceData?.()`
-  if (typeof window.saveTimetableData === "function") {
-    window.saveTimetableData();
-  } else if (typeof window.saveToFirebase === "function") {
-    window.saveToFirebase();
-  } else if (typeof window.syncToFirebase === "function") {
-    window.syncToFirebase();
+  function isTeacherUnavailable(teacher, day, period, ignoreClass = null) {
+    if (!teacher) return true;
+    if (teacher.secondaryBusySlots?.[day]?.includes(period)) return true;
+    if (teacher.personalOffSlots?.[day]?.includes(period)) return true;
+    return CLASSES.some(c => {
+      if (c === ignoreClass) return false;
+      const slot = state.schedules[c]?.[day]?.[period];
+      return slot && (slot.teacherId === teacher.id || slot.coTeacherId === teacher.id);
+    });
   }
 
-  // 2. Replace with your actual render function name (e.g., `renderTimetableViews` or `renderAll`):
-  if (typeof window.renderTimetableViews === "function") {
-    window.renderTimetableViews();
-  } else if (typeof window.renderAll === "function") {
-    window.renderAll();
+  function persistAndRefresh(touchedKeys = []) {
+    if (typeof refreshAllScheduleViews === "function") {
+      refreshAllScheduleViews();
+    }
+    applyStaggeredCardAnimations();
+    setTimeout(() => highlightModifiedSlots(touchedKeys), 40);
   }
 
-  // 3. Replay staggered card animations and highlight changed period cells
-  applyStaggeredCardAnimations();
-  highlightModifiedSlots(touchedKeys);
-}
-  function isTeacherBusy(allocations, teacherShort, day, period) {
-    return allocations.some(
-      (a) =>
-        a.teacherShort === teacherShort &&
-        String(a.day).toLowerCase() === String(day).toLowerCase() &&
-        Number(a.period) === Number(period)
-    );
-  }
+  function autoFillUnassignedSlots() {
+    if (state.isViewOnly) {
+      showNotification("View-Only Mode: Switch to Admin role to use Smart Auto-Fill.", "warning");
+      return 0;
+    }
 
-  function isTeacherOff(teacher, day, period) {
-    if (!teacher || !Array.isArray(teacher.offSlots)) return false;
-    return teacher.offSlots.some(
-      (s) =>
-        String(s.day).toLowerCase() === String(day).toLowerCase() &&
-        Number(s.period) === Number(period)
-    );
-  }
+    pushUndoSnapshot();
+    const targetClasses = (state.activeSlide === 3 && state.selectedClassSlide3 !== "ALL")
+      ? [state.selectedClassSlide3]
+      : CLASSES;
 
-  function findBestSubstitutes({ className, day, period, excludeTeacher = "" }) {
-    const { classes, teachers, allocations } = getState();
-    const clsObj = classes.find((c) => c.name === className) || {};
-
-    return teachers
-      .filter((t) => t.shortName && t.shortName !== excludeTeacher)
-      .filter((t) => !isTeacherOff(t, day, period))
-      .filter((t) => !isTeacherBusy(allocations, t.shortName, day, period))
-      .map((t) => {
-        const weeklyLoad = allocations.filter((a) => a.teacherShort === t.shortName).length;
-        const dayLoad = allocations.filter(
-          (a) => a.teacherShort === t.shortName && String(a.day).toLowerCase() === String(day).toLowerCase()
-        ).length;
-
-        let score = 100 - dayLoad * 15 - weeklyLoad * 2;
-        const reasons = [];
-
-        if (clsObj.classTeacher === t.shortName || clsObj.coClassTeacher === t.shortName) {
-          score += 25;
-          reasons.push("Class/Co-Class familiarity");
-        }
-        if (dayLoad === 0) {
-          score += 10;
-          reasons.push("0 periods taken today");
-        }
-        reasons.push(`${dayLoad} today / ${weeklyLoad} total`);
-
-        return {
-          teacherShort: t.shortName,
-          teacherName: t.name || t.shortName,
-          score,
-          reason: reasons.join(" · ")
-        };
-      })
-      .sort((a, b) => b.score - a.score);
-  }
-
-  function autoFillUnassignedSlots(targetClass = null) {
-    const { classes, teachers, allocations } = getState();
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const periodsPerDay = 8;
     const touched = [];
     let addedCount = 0;
 
-    const classList = targetClass
-      ? classes.filter((c) => c.name === targetClass)
-      : classes;
+    targetClasses.forEach(cls => {
+      const [cNum, cSec] = cls.split("-");
+      const classAllots = state.allotments.filter(a => a.class === cNum && a.section === cSec);
 
-    classList.forEach((cls) => {
-      days.forEach((day) => {
-        for (let p = 1; p <= periodsPerDay; p++) {
-          const exists = allocations.some(
-            (a) => a.className === cls.name && a.day === day && Number(a.period) === p
-          );
-          if (exists) continue;
-
-          const candidates = teachers
-            .filter((t) => t.shortName && !t.isCommon)
-            .filter((t) => !isTeacherOff(t, day, p))
-            .filter((t) => !isTeacherBusy(allocations, t.shortName, day, p))
-            .sort((a, b) => {
-              const loadA = allocations.filter((x) => x.teacherShort === a.shortName).length;
-              const loadB = allocations.filter((x) => x.teacherShort === b.shortName).length;
-              return loadA - loadB;
-            });
-
-          if (candidates.length > 0) {
-            const chosen = candidates[0];
-            allocations.push({
-              id: `${cls.name}-${day}-${p}-${Date.now()}-${addedCount}`,
-              className: cls.name,
-              day,
-              period: p,
-              subject: chosen.primarySubject || "General",
-              teacherShort: chosen.shortName,
-              isCommon: false
-            });
-            addedCount++;
-            touched.push(`${day}-${p}-${cls.name}`);
-          }
+      const remainingPool = [];
+      classAllots.forEach(a => {
+        let alreadyPlaced = 0;
+        DAYS.forEach(d => {
+          PERIODS.forEach(p => {
+            const s = state.schedules[cls]?.[d]?.[p];
+            if (s && s.teacherId === a.teacherId && s.subject === a.subject) alreadyPlaced++;
+          });
+        });
+        const left = Math.max(0, parseInt(a.periods || 0) - alreadyPlaced);
+        for (let i = 0; i < left; i++) {
+          remainingPool.push({ subject: a.subject, teacherId: a.teacherId });
         }
+      });
+
+      DAYS.forEach(d => {
+        PERIODS.forEach(p => {
+          if (state.schedules[cls]?.[d]?.[p]) return;
+          const idx = remainingPool.findIndex(item => {
+            const teacher = state.teachers.find(t => t.id === item.teacherId);
+            return teacher && !isTeacherUnavailable(teacher, d, p, cls);
+          });
+          if (idx > -1) {
+            const chosen = remainingPool.splice(idx, 1)[0];
+            if (!state.schedules[cls]) state.schedules[cls] = {};
+            if (!state.schedules[cls][d]) state.schedules[cls][d] = {};
+            state.schedules[cls][d][p] = {
+              subject: chosen.subject,
+              teacherId: chosen.teacherId,
+              coTeacherId: null,
+              isBlock: false
+            };
+            addedCount++;
+            touched.push(`${cls}|${d}|${p}`);
+          }
+        });
       });
     });
 
@@ -7577,50 +7572,106 @@ const KvsAiEngine = (() => {
     return addedCount;
   }
 
+  function findBestSubstitutes(clsInput, dayInput, periodInput) {
+    const cls = normalizeClass(clsInput);
+    const day = normalizeDay(dayInput);
+    const period = Number(periodInput);
+    const [cNum, cSec] = cls.split("-");
+
+    return state.teachers
+      .filter(t => !isTeacherUnavailable(t, day, period, cls))
+      .map(t => {
+        let dayLoad = 0;
+        let weekLoad = 0;
+        CLASSES.forEach(c => {
+          DAYS.forEach(d => {
+            PERIODS.forEach(p => {
+              const s = state.schedules[c]?.[d]?.[p];
+              if (s && (s.teacherId === t.id || s.coTeacherId === t.id)) {
+                weekLoad++;
+                if (d === day) dayLoad++;
+              }
+            });
+          });
+        });
+
+        let score = 100 - dayLoad * 15 - weekLoad * 2;
+        if ((t.isClassTeacher && t.classNum === cNum && t.section === cSec) ||
+            (t.isCoClassTeacher && t.coClassNum === cNum && t.coSection === cSec)) {
+          score += 25;
+        }
+        return { teacher: t, score, dayLoad, weekLoad };
+      })
+      .sort((a, b) => b.score - a.score);
+  }
+
   function executeActions(actions = []) {
-    const { allocations } = getState();
+    if (state.isViewOnly) {
+      throw new Error("View-Only Mode: Log in as School Admin or Super Admin to apply AI edits.");
+    }
+
+    pushUndoSnapshot();
     const touched = [];
     const results = [];
 
-    actions.forEach((act) => {
+    actions.forEach(act => {
       if (act.type === "SWAP_PERIODS") {
-        const slotA = allocations.find(
-          (a) => a.className === act.className && a.day === act.day && Number(a.period) === Number(act.periodA)
-        );
-        const slotB = allocations.find(
-          (a) => a.className === act.className && a.day === act.day && Number(a.period) === Number(act.periodB)
-        );
+        const cls = normalizeClass(act.className);
+        const day = normalizeDay(act.day);
+        const pA = Number(act.periodA);
+        const pB = Number(act.periodB);
 
-        if (slotA) slotA.period = Number(act.periodB);
-        if (slotB) slotB.period = Number(act.periodA);
-
-        touched.push(`${act.day}-${act.periodA}-${act.className}`, `${act.day}-${act.periodB}-${act.className}`);
-        results.push(`Swapped P${act.periodA} and P${act.periodB} for ${act.className} on ${act.day}.`);
-      } else if (act.type === "ASSIGN_TEACHER") {
-        if (isTeacherBusy(allocations, act.teacherShort, act.day, act.period)) {
-          triggerConflictAnimation(`${act.day}-${act.period}-${act.className}`);
-          results.push(`Skipped ${act.teacherShort} on ${act.day} P${act.period}: already busy.`);
+        if (!state.schedules[cls]?.[day]) {
+          results.push(`Class ${cls} or day ${day} not found.`);
           return;
         }
-        const existing = allocations.find(
-          (a) => a.className === act.className && a.day === act.day && Number(a.period) === Number(act.period)
-        );
-        if (existing) {
-          existing.teacherShort = act.teacherShort;
-          if (act.subject) existing.subject = act.subject;
-        } else {
-          allocations.push({
-            id: `${act.className}-${act.day}-${act.period}-${Date.now()}`,
-            className: act.className,
-            day: act.day,
-            period: Number(act.period),
-            subject: act.subject || "Assigned",
-            teacherShort: act.teacherShort,
-            isCommon: false
-          });
+        const temp = state.schedules[cls][day][pA] || null;
+        state.schedules[cls][day][pA] = state.schedules[cls][day][pB] || null;
+        state.schedules[cls][day][pB] = temp;
+
+        touched.push(`${cls}|${day}|${pA}`, `${cls}|${day}|${pB}`);
+        results.push(`Swapped P${pA} and P${pB} for Class ${cls} on ${day}.`);
+      } else if (act.type === "ASSIGN_TEACHER") {
+        const cls = normalizeClass(act.className);
+        const day = normalizeDay(act.day);
+        const period = Number(act.period);
+        const teacher = resolveTeacher(act.teacherShort);
+
+        if (!teacher) {
+          results.push(`Teacher "${act.teacherShort}" not found.`);
+          return;
         }
-        touched.push(`${act.day}-${act.period}-${act.className}`);
-        results.push(`Assigned ${act.teacherShort} to ${act.className} (${act.day} P${act.period}).`);
+        if (isTeacherUnavailable(teacher, day, period, cls)) {
+          triggerConflictAnimation(`${cls}|${day}|${period}`);
+          results.push(`Conflict: ${teacher.shortName} is busy or locked out on ${day} P${period}.`);
+          return;
+        }
+
+        if (!state.schedules[cls]) state.schedules[cls] = {};
+        if (!state.schedules[cls][day]) state.schedules[cls][day] = {};
+        const prev = state.schedules[cls][day][period];
+        state.schedules[cls][day][period] = {
+          subject: String(act.subject || prev?.subject || "ENG").toUpperCase(),
+          teacherId: teacher.id,
+          coTeacherId: null,
+          isBlock: false
+        };
+
+        const [cNum, cSec] = cls.split("-");
+        if (typeof ensureAllotmentExists === "function") {
+          ensureAllotmentExists(teacher.id, cNum, cSec, state.schedules[cls][day][period].subject);
+        }
+
+        touched.push(`${cls}|${day}|${period}`);
+        results.push(`Assigned ${teacher.shortName} (${state.schedules[cls][day][period].subject}) to Class ${cls} on ${day} P${period}.`);
+      } else if (act.type === "FIND_SUBSTITUTE") {
+        const ranked = findBestSubstitutes(act.className, act.day, act.period);
+        if (ranked.length === 0) {
+          results.push(`No free teachers found for ${act.className} on ${act.day} P${act.period}.`);
+        } else {
+          const top3 = ranked.slice(0, 3).map(r => `${r.teacher.shortName} (${r.dayLoad}P today)`).join(", ");
+          results.push(`Best substitutes for ${normalizeClass(act.className)} P${act.period}: ${top3}.`);
+        }
       }
     });
 
@@ -7631,20 +7682,19 @@ const KvsAiEngine = (() => {
   async function runGeminiCommand(promptText) {
     const apiKey = localStorage.getItem(STORAGE_KEY_API);
     if (!apiKey) {
-      throw new Error("Please set your Gemini API key first using the API Key button.");
+      throw new Error("Click 'API Key' first to save your Gemini API key locally.");
     }
 
-    const { classes, teachers } = getState();
-    const classNames = classes.map((c) => c.name);
-    const teacherCodes = teachers.map((t) => t.shortName);
-
+    const teacherList = state.teachers.map(t => `${t.shortName} (${t.name})`).join(", ");
     const systemInstruction = [
-      "You are a timetable scheduling assistant for KVS Timetable Synchronizer Studio.",
-      "Convert the user's instruction into a JSON array of actions.",
-      "Allowed action objects:",
-      '1) {"type":"SWAP_PERIODS","className":"5A","day":"Tuesday","periodA":3,"periodB":5}',
-      '2) {"type":"ASSIGN_TEACHER","className":"4B","day":"Wednesday","period":2,"teacherShort":"SS","subject":"Maths"}',
-      `Known classes: ${JSON.stringify(classNames)}. Known teachers: ${JSON.stringify(teacherCodes)}.`,
+      "You are the AI scheduling assistant for KVS Timetable Synchronizer Studio.",
+      "Convert the user's request into a JSON array of action objects.",
+      "Allowed action types:",
+      '1) {"type":"SWAP_PERIODS","className":"5-A","day":"TUESDAY","periodA":3,"periodB":5}',
+      '2) {"type":"ASSIGN_TEACHER","className":"2-A","day":"WEDNESDAY","period":2,"teacherShort":"SS","subject":"MATH"}',
+      '3) {"type":"FIND_SUBSTITUTE","className":"5-A","day":"MONDAY","period":4}',
+      `Active classes: ${JSON.stringify(CLASSES)}.`,
+      `Active teachers: ${teacherList}.`,
       "Return ONLY valid JSON."
     ].join(" ");
 
@@ -7676,21 +7726,21 @@ const KvsAiEngine = (() => {
     return executeActions(actions);
   }
 
-  function mountDock(containerSelector = "main, #timetable-container, body") {
-    const host = document.querySelector(containerSelector);
+  function mountDock() {
+    const host = document.querySelector("main") || document.body;
     if (!host || document.getElementById("kvs-ai-dock")) return;
 
     const dock = document.createElement("div");
     dock.id = "kvs-ai-dock";
     dock.className = "kvs-ai-dock no-print";
     dock.innerHTML = `
-      <span class="kvs-ai-dot" title="AI Engine Ready"></span>
+      <span class="kvs-ai-dot" title="KVS AI Engine Active"></span>
       <input id="kvs-ai-prompt" class="kvs-ai-input" type="text"
-        placeholder='Ask AI: e.g., "Swap Period 3 and Period 5 for 5A on Tuesday"' />
+        placeholder='Ask AI: e.g., "Swap P3 and P5 for 5-A on Tuesday" or "Find substitute for 5-A Monday P2"' />
       <button id="kvs-ai-run-btn" class="kvs-ai-btn" type="button">Run AI Command</button>
       <button id="kvs-ai-autofill-btn" class="kvs-ai-btn secondary" type="button">Smart Auto-Fill</button>
       <button id="kvs-ai-key-btn" class="kvs-ai-btn" style="background:#475569;" type="button">API Key</button>
-      <div id="kvs-ai-status" style="width:100%;font-size:12.5px;color:#334155;">Ready.</div>
+      <div id="kvs-ai-status" style="width:100%;font-size:12px;font-weight:600;color:#334155;">KVS AI Studio Ready.</div>
     `;
 
     host.prepend(dock);
@@ -7710,7 +7760,10 @@ const KvsAiEngine = (() => {
 
     document.getElementById("kvs-ai-autofill-btn").addEventListener("click", () => {
       const added = autoFillUnassignedSlots();
-      statusEl.textContent = `Smart Auto-Fill added ${added} clash-free slot(s) with animated highlights.`;
+      statusEl.textContent = `Smart Auto-Fill placed ${added} clash-free period(s) and saved an Undo snapshot.`;
+      if (typeof showNotification === "function") {
+        showNotification(`Smart Auto-Fill placed ${added} period(s)!`, "success");
+      }
     });
 
     document.getElementById("kvs-ai-run-btn").addEventListener("click", async () => {
@@ -7731,16 +7784,17 @@ const KvsAiEngine = (() => {
     applyStaggeredCardAnimations,
     highlightModifiedSlots,
     triggerConflictAnimation,
-    persistAndRefresh,
     findBestSubstitutes,
     autoFillUnassignedSlots,
     runGeminiCommand
   };
 })();
 
-document.addEventListener("DOMContentLoaded", () => {
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => KvsAiEngine.mountDock());
+} else {
   KvsAiEngine.mountDock();
-});
+}
 </script>
 
 </body>

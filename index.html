@@ -8765,5 +8765,59 @@ if (document.readyState === "loading") {
   setTimeout(bootGate, 400);
 })();
 </script>
+  <script>
+(() => {
+  if (window.__kvsPerfControllerInstalled) return;
+  window.__kvsPerfControllerInstalled = true;
+
+  let rafPending = false;
+  let lastPointer = { x: 0, y: 0 };
+
+  function applySmoothParallax() {
+    rafPending = false;
+    const bg = document.getElementById("kvs-demo-bg") || document.getElementById("kvs-campus-motion-img");
+    if (!bg || bg.style.opacity === "0") return;
+
+    const anyModalOpen = Boolean(
+      document.querySelector(".modal-backdrop.open, #user-declaration-modal[style*='display: flex'], #user-declaration-modal[style*='display:flex']")
+    );
+    if (document.hidden || anyModalOpen) return;
+
+    const x = (lastPointer.x - 0.5) * -10;
+    const y = (lastPointer.y - 0.5) * -7;
+    bg.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(1.03)`;
+  }
+
+  window.addEventListener("pointermove", (e) => {
+    lastPointer.x = e.clientX / Math.max(1, window.innerWidth);
+    lastPointer.y = e.clientY / Math.max(1, window.innerHeight);
+    if (!rafPending) {
+      rafPending = true;
+      requestAnimationFrame(applySmoothParallax);
+    }
+  }, { passive: true });
+
+  function syncMediaState() {
+    const anyModalOpen = Boolean(
+      document.querySelector(".modal-backdrop.open, #user-declaration-modal[style*='display: flex'], #user-declaration-modal[style*='display:flex']")
+    );
+    const pauseMedia = document.hidden || anyModalOpen;
+
+    const vid = document.getElementById("kvs-bg-video-el");
+    if (vid) {
+      if (pauseMedia && !vid.paused) vid.pause();
+      else if (!pauseMedia && vid.paused) vid.play().catch(() => {});
+    }
+
+    const motionImg = document.getElementById("kvs-campus-motion-img");
+    if (motionImg) {
+      motionImg.style.animationPlayState = pauseMedia ? "paused" : "running";
+    }
+  }
+
+  document.addEventListener("visibilitychange", syncMediaState, { passive: true });
+  setInterval(syncMediaState, 1000);
+})();
+</script>
 </body>
 </html>
